@@ -1,0 +1,145 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/native/index",
+      "style": {
+        "navigationBarTitleText": "原生示例",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/index",
+      "style": {
+        "navigationBarTitleText": "功能导航",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/finance/index",
+      "style": {
+        "navigationBarTitleText": "资金与返利",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/system/index",
+      "style": {
+        "navigationBarTitleText": "系统中心",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/webview/index",
+      "style": {
+        "navigationBarTitleText": "功能",
+        "navigationBarTextStyle": "black",
+        "navigationBarBackgroundColor": "#f6f8fb"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages/modules",
+      "pages": [
+        {
+          "path": "customerManager/index",
+          "style": {
+            "navigationBarTitleText": "客户与回款",
+            "navigationBarTextStyle": "white",
+            "navigationBarBackgroundColor": "#2e87ff"
+          }
+        },
+        {
+          "path": "projectManager/index",
+          "style": {
+            "navigationBarTitleText": "项目与资金池",
+            "navigationBarTextStyle": "white",
+            "navigationBarBackgroundColor": "#2e87ff"
+          }
+        },
+        {
+          "path": "moneyManager/index",
+          "style": {
+            "navigationBarTitleText": "资金管理",
+            "navigationBarTextStyle": "white",
+            "navigationBarBackgroundColor": "#2e87ff"
+          }
+        },
+        {
+          "path": "materialManage/index",
+          "style": {
+            "navigationBarTitleText": "素材管理",
+            "navigationBarTextStyle": "white",
+            "navigationBarBackgroundColor": "#2e87ff"
+          }
+        },
+        {
+          "path": "mediaRebate/index",
+          "style": {
+            "navigationBarTitleText": "返利与核算",
+            "navigationBarTextStyle": "white",
+            "navigationBarBackgroundColor": "#2e87ff"
+          }
+        }
+      ]
+    }
+  ],
+  "tabBar": {
+    "color": "#5f6b7c",
+    "selectedColor": "#2e87ff",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/tab/home.svg",
+        "selectedIconPath": "static/tab/home-active.svg"
+      },
+      {
+        "pagePath": "pages/modules/index",
+        "text": "功能",
+        "iconPath": "static/tab/grid.svg",
+        "selectedIconPath": "static/tab/grid-active.svg"
+      },
+      {
+        "pagePath": "pages/finance/index",
+        "text": "资金",
+        "iconPath": "static/tab/money.svg",
+        "selectedIconPath": "static/tab/money-active.svg"
+      },
+      {
+        "pagePath": "pages/system/index",
+        "text": "系统",
+        "iconPath": "static/tab/setting.svg",
+        "selectedIconPath": "static/tab/setting-active.svg"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#2e87ff",
+    "backgroundColor": "#f6f8fb"
+  }
+}
