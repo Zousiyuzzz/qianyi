@@ -22,7 +22,7 @@ export const API_ENV = {
 export const MODULE_GROUPS = [
   {
     key: 'dashboard',
-    title: '报表与工作台',
+    title: '报表看板',
     description: '分析报表、汇总/渠道/销售/利润视图及个人工作台。',
     modules: [
       { title: '分析报表', path: '/dashboard/analysis', desc: '投放效果与经营趋势分析。' },
@@ -34,8 +34,16 @@ export const MODULE_GROUPS = [
     ]
   },
   {
+    key: 'oa',
+    title: '审批中心',
+    description: '移动端审批任务和发起入口，复用 Web 审批流。',
+    modules: [
+      { title: '审批中心', path: '/OA/index', desc: '统一审批收件箱与发起列表。' }
+    ]
+  },
+  {
     key: 'customer',
-    title: '客户与回款',
+    title: '客户列表',
     description: '客户池海、回款管理与延期审批。',
     modules: [
       { title: '客户池海', path: '/customerManager/TabCustomermanageList', desc: '客户主数据与跟进。' },
@@ -45,7 +53,7 @@ export const MODULE_GROUPS = [
   },
   {
     key: 'project',
-    title: '项目与资金池',
+    title: '项目列表',
     description: '项目全链路、资金池及机器人配置。',
     modules: [
       { title: '项目管理', path: '/projectManager/TabProjectmanageList', desc: '项目立项、进度与协作。' },
@@ -56,9 +64,24 @@ export const MODULE_GROUPS = [
     ]
   },
   {
+    key: 'money',
+    title: '资金管理',
+    description: '到账、退款、项目损失、合同及抬头/卡号配置。',
+    modules: [
+      { title: '客户到账', path: '/moneyManager/Preparation', desc: '到账登记与确认。' },
+      { title: '客户退款', path: '/moneyManager/Refund', desc: '退款流程与凭证。' },
+      { title: '到账记录', path: '/moneyManager/TabCmbTransactionRecordList', desc: '银行到账明细与核验。' },
+      { title: '银行转账', path: '/moneyManager/TabCmbPaymentTransferRecordList', desc: '对公转账记录与凭证。' },
+      { title: '项目损失', path: '/projectLossRecord/index', desc: '损益记录与核算。' },
+      { title: '合同管理', path: '/contranct/index', desc: '合同台账与进度。' },
+      { title: '抬头管理', path: '/Manager/bankAccount', desc: '抬头维护与开票。' },
+      { title: '卡号配置', path: '/moneyManager/TabBankAccountConfigList', desc: '收付款卡号统一配置。' }
+    ]
+  },
+  {
     key: 'account',
     title: '账户管理',
-    description: '账户、主体、共享钱包与绑定记录。',
+    description: '账户、主体、共享钱包、子端口与绑定记录。',
     modules: [
       { title: '账户列表', path: '/accountids/index', desc: '账户余额与状态。' },
       { title: '账户主体', path: '/accountSubject/index', desc: '主体档案与资质。' },
@@ -66,6 +89,53 @@ export const MODULE_GROUPS = [
       { title: '子端口', path: '/channelManager/subPort', desc: '子端口管理。' },
       { title: '广告主ID复制', path: '/accountids/copy', desc: '广告主 ID 快速复制。' },
       { title: '账户绑定变动记录', path: '/accountids/accountChangeRecord', desc: '账户绑定变更留痕。' }
+    ]
+  },
+  {
+    key: 'material',
+    title: '素材管理',
+    description: '素材列表、裂变、风控与数据洞察。',
+    modules: [
+      { title: '数据洞察', path: '/materialManage/dataCheck', desc: '数据洞察与趋势。' },
+      { title: '素材列表', path: '/materialManage/index', desc: '素材库与审核状态。' },
+      { title: '素材裂变', path: '/materialManage/copy', desc: '批量裂变工具。' },
+      { title: '素材风控', path: '/materialManage/douyinViolationScoreRecord', desc: '违规扣分与风险监控。' }
+    ]
+  },
+  {
+    key: 'channel',
+    title: '渠道管理',
+    description: '渠道资源、平台应用、卡号配置与代理商账户。',
+    modules: [
+      { title: '渠道列表', path: '/channelManager/ChannelList', desc: '渠道档案与合作管理。' },
+      { title: '平台应用管理', path: '/channelManager/AppManager', desc: '平台应用接入与维护。' },
+      { title: '竞价分类返点模板', path: '/channelManager/rebate', desc: '竞价分类维度的返点策略。' },
+      { title: '卡号配置', path: '/moneyManager/TabBankAccountConfigList', desc: '收付款卡号集中配置。' },
+      { title: '代理商账户', path: '/advertiserInfo/TabAdvertiserInfoList', desc: '代理商账户信息。' }
+    ]
+  },
+  {
+    key: 'financeReport',
+    title: '财务报表',
+    description: '成本导入、利润报表等财务核算视图。',
+    modules: [
+      { title: '成本导入', path: '/moneyManager/ExcelParser', desc: '批量导入成本数据。' },
+      { title: '利润报表', path: '/moneyManager/BackmoneyList', desc: '利润统计与报表。' }
+    ]
+  },
+  {
+    key: 'rebate',
+    title: '返点管理',
+    description: '媒体返点、核算与违规明细。',
+    modules: [
+      { title: '返点管理', path: '/mediaRebate/index', desc: '媒体返点总览。' },
+      { title: '巨量引擎 - 返点结算', path: '/mediaRebate/DY/fandian/index', desc: '巨量返点结算。' },
+      { title: '巨量引擎 - 对账核算', path: '/mediaRebate/DY/duizhang/index', desc: '巨量对账与核算。' },
+      { title: '巨量引擎 - 业绩明细', path: '/mediaRebate/DY/performanceDetail/index', desc: '业绩明细查询。' },
+      { title: '巨量引擎 - 违规明细', path: '/mediaRebate/DY/violationDetail/index', desc: '违规明细追踪。' },
+      { title: '巨量引擎 - 核算明细', path: '/mediaRebate/DY/calcDetail/index', desc: '核算明细查看。' },
+      { title: '磁力引擎', path: '/CL/index', desc: '磁力引擎返点管理。' },
+      { title: '腾讯广告', path: '/TX/index', desc: '腾讯广告返点管理。' }
     ]
   },
   {
@@ -79,57 +149,8 @@ export const MODULE_GROUPS = [
     ]
   },
   {
-    key: 'money',
-    title: '资金管理',
-    description: '到账、退款、项目损失与抬头管理。',
-    modules: [
-      { title: '客户到账', path: '/moneyManager/Preparation', desc: '到账登记与确认。' },
-      { title: '客户退款', path: '/moneyManager/Refund', desc: '退款流程与凭证。' },
-      { title: '项目损失', path: '/projectLossRecord/index', desc: '损益记录与核算。' },
-      { title: '抬头管理', path: '/Manager/bankAccount', desc: '抬头维护与开票。' }
-    ]
-  },
-  {
-    key: 'material',
-    title: '素材管理与洞察',
-    description: '素材列表、裂变、风控与数据洞察。',
-    modules: [
-      { title: '数据洞察', path: '/materialManage/dataCheck', desc: '数据洞察与趋势。' },
-      { title: '素材列表', path: '/materialManage/index', desc: '素材库与审核状态。' },
-      { title: '素材裂变', path: '/materialManage/copy', desc: '批量裂变工具。' },
-      { title: '素材风控', path: '/materialManage/douyinViolationScoreRecord', desc: '违规扣分与风险监控。' }
-    ]
-  },
-  {
-    key: 'finance',
-    title: '财务报表与返利',
-    description: '媒体返点、核算、成本导入与利润报表。',
-    modules: [
-      { title: '返点管理', path: '/mediaRebate/index', desc: '媒体返点总览。' },
-      { title: '巨量引擎 - 返点结算', path: '/mediaRebate/DY/fandian/index', desc: '巨量返点结算。' },
-      { title: '巨量引擎 - 对账核算', path: '/mediaRebate/DY/duizhang/index', desc: '巨量对账与核算。' },
-      { title: '巨量引擎 - 业绩明细', path: '/mediaRebate/DY/performanceDetail/index', desc: '业绩明细查询。' },
-      { title: '巨量引擎 - 违规明细', path: '/mediaRebate/DY/violationDetail/index', desc: '违规明细追踪。' },
-      { title: '巨量引擎 - 核算明细', path: '/mediaRebate/DY/calcDetail/index', desc: '核算明细查看。' },
-      { title: '磁力引擎', path: '/CL/index', desc: '磁力引擎返点管理。' },
-      { title: '腾讯广告', path: '/TX/index', desc: '腾讯广告返点管理。' },
-      { title: '成本导入', path: '/moneyManager/ExcelParser', desc: '批量导入成本数据。' },
-      { title: '利润报表', path: '/moneyManager/BackmoneyList', desc: '利润统计与报表。' }
-    ]
-  },
-  {
-    key: 'channel',
-    title: '渠道与代理商',
-    description: '渠道资源、平台应用与代理商账户。',
-    modules: [
-      { title: '渠道列表', path: '/channelManager/ChannelList', desc: '渠道档案与合作管理。' },
-      { title: '平台应用管理', path: '/channelManager/AppManager', desc: '平台应用接入与维护。' },
-      { title: '代理商账户', path: '/advertiserInfo/TabAdvertiserInfoList', desc: '代理商账户信息。' }
-    ]
-  },
-  {
     key: 'tools',
-    title: '工具与消息',
+    title: '工具',
     description: '工具集、更新日志与消息通知。',
     modules: [
       { title: '邮件发送记录', path: '/system/email', desc: '邮件发送日志。' },
@@ -137,63 +158,6 @@ export const MODULE_GROUPS = [
       { title: '消息管理', path: '/modules/message/sysMessageList', desc: '系统消息列表。' },
       { title: '消息模板', path: '/modules/message/sysMessageTemplateList', desc: '消息模板配置。' },
       { title: '我的消息', path: '/isps/userAnnouncement', desc: '个人消息通知。' }
-    ]
-  },
-  {
-    key: 'monitor',
-    title: '系统监控',
-    description: '网关、定时任务、日志与性能监控。',
-    modules: [
-      { title: '路由网关', path: '/isystem/gatewayroute', desc: '网关路由管理。' },
-      { title: '定时任务', path: '/isystem/QuartzJobList', desc: 'Quartz 任务管理。' },
-      { title: '日志管理', path: '/isystem/log', desc: '系统日志查询。' },
-      { title: '数据日志', path: '/sys/dataLog-list', desc: '数据操作日志。' },
-      { title: 'Redis 监控', path: '/monitor/redis/info', desc: 'Redis 运行状态。' },
-      { title: 'Tomcat 信息', path: '/monitor/TomcatInfo', desc: 'Tomcat 监控。' },
-      { title: '服务器信息', path: '/monitor/SystemInfo', desc: '服务器监控。' },
-      { title: 'JVM 信息', path: '/monitor/JvmInfo', desc: 'JVM 监控。' },
-      { title: '请求追踪', path: '/monitor/HttpTrace', desc: '请求链路追踪。' },
-      { title: '磁盘监控', path: '/monitor/Disk', desc: '磁盘使用监控。' },
-      { title: 'SQL 监控', path: '/druid/', desc: 'Druid SQL 监控。' },
-      { title: '在线文档', path: '/doc.html', desc: '项目在线文档。' },
-      { title: '在线用户', path: '/isystem/online', desc: '在线用户列表。' }
-    ]
-  },
-  {
-    key: 'online',
-    title: '在线开发',
-    description: 'Online 表单、报表、校验与多数据源。',
-    modules: [
-      { title: 'Online 表单开发', path: '/online/cgform', desc: 'Online 表单配置。' },
-      { title: 'Online 报表配置', path: '/online/cgreport', desc: 'Online 报表配置。' },
-      { title: '系统编码规则', path: '/isystem/fillRule', desc: '编码规则管理。' },
-      { title: '系统校验规则', path: '/isystem/checkRule', desc: '校验规则管理。' },
-      { title: '多数据源管理', path: '/isystem/dataSource', desc: '数据源配置与切换。' },
-      { title: 'AUTO 在线表单', path: '/online/cgformList/:code', desc: '自动生成的在线表单。' },
-      { title: 'AUTO 复制表单', path: '/online/copyform/:code', desc: '复制表单配置。' },
-      { title: 'AUTO 在线表单 ERP', path: '/online/cgformErpList/:code', desc: 'ERP 在线表单。' },
-      { title: 'AUTO 在线表单 TAB', path: '/online/cgformTabList/:code', desc: 'TAB 形态在线表单。' },
-      { title: 'AUTO 动态表单', path: '/online/df/:table/:id', desc: '动态表单渲染。' },
-      { title: 'AUTO 在线报表', path: '/online/cgreport/:code', desc: '自动生成报表。' },
-      { title: 'AUTO 树表单列表', path: '/online/cgformTreeList/:code', desc: '树形表单列表。' },
-      { title: 'AUTO 在线内嵌子表', path: '/online/cgformInnerTableList/:code', desc: '内嵌子表列表。' }
-    ]
-  },
-  {
-    key: 'system',
-    title: '系统管理',
-    description: '用户、角色、菜单、部门、字典与公告。',
-    modules: [
-      { title: 'SysFillRuleList', path: '/SysFillRuleList', desc: '填充规则列表。' },
-      { title: '用户管理', path: '/isystem/user', desc: '用户列表与权限。' },
-      { title: '角色管理', path: '/isystem/roleUserList', desc: '角色与成员分配。' },
-      { title: '菜单管理', path: '/isystem/newPermissionList', desc: '菜单/权限配置。' },
-      { title: '部门管理', path: '/isystem/depart', desc: '部门组织管理。' },
-      { title: '我的部门', path: '/isystem/departUserList', desc: '部门成员视图。' },
-      { title: '通讯录', path: '/isystem/addressList', desc: '内部通讯录。' },
-      { title: '数据字典', path: '/isystem/dict', desc: '数据字典维护。' },
-      { title: '分类字典', path: '/isys/category', desc: '分类字典管理。' },
-      { title: '系统通告', path: '/isystem/annountCement', desc: '系统公告与通知。' }
     ]
   },
   {

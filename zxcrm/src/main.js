@@ -23,7 +23,7 @@ import Print from 'vue-print-nb-jeecg'
 import preview from 'vue-photo-preview'
 import 'vue-photo-preview/dist/skin.css'
 import SSO from '@/cas/sso.js'
-import {
+import { 
   ACCESS_TOKEN,
   DEFAULT_COLOR,
   DEFAULT_THEME,
@@ -34,7 +34,8 @@ import {
   DEFAULT_FIXED_HEADER_HIDDEN,
   DEFAULT_FIXED_SIDEMENU,
   DEFAULT_CONTENT_WIDTH_TYPE,
-  DEFAULT_MULTI_PAGE
+  DEFAULT_MULTI_PAGE,
+  TENANT_ID
 } from "@/store/mutation-types"
 import config from '@/defaultSettings'
 
@@ -62,6 +63,38 @@ Vue.use(preview)
 Vue.use(vueBus);
 Vue.use(JeecgComponents);
 Vue.use(VueAreaLinkage);
+
+const TOKEN_TTL = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * 当从移动端 WebView 进入时，自动将 URL 中的 token/tenant_id 写入本地存储，
+ * 确保路由守卫和接口请求都能直接生效，避免出现空白页或二次登录。
+ */
+function hydrateAuthFromUrl () {
+  const mergeParams = new URLSearchParams(window.location.search)
+  const hash = window.location.hash || ''
+  const hashQueryIndex = hash.indexOf('?')
+  if (hashQueryIndex !== -1) {
+    const hashParams = new URLSearchParams(hash.slice(hashQueryIndex + 1))
+    hashParams.forEach((value, key) => {
+      if (!mergeParams.has(key)) {
+        mergeParams.set(key, value)
+      }
+    })
+  }
+
+  const token = mergeParams.get('token')
+  const tenantId = mergeParams.get('tenant_id')
+
+  if (token) {
+    Vue.ls.set(ACCESS_TOKEN, token, TOKEN_TTL)
+  }
+  if (tenantId) {
+    Vue.ls.set(TENANT_ID, tenantId)
+  }
+}
+
+hydrateAuthFromUrl()
 
 SSO.init(() => {
   main()

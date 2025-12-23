@@ -22,7 +22,7 @@
 
 <script>
 import ModuleCard from '../../../components/ModuleCard.vue'
-import { buildWebUrl } from '../../../common/config'
+import { openWebView } from '../../../common/navigation'
 
 export default {
   components: { ModuleCard },
@@ -31,15 +31,18 @@ export default {
       moneyModules: [
         { title: '客户到账', path: '/moneyManager/Preparation', desc: '到账登记、核销与审批。', tag: 'H5' },
         { title: '客户退款', path: '/moneyManager/Refund', desc: '退款流程与凭证上传。', tag: 'H5' },
+        { title: '到账记录', path: '/moneyManager/TabCmbTransactionRecordList', desc: '银行到账流水与核验。', tag: 'H5' },
+        { title: '银行转账', path: '/moneyManager/TabCmbPaymentTransferRecordList', desc: '企业转账记录与凭证。', tag: 'H5' },
         { title: '项目损失', path: '/projectLossRecord/index', desc: '项目损益记录与核算。', tag: 'H5' },
-        { title: '抬头管理', path: '/Manager/bankAccount', desc: '抬头、账户与开票信息维护。', tag: 'H5' }
+        { title: '合同管理', path: '/contranct/index', desc: '合同台账、收支与生命周期。', tag: 'H5' },
+        { title: '抬头管理', path: '/Manager/bankAccount', desc: '抬头、账户与开票信息维护。', tag: 'H5' },
+        { title: '卡号配置', path: '/moneyManager/TabBankAccountConfigList', desc: '收付款卡号集中配置与同步。', tag: 'H5' }
       ]
     }
   },
   methods: {
     openWeb (path) {
-      const url = buildWebUrl(path)
-      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
+      openWebView(path)
     }
   }
 }
