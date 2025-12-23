@@ -1,0 +1,18 @@
+[
+    {
+        "node_id": "start_1766023256260",
+        "node_name": "开始",
+        "node_key": "start"
+    },
+    {
+        "node_id": "approval_1766037015277",
+        "node_name": "审批",
+        "node_key": "user",
+        "operation": "and"
+    },
+    {
+        "node_id": "end_1766023256261",
+        "node_name": "结束",
+        "node_key": "end"
+    }
+]

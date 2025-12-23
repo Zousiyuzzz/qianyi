@@ -1,0 +1,1695 @@
+diff --git a/1.html b/1.html
+deleted file mode 100644
+index 626ac87f90c78718f34586c39d45d1808b0c2493..0000000000000000000000000000000000000000
+--- a/1.html
++++ /dev/null
+@@ -1,66 +0,0 @@
+-<table border="1" cellspacing="0" cellpadding="5">
+-    <tr>
+-        <th>消耗</th>
+-        <th>转化数</th>
+-        <th>订单数</th>
+-        <th>转化成本</th>
+-        <th>主体</th>
+-        <th>订单成本</th>
+-        <th>时间</th>
+-        <th>分享量</th>
+-        <th>推广位</th>
+-        <th>分享转化率</th>
+-        <th>分享成本</th>
+-        <th>页面访问uv</th>
+-        <th>uv成本</th>
+-        <th>分享率</th>
+-    </tr>
+-    <tr>
+-        <td>0.00</td>
+-        <td>39</td>
+-        <td>15098</td>
+-        <td>0.000000</td>
+-        <td>密令</td>
+-        <td>0.000000</td>
+-        <td>2025-07-08</td>
+-        <td>81</td>
+-        <td>执象-7.4-闪购一下-口令-（1）,执象-7.4-闪购一下-口令-（2）,执象品牌日口令6799</td>
+-        <td>1.0000</td>
+-        <td>0.000000</td>
+-        <td>4072</td>
+-        <td>0.000000</td>
+-        <td>2.0769</td>
+-    </tr>
+-    <tr>
+-        <td>0.00</td>
+-        <td>11</td>
+-        <td>3651</td>
+-        <td>0.000000</td>
+-        <td>DP-红包</td>
+-        <td>0.000000</td>
+-        <td>2025-07-08</td>
+-        <td>0</td>
+-        <td>执象-7.6-闪购一下-dp-（2）</td>
+-        <td></td>
+-        <td></td>
+-        <td>169</td>
+-        <td>0.000000</td>
+-        <td>0.0000</td>
+-    </tr>
+-    <tr>
+-        <td>4004.44</td>
+-        <td>2743</td>
+-        <td>7043</td>
+-        <td>1.459876</td>
+-        <td>DP-免单</td>
+-        <td>0.568570</td>
+-        <td>2025-07-08</td>
+-        <td>136</td>
+-        <td>执象-7.6-闪购一下-dp-（1）</td>
+-        <td>1.0000</td>
+-        <td>29.444412</td>
+-        <td>144</td>
+-        <td>27.808611</td>
+-        <td>0.0496</td>
+-    </tr>
+-</table>
+\ No newline at end of file
+diff --git a/public/static/config.js b/public/static/config.js
+index 30d715601542dd5473ec463c891504f49d93534f..b6338b2476a75b4ab68cb99315f0034b8689e953 100644
+--- a/public/static/config.js
++++ b/public/static/config.js
+@@ -14,8 +14,8 @@ window._CONFIG = {
+   // 聪哥笔记本
+   // VUE_APP_API_BASE_URL: 'http://47.106.223.158:8080/jeecg-boot',
+   // VUE_APP_API_BASE_URL: 'http://n45ckpb.nat.ipyingshe.com/jeecg-boot',
+-  // VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
+-  VUE_APP_API_BASE_URL: '/jeecg-boot',
++  VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
++  // VUE_APP_API_BASE_URL: '/jeecg-boot',
+   //单点登录地址
+   VUE_APP_CAS_BASE_URL: '',
+   //文件预览路径
+diff --git a/src/views/accountids/copy.vue b/src/views/accountids/copy.vue
+index 59f6e0245dbc861a03b134d7dd52faee4dd19807..ef80cc361851790749ef434440b833883c8b4df7 100644
+--- a/src/views/accountids/copy.vue
++++ b/src/views/accountids/copy.vue
+@@ -116,8 +116,8 @@
+         <!-- 明细弹窗 -->
+         <a-modal v-model:visible="detailModalVisible" title="账户明细" @cancel="detailModalVisible = false" width="70%"
+             :footer="null">
+-            <!-- 明细查询区域 -->
+-            <div style="margin-bottom: 16px;">
++            <!-- 查询区域和导出按钮并排 -->
++            <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                 <a-form layout="inline" @keyup.enter.native="handleDetailSearch">
+                     <a-form-item label="状态">
+                         <a-select v-model="detailQueryParam.success" placeholder="请选择状态" style="width: 120px;"
+@@ -133,6 +133,9 @@
+                             style="margin-left: 8px">重置</a-button>
+                     </a-form-item>
+                 </a-form>
++                <!-- 这里是导出按钮 -->
++                <a-button v-if="detailModalVisible" type="primary" icon="download" size="small"
++                    @click="exportDetailExcel">导出</a-button>
+             </div>
+             <a-table :dataSource="detailList" :columns="detailColumns" :loading="detailLoading" :pagination="false"
+                 size="small" rowKey="id" bordered
+@@ -148,6 +151,8 @@
+ import { advertiserCopy } from '@/api/api'
+ import { getAdvertiserCopyList, getAdvertiserCopyResultList } from '@/api/api'
+ import { mapGetters, mapState } from 'vuex'
++// 新增导出依赖
++import * as XLSX from 'xlsx'
+ 
+ export default {
+     name: 'CopyAccountList',
+@@ -400,6 +405,53 @@ export default {
+             this.detailQueryParam = { success: undefined };
+             this.detailPagination.current = 1;
+             this.loadDetailData();
++        },
++        exportDetailExcel() {
++            if (!this.detailData.id) {
++                this.$message.error('请先打开明细弹窗');
++                return;
++            }
++            this.detailLoading = true;
++            getAdvertiserCopyResultList({
++                advertiserCopyId: this.detailData.id,
++                pageNo: 1,
++                pageSize: 1000,
++                column: 'createTime',
++                order: 'desc',
++                ...this.detailQueryParam
++            })
++                .then(res => {
++                    if (res && res.success) {
++                        const list = res.result && res.result.records ? res.result.records : (res.result || []);
++                        if (!list.length) {
++                            this.$message.warning('没有可导出的数据');
++                            return;
++                        }
++                        // 处理表头和数据
++                        const data = list.map(item => ({
++                            '明细ID': item.id,
++                            '广告主ID': item.advertiserId,
++                            '广告主名称': item.advertiserName,
++                            '状态': (item.success === true || item.success === 'true') ? '成功' : (item.success === false || item.success === 'false' ? '失败' : '-'),
++                            '失败原因': item.errorMsg,
++                            '创建时间': item.createTime
++                        }));
++                        const ws = XLSX.utils.json_to_sheet(data);
++                        const wb = XLSX.utils.book_new();
++                        XLSX.utils.book_append_sheet(wb, ws, '账户明细');
++                        // 文件名用批次名称
++                        let fileName = (this.detailData.batchName || '账户明细') + '.xlsx';
++                        XLSX.writeFile(wb, fileName);
++                    } else {
++                        this.$message.error((res && res.message) || '导出失败');
++                    }
++                })
++                .catch(() => {
++                    this.$message.error('导出失败');
++                })
++                .finally(() => {
++                    this.detailLoading = false;
++                });
+         }
+     },
+     mounted() {
+diff --git a/src/views/jeecg/helloworld2.vue b/src/views/jeecg/helloworld2.vue
+index 3f567ef7e8683afa33535c45c0be825a7592325b..cf18e89914d61d31f8122c2d55090a36b1bfb6e6 100644
+--- a/src/views/jeecg/helloworld2.vue
++++ b/src/views/jeecg/helloworld2.vue
+@@ -4,28 +4,28 @@
+   </div>
+ </template>
+ <script>
+-  export default {
+-    data () {
+-      return {
+-        description: '表单页用于向用户收集或验证信息，基础表单常见于数据项较少的表单场景。',
+-        value: 1,
++export default {
++  data() {
++    return {
++      description: '表单页用于向用户收集或验证信息，基础表单常见于数据项较少的表单场景。',
++      value: 1,
+ 
+-        // form
+-        form: this.$form.createForm(this),
++      // form
++      form: this.$form.createForm(this),
+ 
+-      }
+-    },
+-    methods: {
+-      // handler
+-      handleSubmit (e) {
+-        e.preventDefault()
+-        this.form.validateFields((err, values) => {
+-          if (!err) {
+-            // eslint-disable-next-line no-console
+-            // console.log('Received values of form: ', values)
+-          }
+-        })
+-      }
++    }
++  },
++  methods: {
++    // handler
++    handleSubmit(e) {
++      e.preventDefault()
++      this.form.validateFields((err, values) => {
++        if (!err) {
++          // eslint-disable-next-line no-console
++          // console.log('Received values of form: ', values)
++        }
++      })
+     }
+   }
++}
+ </script>
+\ No newline at end of file
+diff --git a/src/views/tools/dingtalkRobotConfig/DingtalkRobotForm.vue b/src/views/tools/dingtalkRobotConfig/DingtalkRobotForm.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..9061285d965caa1af6fa964b1fe6c80401b1de3e
+--- /dev/null
++++ b/src/views/tools/dingtalkRobotConfig/DingtalkRobotForm.vue
+@@ -0,0 +1,101 @@
++<template>
++    <a-spin :spinning="confirmLoading">
++        <j-form-container :disabled="formDisabled">
++            <a-form-model ref="form" :model="model" :rules="validatorRules" slot="detail">
++                <a-row>
++                    <a-col :span="24">
++                        <a-form-model-item label="机器人名称" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="robotName">
++                            <a-input v-model="model.robotName" placeholder="请输入机器人名称"></a-input>
++                        </a-form-model-item>
++                    </a-col>
++                    <a-col :span="24">
++                        <a-form-model-item label="机器人URL" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="url">
++                            <a-input v-model="model.url" placeholder="请输入机器人URL"></a-input>
++                        </a-form-model-item>
++                    </a-col>
++                </a-row>
++            </a-form-model>
++        </j-form-container>
++    </a-spin>
++</template>
++
++<script>
++import { httpAction } from '@/api/manage'
++export default {
++    name: 'DingtalkRobotForm',
++    props: {
++        disabled: {
++            type: Boolean,
++            default: false,
++            required: false
++        }
++    },
++    data() {
++        return {
++            model: {},
++            labelCol: {
++                xs: { span: 24 },
++                sm: { span: 5 },
++            },
++            wrapperCol: {
++                xs: { span: 24 },
++                sm: { span: 16 },
++            },
++            confirmLoading: false,
++            validatorRules: {
++                robotName: [{ required: true, message: '请输入机器人名称' }],
++                url: [{ required: true, message: '请输入机器人URL' }],
++            },
++            url: {
++                add: '/dingtalkRobotConfig/add',
++                edit: '/dingtalkRobotConfig/edit',
++                queryById: '/dingtalkRobotConfig/queryById'
++            }
++        }
++    },
++    computed: {
++        formDisabled() {
++            return this.disabled
++        },
++    },
++    created() {
++        this.modelDefault = JSON.parse(JSON.stringify(this.model));
++    },
++    methods: {
++        add() {
++            this.edit(this.modelDefault);
++        },
++        edit(record) {
++            this.model = Object.assign({}, record);
++            this.visible = true;
++        },
++        submitForm() {
++            const that = this;
++            this.$refs.form.validate(valid => {
++                if (valid) {
++                    that.confirmLoading = true;
++                    let httpurl = '';
++                    let method = '';
++                    if (!this.model.id) {
++                        httpurl += this.url.add;
++                        method = 'post';
++                    } else {
++                        httpurl += this.url.edit;
++                        method = 'put';
++                    }
++                    httpAction(httpurl, this.model, method).then((res) => {
++                        if (res.success) {
++                            that.$message.success(res.message);
++                            that.$emit('ok');
++                        } else {
++                            that.$message.warning(res.message);
++                        }
++                    }).finally(() => {
++                        that.confirmLoading = false;
++                    })
++                }
++            })
++        },
++    }
++}
++</script>
+\ No newline at end of file
+diff --git a/src/views/tools/dingtalkRobotConfig/DingtalkRobotModal.vue b/src/views/tools/dingtalkRobotConfig/DingtalkRobotModal.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..0db86e3f9551c1f14a453fe1d3daa864762b0f7e
+--- /dev/null
++++ b/src/views/tools/dingtalkRobotConfig/DingtalkRobotModal.vue
+@@ -0,0 +1,52 @@
++<template>
++    <j-modal :title="title" :width="width" :visible="visible" switchFullscreen @ok="handleOk"
++        :okButtonProps="{ class: { 'jee-hidden': disableSubmit } }" @cancel="handleCancel" cancelText="关闭">
++        <dingtalk-robot-form ref="realForm" @ok="submitCallback" :disabled="disableSubmit"></dingtalk-robot-form>
++    </j-modal>
++</template>
++
++<script>
++import DingtalkRobotForm from './DingtalkRobotForm'
++export default {
++    name: 'DingtalkRobotModal',
++    components: {
++        DingtalkRobotForm
++    },
++    data() {
++        return {
++            title: '',
++            width: 600,
++            visible: false,
++            disableSubmit: false
++        }
++    },
++    methods: {
++        add() {
++            this.visible = true
++            this.$nextTick(() => {
++                this.$refs.realForm.add();
++            })
++        },
++        edit(record) {
++            this.visible = true
++            this.$nextTick(() => {
++                this.$refs.realForm.edit(record);
++            })
++        },
++        close() {
++            this.$emit('close');
++            this.visible = false;
++        },
++        handleOk() {
++            this.$refs.realForm.submitForm();
++        },
++        submitCallback() {
++            this.$emit('ok');
++            this.visible = false;
++        },
++        handleCancel() {
++            this.close()
++        }
++    }
++}
++</script>
+\ No newline at end of file
+diff --git a/src/views/tools/dingtalkRobotConfig/dingtalkRobotConfig.vue b/src/views/tools/dingtalkRobotConfig/dingtalkRobotConfig.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc3572fe09b32a0268734e3b30caf63cce1fa801
+--- /dev/null
++++ b/src/views/tools/dingtalkRobotConfig/dingtalkRobotConfig.vue
+@@ -0,0 +1,145 @@
++<template>
++    <a-card :bordered="false">
++        <!-- 查询区域 -->
++        <div class="table-page-search-wrapper">
++            <a-form layout="inline" @keyup.enter.native="searchQuery">
++                <a-row :gutter="24">
++                    <a-col :md="8" :sm="12">
++                        <a-form-item label="机器人名称">
++                            <a-input placeholder="输入机器人名称模糊查询" v-model="queryParam.robotName"></a-input>
++                        </a-form-item>
++                    </a-col>
++                    <a-col :md="8" :sm="12">
++                        <span style="float: left;overflow: hidden;" class="table-page-search-submitButtons">
++                            <a-button type="primary" @click="searchQuery" icon="search">查询</a-button>
++                            <a-button type="primary" @click="searchReset" icon="reload"
++                                style="margin-left: 8px">重置</a-button>
++                        </span>
++                    </a-col>
++                </a-row>
++            </a-form>
++        </div>
++        <!-- 查询区域-END -->
++
++        <!-- 操作按钮区域 -->
++        <div class="table-operator">
++            <a-button @click="handleAdd" type="primary" icon="plus">新增</a-button>
++            <a-button type="primary" icon="download" @click="handleExportXls('钉钉机器人配置')">导出</a-button>
++            <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader"
++                :action="importExcelUrl" @change="handleImportExcel">
++                <a-button type="primary" icon="import">导入</a-button>
++            </a-upload>
++            <j-super-query :fieldList="superFieldList" ref="superQueryModal"
++                @handleSuperQuery="handleSuperQuery"></j-super-query>
++            <a-dropdown v-if="selectedRowKeys.length > 0">
++                <a-menu slot="overlay">
++                    <a-menu-item key="1" @click="batchDel"><a-icon type="delete" />删除</a-menu-item>
++                </a-menu>
++                <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /></a-button>
++            </a-dropdown>
++        </div>
++
++        <!-- table区域-begin -->
++        <div>
++            <div class="ant-alert ant-alert-info" style="margin-bottom: 16px;">
++                <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{
++                    selectedRowKeys.length }}</a>项
++                <a style="margin-left: 24px" @click="onClearSelected">清空</a>
++            </div>
++
++            <a-table ref="table" size="middle" :scroll="{ x: true }" bordered rowKey="id" :columns="columns"
++                :dataSource="dataSource" :pagination="ipagination" :loading="loading"
++                :rowSelection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
++                class="j-table-force-nowrap" @change="handleTableChange">
++                <span slot="action" slot-scope="text, record">
++                    <a @click="handleEdit(record)">编辑</a>
++                    <a-divider type="vertical" />
++                    <a>
++                        <a-popconfirm title="确定删除吗?" @confirm="() => handleDelete(record.id)">
++                            <a>删除</a>
++                        </a-popconfirm>
++                    </a>
++                </span>
++            </a-table>
++        </div>
++
++        <dingtalk-robot-modal ref="modalForm" @ok="modalFormOk"></dingtalk-robot-modal>
++    </a-card>
++</template>
++
++<script>
++import '@/assets/less/TableExpand.less'
++import { mixinDevice } from '@/utils/mixin'
++import { JeecgListMixin } from '@/mixins/JeecgListMixin'
++import DingtalkRobotModal from './DingtalkRobotModal'
++
++export default {
++    name: 'DingtalkRobotConfig',
++    mixins: [JeecgListMixin, mixinDevice],
++    components: {
++        DingtalkRobotModal
++    },
++    data() {
++        return {
++            queryParam: {},
++            isorter: {},
++            description: '钉钉机器人配置页面',
++            columns: [
++                {
++                    title: '机器人ID',
++                    align: 'center',
++                    dataIndex: 'id'
++                },
++                {
++                    title: '机器人名称',
++                    align: 'center',
++                    dataIndex: 'robotName'
++                },
++                {
++                    title: '机器人URL',
++                    align: 'center',
++                    dataIndex: 'url'
++                },
++                {
++                    title: '操作',
++                    dataIndex: 'action',
++                    align: 'center',
++                    fixed: 'right',
++                    width: 120,
++                    scopedSlots: { customRender: 'action' }
++                }
++            ],
++            url: {
++                list: '/dingtalkRobotConfig/list',
++                delete: '/dingtalkRobotConfig/delete',
++                deleteBatch: '/dingtalkRobotConfig/deleteBatch',
++                exportXlsUrl: '/dingtalkRobotConfig/exportXls',
++                importExcelUrl: 'dingtalkRobotConfig/importExcel',
++            },
++            dictOptions: {},
++            superFieldList: [],
++        }
++    },
++    created() {
++        this.getSuperFieldList();
++    },
++    computed: {
++        importExcelUrl: function () {
++            return `${window._CONFIG['domianURL']}/${this.url.importExcelUrl}`;
++        },
++    },
++    methods: {
++        initDictConfig() { },
++        getSuperFieldList() {
++            let fieldList = [];
++            fieldList.push({ type: 'string', value: 'robotName', text: '机器人名称', dictCode: '' })
++            fieldList.push({ type: 'string', value: 'url', text: '机器人URL', dictCode: '' })
++            this.superFieldList = fieldList
++        },
++    }
++}
++</script>
++
++<style scoped>
++@import '~@assets/less/common.less';
++</style>
+diff --git a/src/views/tools/loginConfig/LoginConfigForm.vue b/src/views/tools/loginConfig/LoginConfigForm.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ea8b4ee1a0447f7844307148bd5a03373ed1b8c
+--- /dev/null
++++ b/src/views/tools/loginConfig/LoginConfigForm.vue
+@@ -0,0 +1,113 @@
++<template>
++    <a-spin :spinning="confirmLoading">
++        <j-form-container :disabled="formDisabled">
++            <a-form-model ref="form" :model="model" :rules="validatorRules" slot="detail">
++                <a-row>
++                    <a-col :span="24">
++                        <a-form-model-item label="账号" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="userName">
++                            <a-input v-model="model.userName" placeholder="请输入账号"></a-input>
++                        </a-form-model-item>
++                    </a-col>
++                    <a-col :span="24">
++                        <a-form-model-item label="密码" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="password">
++                            <a-input-password v-model="model.password" placeholder="请输入密码"></a-input-password>
++                        </a-form-model-item>
++                    </a-col>
++                    <a-col :span="24" v-if="model.userName && model.password">
++                        <a-form-model-item label="授权" :labelCol="labelCol" :wrapperCol="wrapperCol">
++                            <a-button type="primary" @click="handleRicecow">授权登录</a-button>
++                        </a-form-model-item>
++                    </a-col>
++                </a-row>
++            </a-form-model>
++        </j-form-container>
++    </a-spin>
++</template>
++
++<script>
++import { httpAction, getAction } from '@/api/manage'
++export default {
++    name: 'LoginConfigForm',
++    props: {
++        disabled: {
++            type: Boolean,
++            default: false,
++            required: false
++        }
++    },
++    data() {
++        return {
++            model: {},
++            labelCol: {
++                xs: { span: 24 },
++                sm: { span: 5 },
++            },
++            wrapperCol: {
++                xs: { span: 24 },
++                sm: { span: 16 },
++            },
++            confirmLoading: false,
++            validatorRules: {
++                userName: [{ required: true, message: '请输入账号' }],
++                password: [{ required: true, message: '请输入密码' }],
++            },
++            url: {
++                add: '/promotionPlatformAccount/add',
++                edit: '/promotionPlatformAccount/edit',
++                queryById: '/promotionPlatformAccount/queryById'
++            }
++        }
++    },
++    computed: {
++        formDisabled() {
++            return this.disabled
++        },
++    },
++    created() {
++        this.modelDefault = JSON.parse(JSON.stringify(this.model));
++    },
++    methods: {
++        add() {
++            this.edit(this.modelDefault);
++        },
++        edit(record) {
++            this.model = Object.assign({}, record);
++            this.visible = true;
++        },
++        submitForm() {
++            const that = this;
++            this.$refs.form.validate(valid => {
++                if (valid) {
++                    that.confirmLoading = true;
++                    let httpurl = '';
++                    let method = '';
++                    if (!this.model.id) {
++                        httpurl += this.url.add;
++                        method = 'post';
++                    } else {
++                        httpurl += this.url.edit;
++                        method = 'put';
++                    }
++                    httpAction(httpurl, this.model, method).then((res) => {
++                        if (res.success) {
++                            that.$message.success(res.message);
++                            that.$emit('ok');
++                        } else {
++                            that.$message.warning(res.message);
++                        }
++                    }).finally(() => {
++                        that.confirmLoading = false;
++                    })
++                }
++            })
++        },
++        handleRicecow() {
++            // 触发父组件的授权事件
++            this.$emit('ricecow', {
++                userName: this.model.userName,
++                password: this.model.password
++            });
++        }
++    }
++}
++</script>
+\ No newline at end of file
+diff --git a/src/views/tools/loginConfig/LoginConfigModal.vue b/src/views/tools/loginConfig/LoginConfigModal.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..d6f91d9df84b4fb4bfa80cb6aa1aedf950f544b4
+--- /dev/null
++++ b/src/views/tools/loginConfig/LoginConfigModal.vue
+@@ -0,0 +1,57 @@
++<template>
++    <j-modal :title="title" :width="width" :visible="visible" switchFullscreen @ok="handleOk"
++        :okButtonProps="{ class: { 'jee-hidden': disableSubmit } }" @cancel="handleCancel" cancelText="关闭">
++        <login-config-form ref="realForm" @ok="submitCallback" @ricecow="handleRicecow"
++            :disabled="disableSubmit"></login-config-form>
++    </j-modal>
++</template>
++
++<script>
++import LoginConfigForm from './LoginConfigForm'
++export default {
++    name: 'LoginConfigModal',
++    components: {
++        LoginConfigForm
++    },
++    data() {
++        return {
++            title: '',
++            width: 600,
++            visible: false,
++            disableSubmit: false
++        }
++    },
++    methods: {
++        add() {
++            this.visible = true
++            this.$nextTick(() => {
++                this.$refs.realForm.add();
++            })
++        },
++        edit(record) {
++            this.visible = true
++            this.$nextTick(() => {
++                this.$refs.realForm.edit(record);
++            })
++        },
++        close() {
++            this.$emit('close');
++            this.visible = false;
++        },
++        handleOk() {
++            this.$refs.realForm.submitForm();
++        },
++        submitCallback() {
++            this.$emit('ok');
++            this.visible = false;
++        },
++        handleCancel() {
++            this.close()
++        },
++        handleRicecow(data) {
++            // 触发父组件的授权事件
++            this.$emit('ricecow', data);
++        }
++    }
++}
++</script>
+\ No newline at end of file
+diff --git a/src/views/tools/loginConfig/RicecowModal.vue b/src/views/tools/loginConfig/RicecowModal.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..cad7fc358aa3eaae1a077986511425858e91d4c3
+--- /dev/null
++++ b/src/views/tools/loginConfig/RicecowModal.vue
+@@ -0,0 +1,255 @@
++<template>
++    <j-modal :title="title" :width="width" :visible="visible" switchFullscreen @ok="handleOk"
++        :okButtonProps="{ class: { 'jee-hidden': disableSubmit } }" @cancel="handleCancel" cancelText="关闭">
++        <div class="center-container">
++            <div class="status-bar">
++                <span v-if="loginExpired === null">登录状态检测中...</span>
++                <span v-else-if="loginExpired" class="status-expired">登录状态已过期，请输入验证码授权</span>
++                <span v-else class="status-normal">登录状态正常</span>
++                <span v-if="loginMsg" class="status-msg">{{ loginMsg }}</span>
++                <button class="refresh-status-btn" @click="checkLoginStatus">刷新登录状态</button>
++            </div>
++            <div class="captcha-box">
++                <div v-if="captchaImg">
++                    <img :src="captchaImg" alt="验证码" class="captcha-img" @click="fetchCaptcha" title="点击刷新验证码" />
++                </div>
++                <div v-else>正在加载验证码...</div>
++                <input v-model="captchaInput" placeholder="请输入验证码" class="captcha-input" />
++                <button @click="handleAuth" class="auth-btn">授权</button>
++            </div>
++        </div>
++    </j-modal>
++</template>
++
++<script>
++import axios from 'axios';
++import { getAction, postAction } from '@/api/manage'
++
++export default {
++    name: 'RicecowModal',
++    props: {
++        userName: {
++            type: String,
++            default: ''
++        },
++        password: {
++            type: String,
++            default: ''
++        }
++    },
++    data() {
++        return {
++            title: '授权登录',
++            width: 800,
++            visible: false,
++            disableSubmit: false,
++            captchaImg: '',
++            captchaInput: '',
++            uuid: '',
++            loginExpired: null, // null: 检测中, true: 过期, false: 正常
++            loginMsg: ''
++        }
++    },
++    methods: {
++        show() {
++            this.visible = true;
++            this.$nextTick(() => {
++                this.checkLoginStatus();
++                this.fetchCaptcha();
++            });
++        },
++        close() {
++            this.visible = false;
++        },
++        handleOk() {
++            this.close();
++        },
++        handleCancel() {
++            this.close();
++        },
++        generateUUID() {
++            // 生成标准UUID v4格式，前8位用当前时间戳（16进制），其余部分用随机算法
++            const timestamp = Date.now().toString(16).padStart(8, '0').slice(-8);
++            let template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx';
++            let uuid = template.replace(/[xy]/g, function (c, i) {
++                if (i < 8) {
++                    return timestamp[i];
++                }
++                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
++                return v.toString(16);
++            });
++            return uuid;
++        },
++        async fetchCaptcha() {
++            this.uuid = this.generateUUID();
++            const url = `https://bwc.ganfanniu.com/sqx_fast/captcha.jpg?uuid=${this.uuid}`;
++            try {
++                // axios请求，responseType: 'blob' 兼容图片流
++                const response = await axios.get(url, { responseType: 'blob' });
++                // 尝试解析为json（如果是json返回）
++                const text = await response.data.text();
++                try {
++                    const data = JSON.parse(text);
++                    if (data && data.img) {
++                        this.captchaImg = data.img;
++                    } else if (data && data.code === 500) {
++                        this.captchaImg = '';
++                        this.$message && this.$message.error(data.msg || '获取验证码失败');
++                    }
++                } catch (e) {
++                    // 不是json，直接当图片流处理
++                    const blob = response.data;
++                    this.captchaImg = URL.createObjectURL(blob);
++                }
++            } catch (err) {
++                this.captchaImg = '';
++            }
++        },
++        async checkLoginStatus() {
++            // 使用 getAction 检查登录状态
++            try {
++                const url = '/promotionPlatformAccount/checkExpiration';
++                const params = {};
++                if (this.userName) {
++                    params.userName = this.userName;
++                }
++                const res = await getAction(url, params);
++                this.loginExpired = res && res.expired;
++                this.loginMsg = res && res.message ? res.message : '';
++                this.$message && this.$message.success('登录状态刷新成功');
++            } catch (e) {
++                this.loginExpired = null;
++                this.loginMsg = '';
++                this.$message && this.$message.error('登录状态刷新失败');
++            }
++        },
++        async handleAuth() {
++            if (!this.captchaInput) {
++                this.$message && this.$message.warning('请输入验证码');
++                return;
++            }
++            try {
++                const url = '/promotionPlatformAccount/login';
++                const res = await postAction(url, {
++                    captcha: this.captchaInput,
++                    uuid: this.uuid,
++                    userName: this.userName,
++                    password: this.password
++                });
++                if (res && res.success) {
++                    this.$message && this.$message.success('授权成功！');
++                    this.fetchCaptcha();
++                    this.checkLoginStatus();
++                    this.loginExpired = false;
++                } else {
++                    this.$message && this.$message.error(res.data && res.data.msg ? res.data.msg : '授权失败');
++                    this.fetchCaptcha(); // 失败刷新验证码
++                }
++            } catch (e) {
++                this.$message && this.$message.error('授权请求失败');
++                this.fetchCaptcha();
++            }
++        }
++    }
++}
++</script>
++
++<style scoped>
++.center-container {
++    display: flex;
++    flex-direction: column;
++    justify-content: center;
++    align-items: center;
++    background: #f5f6fa;
++    padding: 20px;
++    min-height: 400px;
++}
++
++.status-bar {
++    margin-bottom: 32px;
++    font-size: 18px;
++    color: #333;
++}
++
++.captcha-box {
++    background: #fff;
++    padding: 32px 60px;
++    border-radius: 8px;
++    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
++    display: flex;
++    flex-direction: column;
++    align-items: center;
++    min-width: 340px;
++    max-width: 90vw;
++    margin-left: auto;
++    margin-right: auto;
++}
++
++.captcha-img {
++    width: 180px;
++    height: 60px;
++    margin-bottom: 16px;
++    border-radius: 4px;
++    border: 1px solid #eee;
++    cursor: pointer;
++}
++
++.captcha-input {
++    width: 180px;
++    height: 36px;
++    margin-bottom: 16px;
++    padding: 0 12px;
++    border: 1px solid #d9d9d9;
++    border-radius: 4px;
++    font-size: 16px;
++}
++
++.auth-btn {
++    width: 180px;
++    height: 38px;
++    background: #1890ff;
++    color: #fff;
++    border: none;
++    border-radius: 4px;
++    font-size: 16px;
++    cursor: pointer;
++    transition: background 0.2s;
++}
++
++.auth-btn:hover {
++    background: #40a9ff;
++}
++
++.refresh-status-btn {
++    margin-left: 24px;
++    padding: 4px 16px;
++    font-size: 14px;
++    border: 1px solid #1890ff;
++    background: #fff;
++    color: #1890ff;
++    border-radius: 4px;
++    cursor: pointer;
++    transition: background 0.2s, color 0.2s;
++}
++
++.refresh-status-btn:hover {
++    background: #1890ff;
++    color: #fff;
++}
++
++.status-expired {
++    color: #ff4d4f;
++    font-weight: bold;
++}
++
++.status-normal {
++    color: #52c41a;
++    font-weight: bold;
++}
++
++.status-msg {
++    margin-left: 16px;
++    color: #888;
++    font-size: 14px;
++}
++</style>
+\ No newline at end of file
+diff --git a/src/views/tools/loginConfig/loginConfig.vue b/src/views/tools/loginConfig/loginConfig.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..76ea1fb8167fd6bd266464daf81368a37fe0ac5a
+--- /dev/null
++++ b/src/views/tools/loginConfig/loginConfig.vue
+@@ -0,0 +1,163 @@
++<template>
++    <a-card :bordered="false">
++        <!-- 查询区域 -->
++        <div class="table-page-search-wrapper">
++            <a-form layout="inline" @keyup.enter.native="searchQuery">
++                <a-row :gutter="24">
++                    <a-col :md="8" :sm="12">
++                        <a-form-item label="账号">
++                            <a-input placeholder="输入账号模糊查询" v-model="queryParam.userName"></a-input>
++                        </a-form-item>
++                    </a-col>
++                    <a-col :md="8" :sm="12">
++                        <span style="float: left;overflow: hidden;" class="table-page-search-submitButtons">
++                            <a-button type="primary" @click="searchQuery" icon="search">查询</a-button>
++                            <a-button type="primary" @click="searchReset" icon="reload"
++                                style="margin-left: 8px">重置</a-button>
++                        </span>
++                    </a-col>
++                </a-row>
++            </a-form>
++        </div>
++        <!-- 查询区域-END -->
++
++        <!-- 操作按钮区域 -->
++        <div class="table-operator">
++            <a-button @click="handleAdd" type="primary" icon="plus">新增</a-button>
++            <a-button type="primary" icon="download" @click="handleExportXls('登录配置')">导出</a-button>
++            <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader"
++                :action="importExcelUrl" @change="handleImportExcel">
++                <a-button type="primary" icon="import">导入</a-button>
++            </a-upload>
++            <j-super-query :fieldList="superFieldList" ref="superQueryModal"
++                @handleSuperQuery="handleSuperQuery"></j-super-query>
++            <a-dropdown v-if="selectedRowKeys.length > 0">
++                <a-menu slot="overlay">
++                    <a-menu-item key="1" @click="batchDel"><a-icon type="delete" />删除</a-menu-item>
++                </a-menu>
++                <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /></a-button>
++            </a-dropdown>
++        </div>
++
++        <!-- table区域-begin -->
++        <div>
++            <div class="ant-alert ant-alert-info" style="margin-bottom: 16px;">
++                <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{
++                    selectedRowKeys.length }}</a>项
++                <a style="margin-left: 24px" @click="onClearSelected">清空</a>
++            </div>
++
++            <a-table ref="table" size="middle" :scroll="{ x: true }" bordered rowKey="id" :columns="columns"
++                :dataSource="dataSource" :pagination="ipagination" :loading="loading"
++                :rowSelection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
++                class="j-table-force-nowrap" @change="handleTableChange">
++                <span slot="action" slot-scope="text, record">
++                    <a @click="handleEdit(record)">编辑</a>
++                    <a-divider type="vertical" />
++                    <a @click="handleRicecow(record)">授权</a>
++                    <a-divider type="vertical" />
++                    <a>
++                        <a-popconfirm title="确定删除吗?" @confirm="() => handleDelete(record.id)">
++                            <a>删除</a>
++                        </a-popconfirm>
++                    </a>
++                </span>
++            </a-table>
++        </div>
++
++        <login-config-modal ref="modalForm" @ok="modalFormOk" @ricecow="handleModalRicecow"></login-config-modal>
++        <ricecow-modal ref="ricecowModal" :userName="currentRecord.userName"
++            :password="currentRecord.password"></ricecow-modal>
++    </a-card>
++</template>
++
++<script>
++import '@/assets/less/TableExpand.less'
++import { mixinDevice } from '@/utils/mixin'
++import { JeecgListMixin } from '@/mixins/JeecgListMixin'
++import LoginConfigModal from './LoginConfigModal'
++import RicecowModal from './RicecowModal'
++
++export default {
++    name: 'LoginConfig',
++    mixins: [JeecgListMixin, mixinDevice],
++    components: {
++        LoginConfigModal,
++        RicecowModal
++    },
++    data() {
++        return {
++            queryParam: {},
++            isorter: {},
++            description: '登录配置页面',
++            currentRecord: {},
++            columns: [
++                {
++                    title: '账号',
++                    align: 'center',
++                    dataIndex: 'userName'
++                },
++                {
++                    title: '密码',
++                    align: 'center',
++                    dataIndex: 'password',
++                    customRender: function (text) {
++                        return text ? '******' : '';
++                    }
++                },
++                {
++                    title: '登录信息',
++                    align: 'center',
++                    dataIndex: 'loginInfo'
++                },
++                {
++                    title: '操作',
++                    dataIndex: 'action',
++                    align: 'center',
++                    fixed: 'right',
++                    width: 120,
++                    scopedSlots: { customRender: 'action' }
++                }
++            ],
++            url: {
++                list: '/promotionPlatformAccount/list',
++                delete: '/promotionPlatformAccount/delete',
++                deleteBatch: '/promotionPlatformAccount/deleteBatch',
++                exportXlsUrl: '/promotionPlatformAccount/exportXls',
++                importExcelUrl: 'promotionPlatformAccount/importExcel',
++            },
++            dictOptions: {},
++            superFieldList: [],
++        }
++    },
++    created() {
++        this.getSuperFieldList();
++    },
++    computed: {
++        importExcelUrl: function () {
++            return `${window._CONFIG['domianURL']}/${this.url.importExcelUrl}`;
++        },
++    },
++    methods: {
++        initDictConfig() { },
++        getSuperFieldList() {
++            let fieldList = [];
++            fieldList.push({ type: 'string', value: 'userName', text: '账号', dictCode: '' })
++            fieldList.push({ type: 'string', value: 'password', text: '密码', dictCode: '' })
++            this.superFieldList = fieldList
++        },
++        handleRicecow(record) {
++            this.currentRecord = record;
++            this.$refs.ricecowModal.show();
++        },
++        handleModalRicecow(data) {
++            this.currentRecord = data;
++            this.$refs.ricecowModal.show();
++        },
++    }
++}
++</script>
++
++<style scoped>
++@import '~@assets/less/common.less';
++</style>
+diff --git a/src/views/tools/promotionZoneConfig/PromotionZoneForm.vue b/src/views/tools/promotionZoneConfig/PromotionZoneForm.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..0c7fc4b592dcbb901dffdce7abdac69ea7096755
+--- /dev/null
++++ b/src/views/tools/promotionZoneConfig/PromotionZoneForm.vue
+@@ -0,0 +1,130 @@
++<template>
++    <a-spin :spinning="confirmLoading">
++        <j-form-container :disabled="formDisabled">
++            <a-form-model ref="form" :model="model" :rules="validatorRules" slot="detail">
++                <a-row>
++                    <a-col :span="24">
++                        <a-form-model-item label="推广位名称" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="zoneName">
++                            <a-input v-model="model.zoneName" placeholder="请输入推广位名称"></a-input>
++                        </a-form-model-item>
++                    </a-col>
++                    <a-col :span="24">
++                        <a-form-model-item label="媒体账户名称" :labelCol="labelCol" :wrapperCol="wrapperCol"
++                            prop="mediaAccountName">
++                            <a-input v-model="model.mediaAccountName" placeholder="请输入媒体账户名称"></a-input>
++                        </a-form-model-item>
++                    </a-col>
++                    <a-col :span="24">
++                        <a-form-model-item label="钉钉机器人" :labelCol="labelCol" :wrapperCol="wrapperCol"
++                            prop="dingtalkRobotId">
++                            <a-select v-model="model.dingtalkRobotId" placeholder="请选择钉钉机器人" :options="robotOptions"
++                                :loading="robotLoading" show-search option-filter-prop="label"
++                                :filter-option="filterRobotOption" allowClear @focus="loadRobotOptions" />
++                        </a-form-model-item>
++                    </a-col>
++                </a-row>
++            </a-form-model>
++        </j-form-container>
++    </a-spin>
++</template>
++
++<script>
++import { httpAction, getAction } from '@/api/manage'
++export default {
++    name: 'PromotionZoneForm',
++    props: {
++        disabled: {
++            type: Boolean,
++            default: false,
++            required: false
++        }
++    },
++    data() {
++        return {
++            model: {},
++            labelCol: {
++                xs: { span: 24 },
++                sm: { span: 5 },
++            },
++            wrapperCol: {
++                xs: { span: 24 },
++                sm: { span: 16 },
++            },
++            confirmLoading: false,
++            validatorRules: {
++                zoneName: [{ required: true, message: '请输入推广位名称' }],
++                mediaAccountName: [{ required: true, message: '请输入媒体账户名称' }],
++                dingtalkRobotId: [{ required: true, message: '请选择钉钉机器人' }],
++            },
++            url: {
++                add: '/promotionZoneConfig/add',
++                edit: '/promotionZoneConfig/edit',
++                queryById: '/promotionZoneConfig/queryById'
++            },
++            robotOptions: [],
++            robotLoading: false
++        }
++    },
++    computed: {
++        formDisabled() {
++            return this.disabled
++        },
++    },
++    created() {
++        this.modelDefault = JSON.parse(JSON.stringify(this.model));
++        this.loadRobotOptions();
++    },
++    methods: {
++        add() {
++            this.edit(this.modelDefault);
++        },
++        edit(record) {
++            this.model = Object.assign({}, record);
++            this.visible = true;
++            this.loadRobotOptions();
++        },
++        submitForm() {
++            const that = this;
++            this.$refs.form.validate(valid => {
++                if (valid) {
++                    that.confirmLoading = true;
++                    let httpurl = '';
++                    let method = '';
++                    if (!this.model.id) {
++                        httpurl += this.url.add;
++                        method = 'post';
++                    } else {
++                        httpurl += this.url.edit;
++                        method = 'put';
++                    }
++                    httpAction(httpurl, this.model, method).then((res) => {
++                        if (res.success) {
++                            that.$message.success(res.message);
++                            that.$emit('ok');
++                        } else {
++                            that.$message.warning(res.message);
++                        }
++                    }).finally(() => {
++                        that.confirmLoading = false;
++                    })
++                }
++            })
++        },
++        loadRobotOptions() {
++            if (this.robotOptions.length > 0) return;
++            this.robotLoading = true;
++            getAction('/dingtalkRobotConfig/list', { pageSize: 100 }).then(res => {
++                if (res.success && res.result) {
++                    let arr = res.result.records || res.result;
++                    this.robotOptions = arr.map(item => ({ label: item.robotName, value: item.id }));
++                }
++            }).finally(() => {
++                this.robotLoading = false;
++            })
++        },
++        filterRobotOption(input, option) {
++            return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
++        }
++    }
++}
++</script>
+\ No newline at end of file
+diff --git a/src/views/tools/promotionZoneConfig/PromotionZoneModal.vue b/src/views/tools/promotionZoneConfig/PromotionZoneModal.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..e91ea5b7e19f7428efdebf05d10ee9571f8e83b3
+--- /dev/null
++++ b/src/views/tools/promotionZoneConfig/PromotionZoneModal.vue
+@@ -0,0 +1,52 @@
++<template>
++    <j-modal :title="title" :width="width" :visible="visible" switchFullscreen @ok="handleOk"
++        :okButtonProps="{ class: { 'jee-hidden': disableSubmit } }" @cancel="handleCancel" cancelText="关闭">
++        <promotion-zone-form ref="realForm" @ok="submitCallback" :disabled="disableSubmit"></promotion-zone-form>
++    </j-modal>
++</template>
++
++<script>
++import PromotionZoneForm from './PromotionZoneForm'
++export default {
++    name: 'PromotionZoneModal',
++    components: {
++        PromotionZoneForm
++    },
++    data() {
++        return {
++            title: '',
++            width: 600,
++            visible: false,
++            disableSubmit: false
++        }
++    },
++    methods: {
++        add() {
++            this.visible = true
++            this.$nextTick(() => {
++                this.$refs.realForm.add();
++            })
++        },
++        edit(record) {
++            this.visible = true
++            this.$nextTick(() => {
++                this.$refs.realForm.edit(record);
++            })
++        },
++        close() {
++            this.$emit('close');
++            this.visible = false;
++        },
++        handleOk() {
++            this.$refs.realForm.submitForm();
++        },
++        submitCallback() {
++            this.$emit('ok');
++            this.visible = false;
++        },
++        handleCancel() {
++            this.close()
++        }
++    }
++}
++</script>
+\ No newline at end of file
+diff --git a/src/views/tools/promotionZoneConfig/promotionZoneConfig.vue b/src/views/tools/promotionZoneConfig/promotionZoneConfig.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..1e91bf05f8ac92c1d669ab4fdabfdc05e6705578
+--- /dev/null
++++ b/src/views/tools/promotionZoneConfig/promotionZoneConfig.vue
+@@ -0,0 +1,151 @@
++<template>
++    <a-card :bordered="false">
++        <!-- 查询区域 -->
++        <div class="table-page-search-wrapper">
++            <a-form layout="inline" @keyup.enter.native="searchQuery">
++                <a-row :gutter="24">
++                    <a-col :md="8" :sm="12">
++                        <a-form-item label="推广位名称">
++                            <a-input placeholder="输入推广位名称模糊查询" v-model="queryParam.zoneName"></a-input>
++                        </a-form-item>
++                    </a-col>
++                    <a-col :md="8" :sm="12">
++                        <a-form-item label="媒体账户名称">
++                            <a-input placeholder="输入媒体账户名称模糊查询" v-model="queryParam.mediaAccountName"></a-input>
++                        </a-form-item>
++                    </a-col>
++                    <a-col :md="8" :sm="12">
++                        <span style="float: left;overflow: hidden;" class="table-page-search-submitButtons">
++                            <a-button type="primary" @click="searchQuery" icon="search">查询</a-button>
++                            <a-button type="primary" @click="searchReset" icon="reload"
++                                style="margin-left: 8px">重置</a-button>
++                        </span>
++                    </a-col>
++                </a-row>
++            </a-form>
++        </div>
++        <!-- 查询区域-END -->
++
++        <!-- 操作按钮区域 -->
++        <div class="table-operator">
++            <a-button @click="handleAdd" type="primary" icon="plus">新增</a-button>
++            <a-button type="primary" icon="download" @click="handleExportXls('推广位配置')">导出</a-button>
++            <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader"
++                :action="importExcelUrl" @change="handleImportExcel">
++                <a-button type="primary" icon="import">导入</a-button>
++            </a-upload>
++            <j-super-query :fieldList="superFieldList" ref="superQueryModal"
++                @handleSuperQuery="handleSuperQuery"></j-super-query>
++            <a-dropdown v-if="selectedRowKeys.length > 0">
++                <a-menu slot="overlay">
++                    <a-menu-item key="1" @click="batchDel"><a-icon type="delete" />删除</a-menu-item>
++                </a-menu>
++                <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /></a-button>
++            </a-dropdown>
++        </div>
++
++        <!-- table区域-begin -->
++        <div>
++            <div class="ant-alert ant-alert-info" style="margin-bottom: 16px;">
++                <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{
++                    selectedRowKeys.length }}</a>项
++                <a style="margin-left: 24px" @click="onClearSelected">清空</a>
++            </div>
++
++            <a-table ref="table" size="middle" :scroll="{ x: true }" bordered rowKey="id" :columns="columns"
++                :dataSource="dataSource" :pagination="ipagination" :loading="loading"
++                :rowSelection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
++                class="j-table-force-nowrap" @change="handleTableChange">
++                <span slot="action" slot-scope="text, record">
++                    <a @click="handleEdit(record)">编辑</a>
++                    <a-divider type="vertical" />
++                    <a>
++                        <a-popconfirm title="确定删除吗?" @confirm="() => handleDelete(record.id)">
++                            <a>删除</a>
++                        </a-popconfirm>
++                    </a>
++                </span>
++            </a-table>
++        </div>
++
++        <promotion-zone-modal ref="modalForm" @ok="modalFormOk"></promotion-zone-modal>
++    </a-card>
++</template>
++
++<script>
++import '@/assets/less/TableExpand.less'
++import { mixinDevice } from '@/utils/mixin'
++import { JeecgListMixin } from '@/mixins/JeecgListMixin'
++import PromotionZoneModal from './PromotionZoneModal'
++
++export default {
++    name: 'PromotionZoneConfig',
++    mixins: [JeecgListMixin, mixinDevice],
++    components: {
++        PromotionZoneModal
++    },
++    data() {
++        return {
++            queryParam: {},
++            isorter: {},
++            description: '推广位配置页面',
++            columns: [
++                {
++                    title: '推广位名称',
++                    align: 'center',
++                    dataIndex: 'zoneName'
++                },
++                {
++                    title: '媒体账户名称',
++                    align: 'center',
++                    dataIndex: 'mediaAccountName'
++                },
++                {
++                    title: '钉钉机器人id',
++                    align: 'center',
++                    dataIndex: 'dingtalkRobotId'
++                },
++                {
++                    title: '操作',
++                    dataIndex: 'action',
++                    align: 'center',
++                    fixed: 'right',
++                    width: 120,
++                    scopedSlots: { customRender: 'action' }
++                }
++            ],
++            url: {
++                list: '/promotionZoneConfig/list',
++                delete: '/promotionZoneConfig/delete',
++                deleteBatch: '/promotionZoneConfig/deleteBatch',
++                exportXlsUrl: '/promotionZoneConfig/exportXls',
++                importExcelUrl: 'promotionZoneConfig/importExcel',
++            },
++            dictOptions: {},
++            superFieldList: [],
++        }
++    },
++    created() {
++        this.getSuperFieldList();
++    },
++    computed: {
++        importExcelUrl: function () {
++            return `${window._CONFIG['domianURL']}/${this.url.importExcelUrl}`;
++        },
++    },
++    methods: {
++        initDictConfig() { },
++        getSuperFieldList() {
++            let fieldList = [];
++            fieldList.push({ type: 'string', value: 'zoneName', text: '推广位名称', dictCode: '' })
++            fieldList.push({ type: 'string', value: 'mediaAccountName', text: '媒体账户名称', dictCode: '' })
++            fieldList.push({ type: 'string', value: 'dingtalkRobotId', text: '钉钉机器人id', dictCode: '' })
++            this.superFieldList = fieldList
++        },
++    }
++}
++</script>
++
++<style scoped>
++@import '~@assets/less/common.less';
++</style>
+diff --git a/t.js b/t.js
+index e075f5dc62c31541397c442bff8862e449f1bb90..34bd00c2425ce1970542d67a92003c135dc88229 100644
+--- a/t.js
++++ b/t.js
+@@ -1,19 +1,154 @@
+-{
+-    "code": 0,
+-        "message": "OK",
+-            "request_id": "202507031809227161D0D88FCA4795191B",
+-                "data": {
+-        "query_list": [
+-            {
+-                "query_id": "ucjBELLDrXyXDfpS1751537324867",
+-                "query_status": 3,
+-                "task_list": [
+-                    {
+-                        "create_time": "2025-07-03 18:08:53",
+-                        "task_id": "hSeBWOgCDAEqxyPX1751537333093"
+-                    }
+-                ]
+-            }
+-        ]
++// SHA-256 加密函数
++function rotateRight(a, b) {
++    return (b >>> a) | (b << (32 - a));
++}
++
++function choice(a, b, c) {
++    return (a & b) ^ (~a & c);
++}
++
++function majority(a, b, c) {
++    return (a & b) ^ (a & c) ^ (b & c);
++}
++
++function sha256_Sigma0(a) {
++    return rotateRight(2, a) ^ rotateRight(13, a) ^ rotateRight(22, a);
++}
++
++function sha256_Sigma1(a) {
++    return rotateRight(6, a) ^ rotateRight(11, a) ^ rotateRight(25, a);
++}
++
++function sha256_sigma0(a) {
++    return rotateRight(7, a) ^ rotateRight(18, a) ^ (a >>> 3);
++}
++
++function sha256_sigma1(a) {
++    return rotateRight(17, a) ^ rotateRight(19, a) ^ (a >>> 10);
++}
++
++function sha256_expand(a, b) {
++    return (a[b & 15] += sha256_sigma1(a[(b + 14) & 15]) + a[(b + 9) & 15] + sha256_sigma0(a[(b + 1) & 15]));
++}
++
++var K256 = [
++    1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221,
++    3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580,
++    3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986,
++    2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895,
++    666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037,
++    2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344,
++    430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779,
++    1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298
++];
++
++var ihash, count, buffer, sha256_hex_digits = "0123456789abcdef";
++
++function safe_add(a, b) {
++    var c = (a & 65535) + (b & 65535);
++    return (((a >> 16) + (b >> 16) + (c >> 16)) << 16) | (c & 65535);
++}
++
++function sha256_init() {
++    ihash = Array(8);
++    count = Array(2);
++    buffer = Array(64);
++    count[0] = count[1] = 0;
++    ihash[0] = 1779033703;
++    ihash[1] = 3144134277;
++    ihash[2] = 1013904242;
++    ihash[3] = 2773480762;
++    ihash[4] = 1359893119;
++    ihash[5] = 2600822924;
++    ihash[6] = 528734635;
++    ihash[7] = 1541459225;
++}
++
++function sha256_transform() {
++    var a = ihash[0], b = ihash[1], c = ihash[2], d = ihash[3], f = ihash[4], g = ihash[5], k = ihash[6], l = ihash[7];
++    var e, n, m = Array(16);
++    for (e = 0; e < 16; e++) {
++        m[e] = buffer[(e << 2) + 3] | (buffer[(e << 2) + 2] << 8) | (buffer[(e << 2) + 1] << 16) | (buffer[e << 2] << 24);
+     }
+-}
+\ No newline at end of file
++    for (var h = 0; h < 64; h++) {
++        e = l + sha256_Sigma1(f) + choice(f, g, k) + K256[h];
++        e = h < 16 ? e + m[h] : e + sha256_expand(m, h);
++        n = sha256_Sigma0(a) + majority(a, b, c);
++        l = k;
++        k = g;
++        g = f;
++        f = safe_add(d, e);
++        d = c;
++        c = b;
++        b = a;
++        a = safe_add(e, n);
++    }
++    ihash[0] += a;
++    ihash[1] += b;
++    ihash[2] += c;
++    ihash[3] += d;
++    ihash[4] += f;
++    ihash[5] += g;
++    ihash[6] += k;
++    ihash[7] += l;
++}
++
++function sha256_update(a, b) {
++    var c, d, f = 0;
++    d = (count[0] >> 3) & 63;
++    var g = b & 63;
++    if ((count[0] += b << 3) < (b << 3)) count[1]++;
++    count[1] += b >> 29;
++    for (c = 0; c + 63 < b; c += 64) {
++        for (; d < 64; d++) buffer[d] = a.charCodeAt(f++);
++        sha256_transform();
++        d = 0;
++    }
++    for (d = 0; d < g; d++) buffer[d] = a.charCodeAt(f++);
++}
++
++function sha256_final() {
++    var a = (count[0] >> 3) & 63;
++    buffer[a++] = 128;
++    if (a > 56) {
++        for (; a < 64; a++) buffer[a] = 0;
++        sha256_transform();
++        a = 0;
++    }
++    for (; a < 56; a++) buffer[a] = 0;
++    buffer[56] = (count[1] >>> 24) & 255;
++    buffer[57] = (count[1] >>> 16) & 255;
++    buffer[58] = (count[1] >>> 8) & 255;
++    buffer[59] = count[1] & 255;
++    buffer[60] = (count[0] >>> 24) & 255;
++    buffer[61] = (count[0] >>> 16) & 255;
++    buffer[62] = (count[0] >>> 8) & 255;
++    buffer[63] = count[0] & 255;
++    sha256_transform();
++}
++
++function sha256_encode_hex() {
++    var a = new String();
++    for (var b = 0; b < 8; b++) {
++        for (var c = 28; c >= 0; c -= 4) {
++            a += sha256_hex_digits.charAt((ihash[b] >>> c) & 15);
++        }
++    }
++    return a;
++}
++
++function sha256_digest(a) {
++    sha256_init();
++    sha256_update(a, a.length);
++    sha256_final();
++    return sha256_encode_hex();
++}
++
++// 示例用法
++function encryptPassword(password) {
++    return sha256_digest(password);
++}
++
++// 测试
++var password = "zhixiang2025@@";
++// console.log("加密后的密码:", encryptPassword(password));
+\ No newline at end of file

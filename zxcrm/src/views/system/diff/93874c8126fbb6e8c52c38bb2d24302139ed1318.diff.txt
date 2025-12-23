@@ -1,0 +1,351 @@
+diff --git a/public/static/config.js b/public/static/config.js
+index b6338b2476a75b4ab68cb99315f0034b8689e953..30d715601542dd5473ec463c891504f49d93534f 100644
+--- a/public/static/config.js
++++ b/public/static/config.js
+@@ -14,8 +14,8 @@ window._CONFIG = {
+   // 聪哥笔记本
+   // VUE_APP_API_BASE_URL: 'http://47.106.223.158:8080/jeecg-boot',
+   // VUE_APP_API_BASE_URL: 'http://n45ckpb.nat.ipyingshe.com/jeecg-boot',
+-  VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
+-  // VUE_APP_API_BASE_URL: '/jeecg-boot',
++  // VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
++  VUE_APP_API_BASE_URL: '/jeecg-boot',
+   //单点登录地址
+   VUE_APP_CAS_BASE_URL: '',
+   //文件预览路径
+diff --git a/src/views/accountids/index.vue b/src/views/accountids/index.vue
+index 2a64ff8db0014cf532da7fb20bd01072fff985de..428838c2c2d74243ca218e1ddccaef2acfde8070 100644
+--- a/src/views/accountids/index.vue
++++ b/src/views/accountids/index.vue
+@@ -80,6 +80,17 @@
+                                     </a-select>
+                                 </a-form-item>
+                             </a-col>
++                            <a-col :xl="6" :lg="7" :md="8" :sm="24">
++                                <a-form-item label="是否绑定返点政策模板">
++                                    <a-select v-model="queryParam.isRebate" placeholder="请选择是否绑定返点政策模板">
++                                        <a-select-option value="">请选择</a-select-option>
++                                        <a-select-option :value="1">未绑定</a-select-option>
++                                        <a-select-option :value="0">已绑定</a-select-option>
++                                    </a-select>
++                                </a-form-item>
++                            </a-col>
++
++
+                             <a-col :xl="6" :lg="7" :md="8" :sm="24">
+                                 <a-form-item label="账户类型">
+                                     <a-input placeholder="请输入账户类型" v-model="queryParam.ucType"></a-input>
+@@ -297,22 +308,22 @@ export default {
+                     dataIndex: 'proName',
+                     query: ["KS", "DY", "TX"]
+                 },
+-                {
+-                    title: '账户状态',
+-                    align: "center",
+-                    dataIndex: 'dyStatus',
+-                    query: ["DY"]
+-                },
+-                {
+-                    title: '用户审核状态',
+-                    align: "center",
+-                    dataIndex: 'userReviewStatus',
+-                    customRender: function (t, r, index) {
+-                        const m = ['未送审', '待审核', '审核通过', '审核拒绝', '封禁']
+-                        return m[Number(r.userReviewStatus)]
+-                    },
+-                    query: ["KS"]
+-                },
++                // {
++                //     title: '账户状态',
++                //     align: "center",
++                //     dataIndex: 'dyStatus',
++                //     query: ["DY"]
++                // },
++                // {
++                //     title: '用户审核状态',
++                //     align: "center",
++                //     dataIndex: 'userReviewStatus',
++                //     customRender: function (t, r, index) {
++                //         const m = ['未送审', '待审核', '审核通过', '审核拒绝', '封禁']
++                //         return m[Number(r.userReviewStatus)]
++                //     },
++                //     query: ["KS"]
++                // },
+                 {
+                     title: '客户系统状态',
+                     align: "center",
+diff --git a/src/views/customerManager/TabCustomermanageList.vue b/src/views/customerManager/TabCustomermanageList.vue
+index 481277e416a5d689e102aaac910606c44215077b..e06c1522a2926b755987f755b3c6f52e59011167 100644
+--- a/src/views/customerManager/TabCustomermanageList.vue
++++ b/src/views/customerManager/TabCustomermanageList.vue
+@@ -194,7 +194,7 @@ export default {
+         //   }
+         // },
+         {
+-          title: '回款日期',
++          title: '回款间隔天数',
+           align: "center",
+           dataIndex: 'paymentDate'
+         },
+@@ -203,11 +203,11 @@ export default {
+         //   align: "center",
+         //   dataIndex: 'repaymentDate'
+         // },
+-        {
+-          title: '开票日期',
+-          align: "center",
+-          dataIndex: 'billingDate'
+-        },
++        // {
++        //   title: '开票日期',
++        //   align: "center",
++        //   dataIndex: 'billingDate'
++        // },
+         {
+           title: '是否服务费',
+           align: "center",
+diff --git a/src/views/customerManager/modules/TabCustomermanageForm.vue b/src/views/customerManager/modules/TabCustomermanageForm.vue
+index f1f2522f189223422e6e54359c467bad6b650944..097d39c6ef2896bc5b5f477e12ba0b7d5afb2a4c 100644
+--- a/src/views/customerManager/modules/TabCustomermanageForm.vue
++++ b/src/views/customerManager/modules/TabCustomermanageForm.vue
+@@ -40,8 +40,8 @@
+             </a-form-model-item>
+           </a-col>
+           <a-col :span="24">
+-            <a-form-model-item label="客户承诺回款日期" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="paymentDate">
+-              <a-input-number v-model="model.paymentDate" placeholder="请输入客户承诺回款日期" :min="1" :max="31" :precision="0"
++            <a-form-model-item label="客户回款间隔天数" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="intervalDays">
++              <a-input-number v-model="model.intervalDays" placeholder="请输入客户回款间隔天数" :min="1" :max="31" :precision="0"
+                 style="width: 100%;"></a-input-number>
+             </a-form-model-item>
+           </a-col>
+@@ -51,12 +51,12 @@
+                 style="width: 100%;"></a-input-number>
+             </a-form-model-item>
+           </a-col> -->
+-          <a-col :span="24">
++          <!-- <a-col :span="24">
+             <a-form-model-item label="开票日期" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="billingDate">
+               <a-input-number v-model="model.billingDate" placeholder="请输入客户承诺回款日期" :min="1" :max="31" :precision="0"
+                 style="width: 100%;"></a-input-number>
+             </a-form-model-item>
+-          </a-col>
++          </a-col> -->
+           <!-- <a-col :span="24">
+             <a-form-model-item label="客户标识" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="sustomerUnique">
+               <a-input v-model="model.sustomerUnique" placeholder="请输入返点比例"></a-input>
+@@ -146,10 +146,12 @@ export default {
+       validatorRules: {
+         customerName: [{ required: true, message: '请输入客户名称' },
+         { validator: this.validateCustomerName }],
+-        paymentDate: [{ required: true, message: '请输入客户承诺回款日期' }],
+-        repaymentDate: [{ required: true, message: '请输入客户实际还款日期' }],
+-        billingDate: [{ required: true, message: '请输入客户开票日期' }],
++        // paymentDate: [{ required: true, message: '请输入客户承诺回款日期' }],
++        // repaymentDate: [{ required: true, message: '请输入客户实际还款日期' }],
++        // billingDate: [{ required: true, message: '请输入客户开票日期' }],
++        salesPerson: [{ required: true, message: '请选择销售' }],
+         rebate: [{ required: true, message: '请输入返点' }],
++        intervalDays: [{ required: true, message: '请输入客户回款间隔天数' }]
+       },
+       url: {
+         add: "/customerManage/add",
+@@ -158,6 +160,7 @@ export default {
+       },
+       userList: [],
+       fetching: true,
++      oldPaymentDate: null,
+     }
+   },
+   computed: {
+@@ -202,26 +205,41 @@ export default {
+     },
+     add() {
+       this.edit(this.modelDefault);
++      this.oldPaymentDate = null;
+     },
+     edit(record) {
+       this.model = Object.assign({}, record);
+       this.visible = true;
++      this.oldPaymentDate = record.paymentDate;
+     },
+     submitForm() {
+       const that = this;
+-      // 触发表单验证
+       this.$refs.form.validate(valid => {
+         if (valid) {
+           that.confirmLoading = true;
+           let httpurl = '';
+           let method = '';
+-          if (!this.model.id) {
++          let isAdd = !this.model.id;
++
++          if (isAdd) {
+             httpurl += this.url.add;
+             method = 'post';
++            const now = new Date();
++            const year = now.getFullYear();
++            const month = (now.getMonth() + 1).toString().padStart(2, '0');
++            this.model.startingDate = `${year}-${month}-01`;
+           } else {
+             httpurl += this.url.edit;
+             method = 'put';
+           }
++
++          const paymentDateChanged = this.model.paymentDate !== this.oldPaymentDate;
++          if (isAdd || paymentDateChanged) {
++            const interval = Number(this.model.intervalDays) || 0;
++            this.model.preIntervalDays = interval - 10;
++            this.model.monthApart = Math.floor(interval / 30);
++            this.model.days = interval % 30;
++          }
+           httpAction(httpurl, this.model, method).then((res) => {
+             if (res.success) {
+               that.$message.success(res.message);
+@@ -233,7 +251,6 @@ export default {
+             that.confirmLoading = false;
+           })
+         }
+-
+       })
+     },
+   }
+diff --git a/src/views/dashboard/Analysis.vue b/src/views/dashboard/Analysis.vue
+index da7af4063b0c67dfb1e00078e5a2ff06d4e434c6..688cedc84cdd77a9131bee1765c48de001e8a83d 100644
+--- a/src/views/dashboard/Analysis.vue
++++ b/src/views/dashboard/Analysis.vue
+@@ -1,14 +1,13 @@
+ <template>
+   <div>
+-    <index-chart v-if="hasTotalPermission && indexStyle == 1" :dateRange="dateRange"
+-      @update:dateRange="dateRange = $event"></index-chart>
+-    <BusinessChart v-if="hasChannelPermission && indexStyle == 2" :dateRange="dateRange"
+-      @update:dateRange="dateRange = $event">
+-    </BusinessChart>
+-    <salsChart v-if="hasSalesPermission && indexStyle == 3" :dateRange="dateRange"
+-      @update:dateRange="dateRange = $event"></salsChart>
+-    <div style="width: 100%;text-align: right;margin-top: 20px">
+-      <!-- 请选择统计方式： -->
++    <index-chart v-if="currentPermissionType === 'total'" :dateRange="dateRange"
++      @update:dateRange="dateRange = $event" />
++    <BusinessChart v-else-if="currentPermissionType === 'channel'" :dateRange="dateRange"
++      @update:dateRange="dateRange = $event" />
++    <salsChart v-else-if="currentPermissionType === 'sales'" :dateRange="dateRange"
++      @update:dateRange="dateRange = $event" />
++    <NoPermission v-else />
++    <div v-if="currentPermissionType !== 'none'" style="width: 100%;text-align: right;margin-top: 20px">
+       <a-radio-group v-model="indexStyle">
+         <a-radio v-if="hasTotalPermission" :value="1">汇总</a-radio>
+         <a-radio v-if="hasChannelPermission" :value="2">渠道</a-radio>
+@@ -22,6 +21,7 @@
+ import IndexChart from './IndexChart'
+ import BusinessChart from './bisnussChart.vue'
+ import salsChart from './salsChart.vue'
++import NoPermission from './NoPermission.vue'
+ import { mapState } from 'vuex'
+ 
+ function getYesterday(num = 1) {
+@@ -48,7 +48,8 @@ export default {
+   components: {
+     IndexChart,
+     BusinessChart,
+-    salsChart
++    salsChart,
++    NoPermission
+   },
+   data() {
+     const yesterday = getYesterday();
+@@ -84,6 +85,22 @@ export default {
+     },
+     hasSalesPermission() {
+       return this.permissionMenuList && this.permissionMenuList.some(item => item.component === 'salesCharts')
++    },
++    currentPermissionType() {
++      if (this.hasTotalPermission) return 'total'
++      if (this.hasChannelPermission) return 'channel'
++      if (this.hasSalesPermission) return 'sales'
++      return 'none'
++    }
++  },
++  watch: {
++    currentPermissionType: {
++      immediate: true,
++      handler(val) {
++        if (val === 'total') this.indexStyle = 1
++        else if (val === 'channel') this.indexStyle = 2
++        else if (val === 'sales') this.indexStyle = 3
++      }
+     }
+   },
+   methods: {
+diff --git a/src/views/dashboard/NoPermission.vue b/src/views/dashboard/NoPermission.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..77f8dca7beac6133847aca2ab220fdd6289fdd63
+--- /dev/null
++++ b/src/views/dashboard/NoPermission.vue
+@@ -0,0 +1,11 @@
++<template>
++    <div style="text-align:center;padding:40px 0;color:#999;">
++        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"
++            style="margin-bottom:16px;">
++            <circle cx="40" cy="40" r="38" stroke="#e5e5e5" stroke-width="4" fill="#fafafa" />
++            <path d="M28 52L52 28" stroke="#d9d9d9" stroke-width="4" stroke-linecap="round" />
++            <path d="M52 52L28 28" stroke="#d9d9d9" stroke-width="4" stroke-linecap="round" />
++        </svg>
++        <div>暂无权限查看此内容</div>
++    </div>
++</template>
+\ No newline at end of file
+diff --git a/src/views/system/modules/UserModal.vue b/src/views/system/modules/UserModal.vue
+index a3121ab45c34d44eb398179de0e8b4e2142c25c7..06b252b8406ba0b2c6610d90e0a40221125123e8 100644
+--- a/src/views/system/modules/UserModal.vue
++++ b/src/views/system/modules/UserModal.vue
+@@ -42,6 +42,10 @@
+           <a-input placeholder="请输入手机号码" v-model="model.phone" />
+         </a-form-model-item>
+ 
++        <a-form-model-item label="邮箱" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="email">
++          <a-input placeholder="请输入邮箱" v-model="model.email" />
++        </a-form-model-item>
++
+         <a-form-model-item label="渠道" :labelCol="labelCol" :wrapperCol="wrapperCol" v-show="!roleDisabled">
+           <j-multi-select-tag :disabled="disableSubmit" v-model="model.businessIds" :options="businessList"
+             placeholder="请选择渠道">
+@@ -64,7 +68,7 @@
+ 
+         <!--部门分配-->
+         <a-form-model-item label="部门分配" :labelCol="labelCol" :wrapperCol="wrapperCol" v-show="!departDisabled">
+-          <j-select-depart v-model="model.selecteddeparts" :multi="true" @back="backDepartInfo" :backDepart="true"
++          <j-select-depart v-model="model.selecteddeparts" :multi="false" @back="backDepartInfo" :backDepart="true"
+             :treeOpera="true">></j-select-depart>
+         </a-form-model-item>
+ 
+@@ -75,7 +79,7 @@
+           </j-multi-select-tag>
+         </a-form-model-item> -->
+ 
+-        <a-form-model-item label="身份" :labelCol="labelCol" :wrapperCol="wrapperCol">
++        <!-- <a-form-model-item label="身份" :labelCol="labelCol" :wrapperCol="wrapperCol">
+           <a-radio-group v-model="model.userIdentity" @change="identityChange">
+             <a-radio :value="1">普通用户</a-radio>
+             <a-radio :value="2">上级</a-radio>
+@@ -85,7 +89,7 @@
+           <j-multi-select-tag :disabled="disableSubmit" v-model="model.departIds" :options="nextDepartOptions"
+             placeholder="请选择负责部门">
+           </j-multi-select-tag>
+-        </a-form-model-item>
++        </a-form-model-item> -->
+ 
+         <a-form-model-item label="头像" :labelCol="labelCol" :wrapperCol="wrapperCol">
+           <j-image-upload class="avatar-uploader" text="上传" v-model="model.avatar"></j-image-upload>
+@@ -103,9 +107,7 @@
+           </a-select>
+         </a-form-model-item>
+ 
+-        <a-form-model-item label="邮箱" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="email">
+-          <a-input placeholder="请输入邮箱" v-model="model.email" />
+-        </a-form-model-item>
++
+ 
+         <a-form-model-item label="座机" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="telephone">
+           <a-input placeholder="请输入座机" v-model="model.telephone" />

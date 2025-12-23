@@ -1,0 +1,101 @@
+diff --git a/public/static/config.js b/public/static/config.js
+index b6338b2476a75b4ab68cb99315f0034b8689e953..be437e925142d2a1bef7b1bd8dd0630d10f91f9e 100644
+--- a/public/static/config.js
++++ b/public/static/config.js
+@@ -3,7 +3,7 @@
+  */
+ window._CONFIG = {
+   // 线上
+-  // VUE_APP_API_BASE_URL: 'http://101.200.146.164:8000/jeecg-boot',
++  // VUE_APP_API_BASE_URL: 'http://crm.zxmember.com/jeecg-boot',
+   // 家里
+   // VUE_APP_API_BASE_URL: 'http://192.168.1.11:8080/jeecg-boot/',
+   // 测试服务器
+@@ -14,8 +14,8 @@ window._CONFIG = {
+   // 聪哥笔记本
+   // VUE_APP_API_BASE_URL: 'http://47.106.223.158:8080/jeecg-boot',
+   // VUE_APP_API_BASE_URL: 'http://n45ckpb.nat.ipyingshe.com/jeecg-boot',
+-  VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
+-  // VUE_APP_API_BASE_URL: '/jeecg-boot',
++  // VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
++  VUE_APP_API_BASE_URL: '/jeecg-boot',
+   //单点登录地址
+   VUE_APP_CAS_BASE_URL: '',
+   //文件预览路径
+diff --git a/src/views/tools/dingtalkRobotConfig/DingtalkRobotForm.vue b/src/views/tools/dingtalkRobotConfig/DingtalkRobotForm.vue
+index 9061285d965caa1af6fa964b1fe6c80401b1de3e..d9b9007da0e1d3f3850c779fa9b0d60e02e95060 100644
+--- a/src/views/tools/dingtalkRobotConfig/DingtalkRobotForm.vue
++++ b/src/views/tools/dingtalkRobotConfig/DingtalkRobotForm.vue
+@@ -13,6 +13,11 @@
+                             <a-input v-model="model.url" placeholder="请输入机器人URL"></a-input>
+                         </a-form-model-item>
+                     </a-col>
++                    <a-col :span="24">
++                        <a-form-model-item label="SQL语句" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="sqlText">
++                            <a-textarea v-model="model.sqlText" placeholder="请输入SQL语句" :rows="20"></a-textarea>
++                        </a-form-model-item>
++                    </a-col>
+                 </a-row>
+             </a-form-model>
+         </j-form-container>
+@@ -45,6 +50,7 @@ export default {
+             validatorRules: {
+                 robotName: [{ required: true, message: '请输入机器人名称' }],
+                 url: [{ required: true, message: '请输入机器人URL' }],
++                sqlText: [{ required: false, message: '请输入SQL语句' }],
+             },
+             url: {
+                 add: '/dingtalkRobotConfig/add',
+diff --git a/src/views/tools/dingtalkRobotConfig/DingtalkRobotModal.vue b/src/views/tools/dingtalkRobotConfig/DingtalkRobotModal.vue
+index 0db86e3f9551c1f14a453fe1d3daa864762b0f7e..d3db82800db4775169c56cbc96f09f9fc2e65ab1 100644
+--- a/src/views/tools/dingtalkRobotConfig/DingtalkRobotModal.vue
++++ b/src/views/tools/dingtalkRobotConfig/DingtalkRobotModal.vue
+@@ -15,7 +15,7 @@ export default {
+     data() {
+         return {
+             title: '',
+-            width: 600,
++            width: 1000,
+             visible: false,
+             disableSubmit: false
+         }
+diff --git a/src/views/tools/dingtalkRobotConfig/dingtalkRobotConfig.vue b/src/views/tools/dingtalkRobotConfig/dingtalkRobotConfig.vue
+index fc3572fe09b32a0268734e3b30caf63cce1fa801..7b2e5148191bcd136b1875b5ef8c9cf6f8e1736a 100644
+--- a/src/views/tools/dingtalkRobotConfig/dingtalkRobotConfig.vue
++++ b/src/views/tools/dingtalkRobotConfig/dingtalkRobotConfig.vue
+@@ -100,6 +100,11 @@ export default {
+                     align: 'center',
+                     dataIndex: 'url'
+                 },
++                {
++                    title: 'SQL语句',
++                    align: 'center',
++                    dataIndex: 'sqlText'
++                },
+                 {
+                     title: '操作',
+                     dataIndex: 'action',
+@@ -134,6 +139,7 @@ export default {
+             let fieldList = [];
+             fieldList.push({ type: 'string', value: 'robotName', text: '机器人名称', dictCode: '' })
+             fieldList.push({ type: 'string', value: 'url', text: '机器人URL', dictCode: '' })
++            fieldList.push({ type: 'string', value: 'sqlText', text: 'SQL语句', dictCode: '' })
+             this.superFieldList = fieldList
+         },
+     }
+diff --git a/src/views/tools/promotionZoneConfig/promotionZoneConfig.vue b/src/views/tools/promotionZoneConfig/promotionZoneConfig.vue
+index 1e91bf05f8ac92c1d669ab4fdabfdc05e6705578..246ba33a5231e5ef754eb6f02a67bf1fa1fb88cc 100644
+--- a/src/views/tools/promotionZoneConfig/promotionZoneConfig.vue
++++ b/src/views/tools/promotionZoneConfig/promotionZoneConfig.vue
+@@ -101,9 +101,9 @@ export default {
+                     dataIndex: 'mediaAccountName'
+                 },
+                 {
+-                    title: '钉钉机器人id',
++                    title: '钉钉机器人',
+                     align: 'center',
+-                    dataIndex: 'dingtalkRobotId'
++                    dataIndex: 'dingtalkRobotId_dictText'
+                 },
+                 {
+                     title: '操作',

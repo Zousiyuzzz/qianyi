@@ -1,0 +1,104 @@
+<template>
+  <scroll-view class="page" scroll-y>
+    <view class="section">
+      <view class="icon-grid">
+        <view 
+          v-for="item in materialModules" 
+          :key="item.title" 
+          class="icon-item"
+          @click="openWeb(item.path)"
+        >
+          <view class="icon-wrapper" :style="{ background: item.gradient }">
+            <text class="icon-text">{{ item.icon }}</text>
+          </view>
+          <text class="icon-label">{{ item.title }}</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+
+<script>
+import { buildWebUrl } from '../../../common/config'
+
+export default {
+  data () {
+    return {
+      materialModules: [
+        { 
+          title: '数据洞察', 
+          path: '/materialManage/dataCheck', 
+          icon: '📈',
+          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        },
+        { 
+          title: '素材列表', 
+          path: '/materialManage/index', 
+          icon: '🖼️',
+          gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+        },
+        { 
+          title: '素材裂变', 
+          path: '/materialManage/copy', 
+          icon: '✨',
+          gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+        },
+        { 
+          title: '素材风控', 
+          path: '/materialManage/douyinViolationScoreRecord', 
+          icon: '🛡️',
+          gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+        }
+      ]
+    }
+  },
+  methods: {
+    openWeb (path) {
+      const url = buildWebUrl(path)
+      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
+    }
+  }
+}
+</script>
+
+<style scoped>
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 20rpx;
+}
+.section {
+  padding: 24rpx 28rpx;
+}
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32rpx 20rpx;
+}
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.icon-wrapper {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+.icon-text {
+  font-size: 56rpx;
+  line-height: 1;
+}
+.icon-label {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  line-height: 1.4;
+}
+</style>

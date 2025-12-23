@@ -1,0 +1,1953 @@
+diff --git a/public/static/config.js b/public/static/config.js
+index b6338b2476a75b4ab68cb99315f0034b8689e953..30d715601542dd5473ec463c891504f49d93534f 100644
+--- a/public/static/config.js
++++ b/public/static/config.js
+@@ -14,8 +14,8 @@ window._CONFIG = {
+   // 聪哥笔记本
+   // VUE_APP_API_BASE_URL: 'http://47.106.223.158:8080/jeecg-boot',
+   // VUE_APP_API_BASE_URL: 'http://n45ckpb.nat.ipyingshe.com/jeecg-boot',
+-  VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
+-  // VUE_APP_API_BASE_URL: '/jeecg-boot',
++  // VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
++  VUE_APP_API_BASE_URL: '/jeecg-boot',
+   //单点登录地址
+   VUE_APP_CAS_BASE_URL: '',
+   //文件预览路径
+diff --git a/src/api/api.js b/src/api/api.js
+index 9fc8c7b7d1cca3d10e671bdb9484b35fbb65c43a..ee22e4e42c509ce0d18d3e1872584eb7839cf77f 100644
+--- a/src/api/api.js
++++ b/src/api/api.js
+@@ -101,6 +101,15 @@ export const transitRESTful = {
+ 
+ export const addServiceCost = (params) => postAction("/serviceCost/add", params);
+ 
++// 新增广告主复制接口
++const advertiserCopy = (params) => postAction("/advertiserCopy/copy", params);
++
++// 新增广告主分页列表查询接口
++const getAdvertiserCopyList = (params) => getAction("/advertiserCopy/list", params);
++
++// 新增广告主复制结果分页列表查询接口
++const getAdvertiserCopyResultList = (params) => getAction("/advertiserCopyResult/list", params);
++
+ export {
+   addRole,
+   editRole,
+@@ -156,7 +165,10 @@ export {
+   saveDeptRolePermission,
+   queryMyDepartTreeList,
+   getUserNoticeInfo,
+-  getDictItemsFromCache
++  getDictItemsFromCache,
++  advertiserCopy,
++  getAdvertiserCopyList,
++  getAdvertiserCopyResultList
+ }
+ 
+ 
+diff --git a/src/components/tools/UserMenu.vue b/src/components/tools/UserMenu.vue
+index 08dbf49da2f60d2a51eb14cc11905be2c5b7a4f5..08a689aa1cdc24ca0941ed7c2890755ec367e411 100644
+--- a/src/components/tools/UserMenu.vue
++++ b/src/components/tools/UserMenu.vue
+@@ -50,10 +50,10 @@
+           <a-icon type="setting" />
+           <span>密码修改</span>
+         </a-menu-item>
+-        <a-menu-item key="5" @click="updateCurrentDepart">
++        <!-- <a-menu-item key="5" @click="updateCurrentDepart">
+           <a-icon type="cluster" />
+           <span>切换部门</span>
+-        </a-menu-item>
++        </a-menu-item> -->
+         <a-menu-item key="6" @click="clearCache">
+           <a-icon type="sync" />
+           <span>清理缓存</span>
+diff --git a/src/config/router.config.js b/src/config/router.config.js
+index 13890e1301328b081afeda350a8c5109365e3f1b..d90a957e3c56adb74d3b2e7b3ca53bb6305dc323 100644
+--- a/src/config/router.config.js
++++ b/src/config/router.config.js
+@@ -294,6 +294,11 @@ export const asyncRouterMap = [
+  * @type { *[] }
+  */
+ export const constantRouterMap = [
++  // {
++  //   path: '/accountids/copy',
++  //   name: 'copyAccountId',
++  //   component: () => import('@/views/accountids/copy')
++  // },
+   {
+     path: '/user',
+     component: UserLayout,
+@@ -320,9 +325,11 @@ export const constantRouterMap = [
+         name: 'alteration',
+         component: () => import(/* webpackChunkName: "user" */ '@/views/user/alteration/Alteration')
+       },
++
+     ]
+   },
+ 
++
+   // {
+   //   path: '/',
+   //   name: 'index',
+@@ -379,4 +386,6 @@ export const constantRouterMap = [
+     component: () => import(/* webpackChunkName: "fail" */ '@/views/exception/404')
+   },
+ 
++
++
+ ]
+diff --git a/src/permission.js b/src/permission.js
+index 89540115bdb0fa5f41ccefafce5f419f0ee5f2c9..1748e7ce69ad73b9485b9891b26efc0e16d684d7 100644
+--- a/src/permission.js
++++ b/src/permission.js
+@@ -9,7 +9,7 @@ import { generateIndexRouter, isOAuth2AppEnv } from '@/utils/util'
+ 
+ NProgress.configure({ showSpinner: false }) // NProgress Configuration
+ 
+-const whiteList = ['/user/login', '/user/register', '/user/register-result', '/user/alteration'] // no redirect whitelist
++const whiteList = ['/user/login', '/user/register', '/user/register-result', '/user/alteration', '/accountids/copy'] // no redirect whitelist
+ whiteList.push(OAUTH2_LOGIN_PAGE_PATH)
+ 
+ router.beforeEach((to, from, next) => {
+diff --git a/src/views/accountids/bindingDia.vue b/src/views/accountids/bindingDia.vue
+index 509d96578af6552e15e921009f4073de3a4d49e5..85ea6702d0df4b80cc06ee88ce3c7e77c523bb69 100644
+--- a/src/views/accountids/bindingDia.vue
++++ b/src/views/accountids/bindingDia.vue
+@@ -31,14 +31,14 @@
+                         </a-col>
+ 
+                         <!-- 竞价分类选择（替换为普通下拉） -->
+-                        <a-col :span="24" v-if="Sign">
++                        <!-- <a-col :span="24" v-if="Sign">
+                             <a-form-model-item label="竞价分类" :labelCol="{ span: 4 }" :wrapperCol="{ span: 20 }"
+                                 prop="biddingRebateId">
+                                 <JSearchSelectTag placeholder="请选择竞价分类" v-model="model.biddingRebateId"
+                                     :dict="`tab_bidding_rebate_template,cont,id,del_flag = '0' and channel_sign = '${Sign}'`"
+                                     async allowClear />
+                             </a-form-model-item>
+-                        </a-col>
++                        </a-col> -->
+ 
+                         <!-- 绑定时间选择 -->
+                         <a-col :span="24">
+@@ -119,7 +119,7 @@ export default {
+                 productmId: undefined,
+                 date: undefined,
+                 isCover: true,
+-                biddingRebateId: undefined
++                // biddingRebateId: undefined
+             },
+             // 表单验证规则
+             validatorRules: {
+@@ -138,11 +138,11 @@ export default {
+                         }
+                     }
+                 }],
+-                biddingRebateId: [{ required: true, message: '请选择竞价分类' }]
++                // biddingRebateId: [{ required: true, message: '请选择竞价分类' }]
+             },
+             // API 地址
+             url: {
+-                add: "/accountinfo/bindingPro",
++                add: "/accountinfo/bindingProAndProductm",
+                 edit: "/accountinfo/edit",
+                 queryById: "/accountinfo/queryById",
+                 getProductsByProjectId: "/productManage/getByProId"
+@@ -274,13 +274,13 @@ export default {
+ 
+                 const response = await axios({
+                     method: 'post',
+-                    url: this.API_BASE_URL + '/accountinfo/bindingPro',
++                    url: this.API_BASE_URL + '/accountinfo/bindingProAndProductm',
+                     data: {
+                         projectId: this.model.projectId,
+                         productmId: this.model.productmId,
+                         date: this.model.date,
+                         isCover: this.model.isCover,
+-                        biddingRebateId: this.model.biddingRebateId,
++                        // biddingRebateId: this.model.biddingRebateId,
+                         accountIds: this.dataList.map(item => this.Sign + item)
+                     },
+                     headers: {
+diff --git a/src/views/accountids/bindingDiajjfl.vue b/src/views/accountids/bindingDiajjfl.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..71ed367249805cf40054322bb12da5f731f615d8
+--- /dev/null
++++ b/src/views/accountids/bindingDiajjfl.vue
+@@ -0,0 +1,326 @@
++<template>
++    <a-modal title="广告主ID绑定竞价分类" :visible="visible" :confirm-loading="confirmLoading" @ok="handleOk"
++        @cancel="handleCancel" :width="800" :maskClosable="false" :keyboard="false">
++        <a-spin :spinning="confirmLoading">
++            <j-form-container :disabled="formDisabled">
++                <a-form-model ref="form" :model="model" :rules="validatorRules" slot="detail">
++                    <a-row :gutter="16">
++                        <!-- 项目选择 -->
++                        <!-- <a-col :span="24">
++                            <a-form-model-item label="项目" :labelCol="{ span: 4 }" :wrapperCol="{ span: 20 }"
++                                prop="projectId">
++                                <JSearchSelectTag placeholder="请选择项目" v-model="model.projectId"
++                                    dict="tab_projectManage,pro_name,id,del_flag = '0'" async allowClear />
++                            </a-form-model-item>
++                        </a-col> -->
++
++                        <!-- 产品选择（替换为普通下拉） -->
++                        <!-- <a-col :span="24">
++                            <a-form-model-item label="产品" :labelCol="{ span: 4 }" :wrapperCol="{ span: 20 }"
++                                prop="productmId">
++                                <div style="display: flex; align-items: center;">
++                                    <a-select v-model="model.productmId" placeholder="请选择产品" allowClear
++                                        :options="productOptions" style="flex: 1;">
++                                    </a-select>
++                                </div>
++                            </a-form-model-item>
++                        </a-col> -->
++
++                        <!-- 竞价分类选择（替换为普通下拉） -->
++                        <a-col :span="24" v-if="Sign">
++                            <a-form-model-item label="竞价分类" :labelCol="{ span: 4 }" :wrapperCol="{ span: 20 }"
++                                prop="biddingRebateId">
++                                <JSearchSelectTag placeholder="请选择竞价分类" v-model="model.biddingRebateId"
++                                    :dict="`tab_bidding_rebate_template,cont,id,del_flag = '0' and channel_sign = '${Sign}'`"
++                                    async allowClear />
++                            </a-form-model-item>
++                        </a-col>
++
++                        <!-- 绑定时间选择 -->
++                        <a-col :span="24">
++                            <a-form-model-item label="绑定时间" :labelCol="{ span: 4 }" :wrapperCol="{ span: 20 }"
++                                prop="date">
++                                <a-date-picker v-model="model.date" valueFormat="YYYY-MM-DD" style="width: 100%"
++                                    :disabledDate="disabledDate" />
++                            </a-form-model-item>
++                        </a-col>
++
++                        <!-- 是否覆盖选项 -->
++                        <a-col :span="24">
++                            <a-form-model-item label="是否覆盖" :labelCol="{ span: 4 }" :wrapperCol="{ span: 20 }"
++                                prop="isCover">
++                                <a-radio-group v-model="model.isCover" button-style="solid">
++                                    <a-radio-button :value="true">覆盖</a-radio-button>
++                                    <a-radio-button :value="false">不覆盖</a-radio-button>
++                                </a-radio-group>
++                                <div class="form-item-help">
++                                    选择覆盖会覆盖从绑定时间开始往后所有的消耗数据，否则只会覆盖未绑定竞价分类日期的消耗数据
++                                </div>
++                            </a-form-model-item>
++                        </a-col>
++                    </a-row>
++                </a-form-model>
++            </j-form-container>
++
++            <!-- 绑定账号ID的卡片 -->
++            <a-card :bordered="false">
++                <binding v-model="dataList" @validate="handleValidate" />
++                <a-alert v-if="dataListError" type="error" :message="dataListError" show-icon class="error-alert" />
++            </a-card>
++
++            <!-- 新增产品弹窗 -->
++            <a-modal title="新增产品" :visible="addProductVisible" :confirm-loading="addProductLoading"
++                @ok="handleAddProductOk" @cancel="handleAddProductCancel" :width="500">
++                <a-form-model ref="addProductForm" :model="addProductModel" :rules="addProductRules">
++                    <a-form-model-item label="产品名称" :labelCol="{ span: 6 }" :wrapperCol="{ span: 16 }"
++                        prop="productName">
++                        <a-input v-model="addProductModel.productName" placeholder="请输入产品名称" />
++                    </a-form-model-item>
++                </a-form-model>
++            </a-modal>
++        </a-spin>
++    </a-modal>
++</template>
++
++<script>
++import { httpAction } from '@/api/manage'
++import binding from './components/binding.vue'
++import moment from 'moment'
++import axios from 'axios'
++import { ACCESS_TOKEN, TENANT_ID } from "@/store/mutation-types"
++import Vue from 'vue'
++
++export default {
++    name: 'ProjectBindingModal',
++    components: {
++        binding
++    },
++    data() {
++        return {
++            // 渠道标识
++            Sign: '',
++            // 控制模态框显示
++            visible: false,
++            // 控制表单加载状态
++            confirmLoading: false,
++            // 账号ID列表
++            dataList: [],
++            // 账号ID列表错误信息
++            dataListError: '',
++            // 产品选择器的选项列表
++            productOptions: [],
++            // 表单数据模型
++            model: {
++                date: undefined,
++                isCover: true,
++                biddingRebateId: undefined
++            },
++            // 表单验证规则
++            validatorRules: {
++                date: [{
++                    required: true,
++                    message: '请选择绑定日期',
++                    validator: (rule, value, callback) => {
++                        if (!value) {
++                            callback(new Error('请选择绑定日期'))
++                        } else if (moment(value).isAfter(moment(), 'day')) {
++                            callback(new Error('绑定日期不能晚于今天'))
++                        } else {
++                            callback()
++                        }
++                    }
++                }],
++                biddingRebateId: [{ required: true, message: '请选择竞价分类' }]
++            },
++            // API 地址
++            url: {
++                add: "/accountinfo/bindingRebate",
++                edit: "/accountinfo/edit",
++                queryById: "/accountinfo/queryById",
++                getProductsByProjectId: "/productManage/getByProId"
++            },
++            // 新增产品相关
++            addProductVisible: false,
++            addProductLoading: false,
++            addProductModel: {
++                productName: ''
++            },
++            addProductRules: {
++                productName: [
++                    { required: true, message: '请输入产品名称', trigger: 'blur' }
++                ]
++            }
++        }
++    },
++    computed: {
++        // 控制表单是否禁用
++        formDisabled() {
++            return this.disabled
++        }
++    },
++    methods: {
++        // 禁用未来的日期
++        disabledDate(current) {
++            return current && current > moment().endOf('day')
++        },
++
++        // 初始化添加表单
++        add() {
++            this.edit(this.modelDefault)
++        },
++
++        // 编辑表单数据
++        edit(record) {
++            this.model = Object.assign({}, record)
++            this.visible = true
++        },
++
++        // 显示模态框并初始化账号ID列表
++        showModal(idlist, channel) {
++            this.Sign = channel
++            this.dataList = idlist.map(item => item.accountId).filter(Boolean) || []
++            this.visible = true
++        },
++
++        // 处理绑定组件的验证事件
++        handleValidate(error) {
++            this.dataListError = error
++        },
++
++        // 验证账号ID列表
++        validateDataList() {
++            if (this.dataList.length === 0) {
++                this.dataListError = '至少需要绑定一个账号ID'
++                return false
++            }
++
++            if (this.dataList.some(item => !item || item.trim() === '')) {
++                this.dataListError = '账号ID不能为空'
++                return false
++            }
++
++            this.dataListError = ''
++            return true
++        },
++
++        // 处理确认按钮
++        async handleOk() {
++            try {
++                // console.log()
++                this.confirmLoading = true
++
++                // 验证表单
++                const formValid = await this.$refs.form.validate()
++                if (!formValid) return
++
++                // 验证账号列表
++                if (!this.validateDataList()) return
++
++                const response = await axios({
++                    method: 'post',
++                    url: this.API_BASE_URL + '/accountinfo/bindingRebate',
++                    data: {
++                        date: this.model.date,
++                        isCover: this.model.isCover,
++                        biddingRebateId: this.model.biddingRebateId,
++                        accountIds: this.dataList.map(item => this.Sign + item)
++                    },
++                    headers: {
++                        'Content-Type': 'application/json',
++                        'X-Access-Token': Vue.ls.get(ACCESS_TOKEN)
++
++                    }
++                })
++
++                if (response.data.success) {
++                    this.$message.success(response.data.message)
++                    this.$emit('ok')
++                    this.handleCancel()
++                } else {
++                    this.$message.warning(response.data.message || '操作失败')
++                }
++            } catch (error) {
++                console.error('提交失败:', error)
++                this.$message.error('提交失败，请稍后重试')
++            } finally {
++                this.confirmLoading = false
++            }
++        },
++
++        // 处理取消按钮
++        handleCancel() {
++            this.dataList = ['']
++            this.dataListError = ''
++            this.visible = false
++            this.$refs.form.resetFields()
++            this.productOptions = [];
++        },
++
++        // 显示新增产品弹窗
++        showAddProductModal() {
++            this.addProductVisible = true;
++            this.addProductModel.productName = '';
++        },
++
++        // 处理新增产品确认
++        async handleAddProductOk() {
++            try {
++                this.addProductLoading = true;
++                await this.$refs.addProductForm.validate();
++
++                const { success, message, result } = await httpAction('/productManage/add', {
++                    productName: this.addProductModel.productName,
++                }, 'post');
++
++                if (success) {
++                    this.$message.success('添加成功');
++                    // 刷新产品列表
++                    await this.fetchProductsByProjectId(this.model.projectId);
++                    // 关闭弹窗
++                    this.handleAddProductCancel();
++                } else {
++                    this.$message.warning(message || '添加失败');
++                }
++            } catch (error) {
++                console.error('添加产品失败:', error);
++                this.$message.error('添加产品失败');
++            } finally {
++                this.addProductLoading = false;
++            }
++        },
++
++        // 处理新增产品取消
++        handleAddProductCancel() {
++            this.addProductVisible = false;
++            this.$refs.addProductForm.resetFields();
++        }
++    },
++
++    created() {
++        // 保存默认的 model 数据
++        this.modelDefault = JSON.parse(JSON.stringify(this.model))
++    }
++}
++</script>
++
++<style lang="less" scoped>
++.binding-card {
++    margin-top: 16px;
++
++    ::v-deep .ant-card-head {
++        border-bottom: none;
++        padding-bottom: 0;
++    }
++}
++
++.error-alert {
++    margin-top: 8px;
++}
++
++.form-item-help {
++    color: rgba(0, 0, 0, 0.45);
++    font-size: 12px;
++    line-height: 1.5;
++    margin-top: 4px;
++}
++</style>
+\ No newline at end of file
+diff --git a/src/views/accountids/bindingTemp.vue b/src/views/accountids/bindingTemp.vue
+index f88023fde3283d677badbbfe401b2291a5b0d06f..629d6451692ed20a92bc0efe6aa25cdf49beccd1 100644
+--- a/src/views/accountids/bindingTemp.vue
++++ b/src/views/accountids/bindingTemp.vue
+@@ -1,5 +1,5 @@
+ <template>
+-    <a-modal title="广告主ID绑定项目" :visible="visible" :confirm-loading="confirmLoading" @ok="handleOk"
++    <a-modal title="广告主ID绑定返点政策模板" :visible="visible" :confirm-loading="confirmLoading" @ok="handleOk"
+         @cancel="handleCancel" :width="800" :maskClosable="false" :keyboard="false">
+         <a-spin :spinning="confirmLoading">
+             <j-form-container :disabled="formDisabled">
+diff --git a/src/views/accountids/copy.vue b/src/views/accountids/copy.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..fbc3ab857b60fd785b55faa1db2e445ae79c71e1
+--- /dev/null
++++ b/src/views/accountids/copy.vue
+@@ -0,0 +1,354 @@
++<template>
++    <a-card :bordered="false">
++        <!-- 查询区域 -->
++        <div class="table-page-search-wrapper">
++            <a-form layout="inline" @keyup.enter.native="handleSearch">
++                <a-row :gutter="24">
++                    <a-col :md="6" :sm="12">
++                        <a-form-item label="代理商账户ID">
++                            <a-input v-model.number="queryParam.agentId" placeholder="请输入代理商账户ID" />
++                        </a-form-item>
++                    </a-col>
++                    <a-col :md="6" :sm="12">
++                        <a-form-item label="被复制广告主账户ID">
++                            <a-input v-model.number="queryParam.advertiserId" placeholder="请输入被复制广告主账户ID" />
++                        </a-form-item>
++                    </a-col>
++                    <a-col :md="6" :sm="8">
++                        <span class="table-page-search-submitButtons">
++                            <a-button type="primary" @click="handleSearch" icon="search">查询</a-button>
++                            <a-button type="primary" @click="handleReset" icon="reload"
++                                style="margin-left: 8px">重置</a-button>
++                        </span>
++                    </a-col>
++                </a-row>
++            </a-form>
++        </div>
++        <!-- 查询区域-END -->
++
++        <!-- 操作按钮区域 -->
++        <div class="table-operator">
++            <a-button @click="showAddModal" type="primary" icon="plus">新增</a-button>
++        </div>
++
++        <!-- table区域-begin -->
++        <div>
++            <a-table size="middle" :scroll="{ x: true }" bordered rowKey="id" :columns="columns" :dataSource="itemList"
++                :pagination="false" :loading="loading">
++                <span slot="copyTag" slot-scope="text, record">
++                    {{ (text === true || text === 'true' || text === 1 || text === '1') ? '是' : '否' }}
++                </span>
++                <span slot="reportType" slot-scope="text">
++                    {{
++                        text === 'EMPTY' ? '不报备' :
++                            text === 'INCREASE_QUANTITY' ? '走量报备' :
++                                text === 'SELF_OPERATION' ? '自运营报备' :
++                                    text === 'INCREASE_QUANTITY_QUANTITY' ? '收量报备' :
++                                        (text || '-')
++                    }}
++                </span>
++                <span slot="copyDelivery" slot-scope="text, record">
++                    {{ (text === true || text === 'true' || text === 1 || text === '1') ? '是' : '否' }}
++                </span>
++                <span slot="copyStatus" slot-scope="text">
++                    {{
++                        text === '0' ? '复制中' :
++                            text === '1' ? '全部成功' :
++                                text === '2' ? '部分成功' :
++                                    text === '3' ? '全部失败' :
++                                        (text || '-')
++                    }}
++                </span>
++                <span slot="action" slot-scope="text, record, index">
++                    <a @click="showDetail(record)">查看明细</a>
++                </span>
++            </a-table>
++            <a-pagination :current="pagination.current" :page-size="pagination.pageSize" :total="pagination.total"
++                @change="onPageChange" style="margin-top: 16px; text-align: right;" />
++        </div>
++
++        <!-- 新增账户弹窗 -->
++        <a-modal v-model:visible="addModalVisible" title="新增账户" @ok="handleAddOk" @cancel="handleAddCancel"
++            :confirm-loading="addModalLoading" width="40%">
++            <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
++                <a-form-item label="任务名称" required>
++                    <a-input v-model="addForm.batchName" placeholder="请输入任务名称" />
++                </a-form-item>
++                <a-form-item label="被复制广告主账户ID" required>
++                    <a-input v-model="addForm.advertiserId" placeholder="请输入被复制广告主账户ID" />
++                </a-form-item>
++                <a-form-item label="复制数量" required>
++                    <a-input-number v-model="addForm.quantity" :min="1" :max="100" :step="1" style="width: 100%"
++                        placeholder="请输入复制数量" />
++                </a-form-item>
++                <a-form-item label="广告主账户名称" required>
++                    <a-input v-model="addForm.advertiserName" placeholder="请输入广告主账户名称" />
++                </a-form-item>
++                <a-form-item label="复制标签">
++                    <a-radio-group v-model="addForm.copyTag" button-style="solid">
++                        <a-radio-button :value="true">复制</a-radio-button>
++                        <a-radio-button :value="false">不复制</a-radio-button>
++                    </a-radio-group>
++                </a-form-item>
++                <a-form-item label="报备类型">
++                    <a-radio-group v-model="addForm.reportType" button-style="solid">
++                        <a-radio-button value="EMPTY">不报备</a-radio-button>
++                        <a-radio-button value="INCREASE_QUANTITY">走量报备</a-radio-button>
++                        <a-radio-button value="SELF_OPERATION">自运营报备</a-radio-button>
++                        <a-radio-button value="INCREASE_QUANTITY_QUANTITY">收量报备</a-radio-button>
++                    </a-radio-group>
++                </a-form-item>
++                <a-form-item label="复制投放资质">
++                    <a-radio-group v-model="addForm.copyDelivery" button-style="solid">
++                        <a-radio-button :value="true">复制</a-radio-button>
++                        <a-radio-button :value="false">不复制</a-radio-button>
++                    </a-radio-group>
++                </a-form-item>
++            </a-form>
++        </a-modal>
++
++        <!-- 明细弹窗 -->
++        <a-modal v-model:visible="detailModalVisible" title="账户明细" @cancel="detailModalVisible = false" width="70%"
++            :footer="null">
++            <a-table :dataSource="detailList" :columns="detailColumns" :loading="detailLoading" :pagination="false"
++                size="small" rowKey="id" bordered
++                style="margin-bottom: 12px; min-height: 200px; background: #fff; border-radius: 4px;" />
++        </a-modal>
++    </a-card>
++</template>
++
++<script>
++import { advertiserCopy } from '@/api/api'
++import { getAdvertiserCopyList, getAdvertiserCopyResultList } from '@/api/api'
++import { mapGetters, mapState } from 'vuex'
++
++export default {
++    name: 'CopyAccountList',
++    data() {
++        return {
++            queryParam: {
++                agentId: undefined,
++                advertiserId: undefined
++            },
++            itemList: [],
++            loading: false,
++            columns: [
++                { title: '批次号', dataIndex: 'batchNumber', key: 'batchNumber', align: 'center' },
++                { title: '批次名称', dataIndex: 'batchName', key: 'batchName', align: 'center' },
++                { title: '代理商账户ID', dataIndex: 'agentId', key: 'agentId', align: 'center' },
++                { title: '被复制广告主账户ID', dataIndex: 'advertiserId', key: 'advertiserId', align: 'center' },
++                { title: '复制数量', dataIndex: 'quantity', key: 'quantity', align: 'center' },
++                { title: '广告主账户名称', dataIndex: 'advertiserName', key: 'advertiserName', align: 'center' },
++                { title: '创建时间', dataIndex: 'createTime', key: 'createTime', align: 'center' },
++                { title: '复制结果', dataIndex: 'copyStatus', key: 'copyStatus', align: 'center', scopedSlots: { customRender: 'copyStatus' } },
++                { title: '复制标签', dataIndex: 'copyTag', key: 'copyTag', align: 'center', scopedSlots: { customRender: 'copyTag' } },
++                {
++                    title: '自运营报备类型', dataIndex: 'reportType', key: 'reportType', align: 'center', scopedSlots: { customRender: 'reportType' }
++                },
++                { title: '复制投放资质', dataIndex: 'copyDelivery', key: 'copyDelivery', align: 'center', scopedSlots: { customRender: 'copyDelivery' } },
++                { title: '操作', key: 'action', align: 'center', width: 100, scopedSlots: { customRender: 'action' } }
++            ],
++            pagination: {
++                current: 1,
++                pageSize: 10,
++                total: 0
++            },
++            // 弹窗相关
++            addModalVisible: false,
++            addModalLoading: false,
++            addForm: {
++                batchName: '',
++                agentId: '',
++                advertiserId: '',
++                quantity: 1,
++                advertiserName: '',
++                copyTag: false,
++                reportType: 'EMPTY',
++                copyDelivery: false
++            },
++            detailModalVisible: false,
++            detailData: {},
++            detailList: [],
++            detailLoading: false,
++            detailColumns: [
++                { title: '明细ID', dataIndex: 'id', key: 'id', align: 'center' },
++                { title: '广告主ID', dataIndex: 'advertiserId', key: 'advertiserId', align: 'center' },
++                { title: '广告主名称', dataIndex: 'advertiserName', key: 'advertiserName', align: 'center' },
++                {
++                    title: '状态', dataIndex: 'success', key: 'status', align: 'center',
++                    customRender: (text) => (text === true || text === 'true') ? '成功' : (text === false || text === 'false' ? '失败' : '-')
++                },
++                { title: '失败原因', dataIndex: 'errorMsg', key: 'errorMsg', align: 'center' },
++                { title: '创建时间', dataIndex: 'createTime', key: 'createTime', align: 'center' }
++            ]
++        }
++    },
++    methods: {
++        ...mapGetters(["userInfo"]),
++
++        handleSearch() {
++            // console.log()
++            this.loading = true;
++            getAdvertiserCopyList({
++                ...this.queryParam,
++                pageNo: this.pagination.current,
++                pageSize: this.pagination.pageSize,
++                column: 'createTime',
++                order: 'desc',
++                createdBy: this.userInfo().id
++            })
++                .then(res => {
++                    if (res && res.success) {
++                        // 兼容不同返回结构
++                        this.itemList = res.result && res.result.records ? res.result.records : (res.result || []);
++                        // 更新总数以支持分页
++                        if (res.result && typeof res.result.total === 'number') {
++                            this.pagination.total = res.result.total;
++                        }
++                        if (res.result && typeof res.result.current === 'number') {
++                            this.pagination.current = res.result.current;
++                        }
++                        if (res.result && typeof res.result.size === 'number') {
++                            this.pagination.pageSize = res.result.size;
++                        }
++                    } else {
++                        this.itemList = [];
++                        this.$message.error((res && res.message) || '查询失败');
++                    }
++                })
++                .catch(() => {
++                    this.itemList = [];
++                    this.$message.error('查询失败');
++                })
++                .finally(() => {
++                    this.loading = false;
++                });
++        },
++        handleReset() {
++            this.queryParam = { agentId: undefined, advertiserId: undefined };
++            this.handleSearch();
++        },
++        showAddModal() {
++            this.addForm = {
++                batchName: '',
++                agentId: '',
++                advertiserId: '',
++                quantity: 1,
++                advertiserName: '',
++                copyTag: false,
++                reportType: 'EMPTY',
++                copyDelivery: false
++            };
++            this.addModalVisible = true;
++        },
++        handleAddOk() {
++            const {
++                batchName,
++                agentId,
++                advertiserId,
++                quantity,
++                advertiserName
++            } = this.addForm;
++            if (!batchName || !batchName.trim()) {
++                this.$message.error('批次名称必填');
++                return;
++            }
++            // if (!agentId || !agentId.toString().trim()) {
++            //     this.$message.error('代理商账户ID必填');
++            //     return;
++            // }
++            if (!advertiserId || !advertiserId.toString().trim()) {
++                this.$message.error('被复制广告主账户ID必填');
++                return;
++            }
++            if (!quantity || isNaN(quantity) || quantity < 1 || quantity > 100 || !Number.isInteger(Number(quantity))) {
++                this.$message.error('复制数量必须为1-100之间的整数');
++                return;
++            }
++            if (!advertiserName || !advertiserName.trim()) {
++                this.$message.error('广告主账户名称必填');
++                return;
++            }
++            if (/[^\w\u4e00-\u9fa5]/.test(advertiserName)) {
++                this.$message.error('广告主账户名称不能包含特殊字符');
++                return;
++            }
++            if (/\n/.test(advertiserName)) {
++                this.$message.error('广告主账户名称不能包含换行符');
++                return;
++            }
++            if (this.itemList.some(i => i.advertiserName === advertiserName)) {
++                this.$message.error('广告主账户名称不可重复');
++                return;
++            }
++            this.addModalLoading = true;
++            advertiserCopy(this.addForm)
++                .then(res => {
++                    if (res && res.success) {
++                        this.$message.success(res.message || '新增成功');
++                        this.addModalVisible = false;
++                    } else {
++                        this.$message.error((res && res.message) || '新增失败');
++                    }
++                })
++                .catch(() => {
++                    this.$message.error('新增失败');
++                })
++                .finally(() => {
++                    this.addModalLoading = false;
++                });
++            this.addModalVisible = false;
++            this.handleSearch();
++        },
++        handleAddCancel() {
++            this.addModalVisible = false;
++        },
++        showDetail(record) {
++            this.detailData = { ...record };
++            this.detailModalVisible = true;
++            this.detailLoading = true;
++            this.detailList = [];
++            getAdvertiserCopyResultList({
++                advertiserCopyId: record.id,
++                pageSize: 1000,
++                column: 'createTime',
++                order: 'desc'
++            })
++                .then(res => {
++                    if (res && res.success) {
++                        this.detailList = res.result && res.result.records ? res.result.records : (res.result || []);
++                    } else {
++                        this.detailList = [];
++                        this.$message.error((res && res.message) || '明细查询失败');
++                    }
++                })
++                .catch(() => {
++                    this.detailList = [];
++                    this.$message.error('明细查询失败');
++                })
++                .finally(() => {
++                    this.detailLoading = false;
++                });
++        },
++        onPageChange(page) {
++            this.pagination.current = page;
++            this.handleSearch();
++        }
++    },
++    mounted() {
++        this.handleSearch();
++    }
++}
++</script>
++
++<style scoped>
++@import '~@/assets/less/common.less';
++
++.table-operator {
++    margin-bottom: 18px;
++}
++
++.table-page-search-wrapper {
++    margin-bottom: 18px;
++}
++</style>
+\ No newline at end of file
+diff --git a/src/views/accountids/index.vue b/src/views/accountids/index.vue
+index 428838c2c2d74243ca218e1ddccaef2acfde8070..28ec1b083608a17b0a9423a6918a6d9fc0f823ba 100644
+--- a/src/views/accountids/index.vue
++++ b/src/views/accountids/index.vue
+@@ -159,8 +159,10 @@
+                     <a-menu slot="overlay">
+                         <a-menu-item key="1" @click="batchBindingProject(queryParam.channelSign)"><a-icon
+                                 type="api" />批量绑定项目</a-menu-item>
++                        <a-menu-item key="1" @click="batchBindingjjfl(queryParam.channelSign)"><a-icon
++                                type="api" />批量绑定竞价分类</a-menu-item>
+                         <a-menu-item key="1" @click="handleBingding(queryParam.channelSign)"><a-icon
+-                                type="block" />账户关联模板</a-menu-item>
++                                type="block" />批量绑定返点政策模板</a-menu-item>
+                     </a-menu>
+                     <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /></a-button>
+                 </a-dropdown>
+@@ -205,6 +207,7 @@
+             <tab-accountinfo-modal ref="modalForm" @ok="modalFormOk"></tab-accountinfo-modal>
+             <binding-dia ref="BindingDia" @ok="modalFormOk"></binding-dia>
+             <binding-temp ref="BindingTemp" @ok="modalFormOk"></binding-temp>
++            <binding-diajjfl ref="BindingDiajjfl" @ok="modalFormOk"></binding-diajjfl>
+         </a-card>
+     </div>
+ </template>
+@@ -217,6 +220,7 @@ import { JeecgListMixin } from '@/mixins/JeecgListMixin'
+ import TabAccountinfoModal from './modules/TabAccountinfoModal'
+ import bindingDia from './bindingDia.vue'
+ import bindingTemp from './bindingTemp.vue'
++import bindingDiajjfl from './bindingDiajjfl.vue'
+ 
+ export default {
+     name: 'TabAccountinfoList',
+@@ -224,7 +228,8 @@ export default {
+     components: {
+         TabAccountinfoModal,
+         bindingDia,
+-        bindingTemp
++        bindingTemp,
++        bindingDiajjfl
+     },
+     data() {
+         return {
+@@ -302,6 +307,33 @@ export default {
+                     dataIndex: 'productmName',
+                     query: ["KS", "TX", "DY"]
+                 },
++                {
++                    title: '竞价分类',
++                    align: "center",
++                    query: ["KS", "TX", "DY"],
++                    customRender: function (t, r) {
++                        const LABELS_MAP = {
++                            1: '自运营',
++                            2: '走量',
++                            3: '收量'
++                        };
++                        const tpl = r.biddingRebateTemplate;
++                        if (!tpl) return '';
++                        const channel = tpl.channelName || '';
++                        const classification = tpl.classification || '';
++                        const label = LABELS_MAP[tpl.label] || '';
++                        return [channel, classification, label].filter(Boolean).join('-');
++                    },
++                },
++                {
++                    title: '返点政策模板',
++                    align: "center",
++                    query: ["KS", "TX", "DY"],
++                    dataIndex: 'rebateTeptId',
++                    customRender: function (t, r) {
++                        return r.rebateTeptId_dictText
++                    },
++                },
+                 {
+                     title: '项目名称',
+                     align: "center",
+@@ -410,6 +442,16 @@ export default {
+                 // this.$refs['BindingDia'].showModal([...this.selectedRowKeys])
+             }
+         },
++        batchBindingjjfl(channelSign) {
++            if (this.selectedRowKeys.length <= 0) {
++                this.$message.warning('请选择一条记录！');
++                return false;
++            } else {
++                const selectedRows = this.dataSource.filter(item => this.selectedRowKeys.includes(item.id));
++                this.$refs['BindingDiajjfl'].showModal(selectedRows, channelSign);
++                // this.$refs['BindingDia'].showModal([...this.selectedRowKeys])
++            }
++        },
+         // 父级tab切换
+         handleParentTabChange(activeKey) {
+             this.activeParentTab = activeKey;
+diff --git a/src/views/customerManager/ExcelParser.vue b/src/views/customerManager/ExcelParser.vue
+index 3bfd88d87f2730d1bdd3e17fcc4da5d2f51288e9..9aedd141b840727d24a80ec1dfcead2df9ea1b4b 100644
+--- a/src/views/customerManager/ExcelParser.vue
++++ b/src/views/customerManager/ExcelParser.vue
+@@ -72,12 +72,19 @@
+                     bordered :rowKey="(record, index) => record.key" :loading="isTableLoading || isSubmitting">
+                 </a-table>
+             </div>
++
++            <template v-if="serverDataTotal > 0">
++                <div style="color: #faad14; margin-bottom: 8px;">
++                    已存在 {{ serverDataTotal }} 条数据（如需覆盖请先清除后再上传）
++                </div>
++            </template>
+         </a-card>
+     </div>
+ </template>
+ 
+ <script>
+ import { postAction } from '@/api/manage'
++import { getAction } from '@/api/manage'
+ import * as XLSX from 'xlsx'
+ import moment from 'moment'
+ 
+@@ -178,7 +185,10 @@ export default {
+                 'monthActualShootingPoint': '本月实拍点位',
+                 'monthPureClipPoint': '本月纯剪辑点位',
+                 'monthUpdatePoint': '本月修改点位'
+-            }
++            },
++            serverData: [],
++            isCheckingServerData: false,
++            serverDataTotal: 0
+         }
+     },
+     computed: {
+@@ -265,6 +275,7 @@ export default {
+     watch: {
+         uploadType: {
+             handler(newType) {
++                this.checkServerData();
+                 if (!this.isParsing && !this.isLoading) {
+                     this.clearData()
+                     if (this.fileData) {
+@@ -272,7 +283,12 @@ export default {
+                     }
+                 }
+             },
+-            immediate: false
++            immediate: true
++        },
++        selectedMonth: {
++            handler() {
++                this.checkServerData();
++            }
+         }
+     },
+     created() {
+@@ -299,13 +315,11 @@ export default {
+         },
+         terminateWorker() {
+             if (this.currentWorker) {
+-                // console.log('Terminating existing Web Worker')
+                 this.currentWorker.terminate()
+                 this.currentWorker = null
+             }
+         },
+         clearData() {
+-            // console.log('Clearing data')
+             this.terminateWorker()
+             this.fileData = null
+             this.parsedData = []
+@@ -354,10 +368,8 @@ export default {
+         handleUploadChange(info) {
+             const file = info.file
+             if (!file || this.isUploading || this.isSubmitting) {
+-                // console.log('Upload blocked: file missing or in progress')
+                 return
+             }
+-            // console.log(`Uploading file: ${file.name}`)
+             this.isUploading = true
+             this.isTableLoading = true
+             this.clearData() // 重置状态以确保干净的开始
+@@ -366,12 +378,10 @@ export default {
+             }
+             const reader = new FileReader()
+             reader.onload = (e) => {
+-                // console.log('File read successfully')
+                 this.fileData = e.target.result
+                 this.handleParse(true)
+             }
+             reader.onerror = () => {
+-                console.error(`File read failed: ${file.name}`)
+                 this.$message.error(`${file.name} 读取失败`)
+                 this.clearData()
+             }
+@@ -379,19 +389,16 @@ export default {
+         },
+         async handleParse(isAutoParse = false) {
+             if (this.isParsingData || this.isSubmitting) {
+-                // console.log('Parse blocked: already parsing or submitting')
+                 return
+             }
+             if (!this.fileData || this.isParsing) {
+                 if (!this.fileData) {
+-                    console.warn('No file data to parse')
+                     this.$message.warning('请先选择Excel文件')
+                 }
+                 this.isUploading = false
+                 this.isTableLoading = false
+                 return
+             }
+-            // console.log('Starting file parsing')
+             this.isParsingData = true
+             this.isTableLoading = true
+             this.isParsing = true
+@@ -514,13 +521,11 @@ export default {
+                 this.currentWorker.onmessage = (e) => {
+                     const data = e.data;
+                     if (data.error) {
+-                        console.error(`Parse error: ${data.error}`)
+                         this.$message.error(data.error)
+                         this.clearData()
+                         return
+                     }
+                     if (data.headers && data.chunks) {
+-                        // console.log('Parse success, processing chunks')
+                         const { headers, chunks, totalChunks, numRows, headerRow } = data
+                         const currentFieldMapping = this.fieldMappings[this.uploadType]
+                         const filteredHeaders = headers.filter(header => header && currentFieldMapping[header])
+@@ -529,7 +534,6 @@ export default {
+                             this.$message.warning(`以下Excel列未匹配到预期字段，将被忽略：${unmappedHeaders.join(', ')}`)
+                         }
+                         if (this.uploadType === 'personnel' && !this.requiredPersonnelFields.every(field => filteredHeaders.includes(field))) {
+-                            console.error(`Missing required fields: ${this.requiredPersonnelFields.filter(f => !filteredHeaders.includes(f)).join(', ')}`)
+                             this.$message.error(`缺少必需字段：${this.requiredPersonnelFields.filter(f => !filteredHeaders.includes(f)).join(', ')}`)
+                             this.clearData()
+                             return
+@@ -553,7 +557,6 @@ export default {
+                     }
+                 }
+                 this.currentWorker.onerror = (error) => {
+-                    console.error(`Worker error: ${error.message}`)
+                     this.$message.error('数据解析失败：' + error.message)
+                     this.clearData()
+                 }
+@@ -565,19 +568,15 @@ export default {
+                     percentageFields: this.percentageFields
+                 })
+             } catch (error) {
+-                console.error(`Parse exception: ${error.message}`)
+-                this.$message.error('数据解析失败：' + error.message)
+                 this.clearData()
+             }
+         },
+         processChunks(chunks, totalChunks) {
+-            // console.log(`Processing chunks: ${chunks.length}/${totalChunks}`)
+             this.isLoading = true
+             this.isTableLoading = true
+             let currentChunk = 0
+             const processNextChunk = () => {
+                 if (currentChunk >= chunks.length) {
+-                    // console.log('All chunks processed')
+                     this.isLoading = false
+                     this.isTableLoading = false
+                     this.isDataFullyLoaded = true
+@@ -692,7 +691,6 @@ export default {
+                 this.$message.warning('请选择所属月份')
+                 return
+             }
+-            // console.log('Submitting data')
+             this.isSubmitting = true
+             this.loading = true
+             const submitData = this.allData.map(item => {
+@@ -752,18 +750,14 @@ export default {
+                 dateDffilation: this.selectedMonth.format('YYYY-MM')
+             }).then(res => {
+                 if (res.success) {
+-                    // console.log('Submit success')
+                     this.$message.success('数据提交成功')
+                     this.$emit('submit-success')
+                 } else {
+-                    console.error(`Submit failed: ${res.message}`)
+                     this.$message.error(res.message || '数据提交失败')
+                 }
+             }).catch(error => {
+-                console.error(`Submit error: ${error.message}`)
+                 this.$message.error('提交失败：' + error.message)
+             }).finally(() => {
+-                // console.log('Submit complete')
+                 this.loading = false
+                 this.isSubmitting = false
+             })
+@@ -777,7 +771,6 @@ export default {
+                 okType: 'danger',
+                 cancelText: '取消',
+                 onOk: () => {
+-                    // console.log('Clearing all data')
+                     this.isClearing = true
+                     this.loading = true
+                     this.clearData()
+@@ -785,11 +778,89 @@ export default {
+                     this.$message.success('数据已清除')
+                     this.isClearing = false
+                     this.loading = false
++                    this.isSubmitting = false;
++                    this.isUploading = false;
+                 }
+             })
+         },
+         disabledDate(current) {
+             return current && current > moment().endOf('month')
++        },
++        async checkServerData() {
++            if (!this.selectedMonth) return;
++            this.isCheckingServerData = true;
++            this.isTableLoading = true;
++            this.serverData = [];
++            this.serverDataTotal = 0;
++            let pageNo = 1, pageSize = 1000, total = 0, allData = [];
++            const apiUrl = this.uploadType === 'material' ? '/materialCost/list' : '/usersCost/list';
++            const params = {
++                pageNo,
++                pageSize
++            };
++            if (this.selectedMonth) {
++                params.dateDffilation = this.selectedMonth.format ? this.selectedMonth.format('YYYY-MM') : this.selectedMonth;
++            }
++            try {
++                while (true) {
++                    params.pageNo = pageNo;
++                    const res = await getAction(apiUrl, params);
++                    if (res.success && res.result) {
++                        let records = res.result.records || [];
++                        let t = res.result.total || 0;
++                        allData = allData.concat(records);
++                        total = t;
++                        if (allData.length >= total) break;
++                        pageNo++;
++                    } else {
++                        break;
++                    }
++                }
++                this.serverData = allData;
++                this.serverDataTotal = total;
++                if (total > 0) {
++                    // 用 fieldMappings 的中文表头生成 dynamicColumns
++                    const mapping = this.fieldMappings[this.uploadType];
++                    this.dynamicColumns = Object.keys(mapping).map(header => ({
++                        title: header,
++                        dataIndex: header,
++                        width: 150,
++                        ellipsis: true
++                    }));
++                    // 还原 parsedData 为"中文表头"结构
++                    this.parsedData = allData.map((item, idx) => {
++                        const row = {};
++                        Object.keys(mapping).forEach(header => {
++                            row[header] = item[mapping[header]];
++                        });
++                        row.key = idx + '-' + Date.now();
++                        return row;
++                    });
++                    this.allData = [...this.parsedData];
++                    this.isDataFullyLoaded = true;
++                    this.isSubmitting = false;
++                    this.isUploading = false;
++                } else {
++                    this.parsedData = [];
++                    this.allData = [];
++                    this.isDataFullyLoaded = false;
++                    this.dynamicColumns = [];
++                    this.isSubmitting = false;
++                    this.isUploading = false;
++                }
++                if (this.selectedMonth) {
++                    if (total > 0) {
++                        this.$message.info(`该类型和月份下已存在${total}条数据`);
++                    } else {
++                        this.$message.success('该类型和月份下暂无数据');
++                    }
++                }
++            } catch (e) {
++                this.$message.error('查询已有数据失败');
++            } finally {
++                this.isCheckingServerData = false;
++                this.isTableLoading = false;
++            }
+         }
+     }
+ }
+diff --git a/src/views/dashboard/Analysis.vue b/src/views/dashboard/Analysis.vue
+index 25e479c6df0fb0eb33731c3d5cc7758a7fa1299e..ad4aaaaff11a311a47b16541750177de4e83cce4 100644
+--- a/src/views/dashboard/Analysis.vue
++++ b/src/views/dashboard/Analysis.vue
+@@ -9,10 +9,14 @@
+       </a-radio-group>
+     </div>
+ 
+-    <index-chart v-if="indexStyle === 1" :dateRange="dateRange" @update:dateRange="dateRange = $event" />
+-    <BusinessChart v-else-if="indexStyle === 2" :dateRange="dateRange" @update:dateRange="dateRange = $event" />
+-    <salsChart v-else-if="indexStyle === 3" :dateRange="dateRange" @update:dateRange="dateRange = $event" />
+-    <div v-else-if="indexStyle === 4" :dateRange="dateRange" @update:dateRange="dateRange = $event">
++    <index-chart v-if="indexStyle === 1 && hasTotalPermission" :dateRange="dateRange"
++      @update:dateRange="dateRange = $event" />
++    <BusinessChart v-else-if="indexStyle === 2 && hasChannelPermission" :dateRange="dateRange"
++      @update:dateRange="dateRange = $event" />
++    <salsChart v-else-if="indexStyle === 3 && hasSalesPermission" :dateRange="dateRange"
++      @update:dateRange="dateRange = $event" />
++    <div v-else-if="indexStyle === 4 && haslirunPermission" :dateRange="dateRange"
++      @update:dateRange="dateRange = $event">
+       <div class="top">
+         <div class="top-item">
+           <div class="top-icon"><a-icon type="dollar" /></div>
+diff --git a/src/views/dashboard/bisnussChart.vue b/src/views/dashboard/bisnussChart.vue
+index 693dc4065b43729956c7ce20ba84572d87e79bcf..6c2f5c9ebc19ac4c10419c9928f0b4054c47db3a 100644
+--- a/src/views/dashboard/bisnussChart.vue
++++ b/src/views/dashboard/bisnussChart.vue
+@@ -49,15 +49,10 @@
+       <div style="padding: 10px 10px 0 10px; width: 100%; display: flex; align-items: center;">
+         <div class="extra-wrapper" slot="tabBarExtraContent" style="width: 100%">
+           <span style="margin: 0 10px;">日期：</span>
+-          <a-range-picker 
+-            :value="dateRange" 
+-            @change="handleDateChange" 
+-            :ranges="ranges"
+-            :allowClear="false"
+-          />
++          <a-range-picker :value="dateRange" @change="handleDateChange" :ranges="ranges" :allowClear="false" />
+           <span style="margin: 0 10px;">渠道：</span>
+-          <j-multi-select-tag style="width: 280px;" v-model="businessIds" :options="businessOptions"
+-            placeholder="请选择渠道" />
++          <j-multi-select-tag v-if="businessOptions && businessOptions.length > 0" style="width: 280px;"
++            v-model="businessIds" :options="businessOptions" placeholder="请选择渠道" />
+           <a-tooltip style="margin-left: 10px;" :title="tooltipContent" @visibleChange="getUnbindingNum" slot="action">
+             <a-icon type="info-circle-o" />
+           </a-tooltip>
+@@ -264,15 +259,15 @@ export default {
+     },
+     getBusinessList() {
+       this.getBisLoading = true;
+-      this.businessOptions = [];
+       httpAction('/business/list', {
+         pageNo: 1,
+         pageSize: 10000,
+       }, 'GET')
+         .then((res) => {
+           if (res.success) {
+-            this.businessOptions = res.result.records.map((item) => {
+-              return { label: item.businessName, value: item.id };
++            const records = (res.result && res.result.records) ? res.result.records : [];
++            this.businessOptions = records.filter(item => item).map((item) => {
++              return { label: item.businessName || '', value: item.id || '' };
+             });
+           } else {
+             this.$message.warning(res.message);
+@@ -431,13 +426,15 @@ export default {
+       )
+         .then((res) => {
+           if (res.success) {
+-            this.proRankList = (res.result || []).map((item) => {
+-              return {
+-                ...item,
+-                name: item.pro_name,
+-                total: item.total_charged_in_yuan,
+-              };
+-            });
++            this.proRankList = (res.result || [])
++              .filter(item => item)
++              .map((item) => {
++                return {
++                  ...item,
++                  name: item.pro_name || '',
++                  total: item.total_charged_in_yuan || 0,
++                };
++              });
+           } else {
+             this.$message.warning(res.message);
+           }
+@@ -457,13 +454,15 @@ export default {
+       )
+         .then((res) => {
+           if (res.success) {
+-            this.cusRankList = (res.result || []).map((item) => {
+-              return {
+-                ...item,
+-                name: item.customer_name,
+-                total: item.total_charged_in_yuan,
+-              };
+-            });
++            this.cusRankList = (res.result || [])
++              .filter(item => item)
++              .map((item) => {
++                return {
++                  ...item,
++                  name: item.customer_name || '',
++                  total: item.total_charged_in_yuan || 0,
++                };
++              });
+           } else {
+             this.$message.warning(res.message);
+           }
+@@ -483,13 +482,15 @@ export default {
+       )
+         .then((res) => {
+           if (res.success) {
+-            this.busRankList = (res.result || []).map((item) => {
+-              return {
+-                ...item,
+-                name: item.business_name,
+-                total: item.total_charged_in_yuan,
+-              };
+-            });
++            this.busRankList = (res.result || [])
++              .filter(item => item)
++              .map((item) => {
++                return {
++                  ...item,
++                  name: item.business_name || '',
++                  total: item.total_charged_in_yuan || 0,
++                };
++              });
+           } else {
+             this.$message.warning(res.message);
+           }
+@@ -509,13 +510,15 @@ export default {
+       )
+         .then((res) => {
+           if (res.success) {
+-            this.salesRankList = (res.result || []).map((item) => {
+-              return {
+-                ...item,
+-                name: item.sales_person_name,
+-                total: item.total_charged_in_yuan,
+-              };
+-            });
++            this.salesRankList = (res.result || [])
++              .filter(item => item)
++              .map((item) => {
++                return {
++                  ...item,
++                  name: item.sales_person_name || '',
++                  total: item.total_charged_in_yuan || 0,
++                };
++              });
+           } else {
+             this.$message.warning(res.message);
+           }
+diff --git a/src/views/dashboard/components/UnbindingAccountModal.vue b/src/views/dashboard/components/UnbindingAccountModal.vue
+index aa9fc026bfbad31beda1cf63bf3a4ac2816c3563..9fa398daf1594e9d9d3c8d8db20a5bd65d17af3b 100644
+--- a/src/views/dashboard/components/UnbindingAccountModal.vue
++++ b/src/views/dashboard/components/UnbindingAccountModal.vue
+@@ -1,6 +1,6 @@
+ <template>
+     <a-modal title="未绑定项目账户列表" :width="1600" :visible="visible" :destroyOnClose="true" @ok="handleOk"
+-        @cancel="handleCancel">
++        @cancel="handleCancel" @afterClose="resetData">
+         <div style="background-color: #fff;">
+             <a-tabs default-active-key="DY" v-model="activeParentTab" @change="handleParentTabChange" tabPosition="top">
+                 <a-tab-pane key="DY" tab="巨量">
+@@ -251,27 +251,54 @@ export default {
+                     query: ["KS", "DY", "TX"]
+                 },
+                 {
+-                    title: '账户状态',
++                    title: '竞价分类',
+                     align: "center",
+-                    dataIndex: 'dyStatus',
+-                    query: ["DY"]
++                    query: ["KS", "TX", "DY"],
++                    customRender: function (t, r) {
++                        const LABELS_MAP = {
++                            1: '自运营',
++                            2: '走量',
++                            3: '收量'
++                        };
++                        const tpl = r.biddingRebateTemplate;
++                        if (!tpl) return '';
++                        const channel = tpl.channelName || '';
++                        const classification = tpl.classification || '';
++                        const label = LABELS_MAP[tpl.label] || '';
++                        return [channel, classification, label].filter(Boolean).join('-');
++                    },
+                 },
+                 {
+-                    title: '用户审核状态',
++                    title: '返点政策模板',
+                     align: "center",
+-                    dataIndex: 'userReviewStatus',
+-                    customRender: function (t, r, index) {
+-                        const m = ['未送审', '待审核', '审核通过', '审核拒绝', '封禁']
+-                        return m[Number(r.userReviewStatus)]
++                    query: ["KS", "TX", "DY"],
++                    dataIndex: 'rebateTeptId',
++                    customRender: function (t, r) {
++                        return r.rebateTeptId_dictText
+                     },
+-                    query: ["KS"]
+                 },
+-                {
+-                    title: '客户系统状态',
+-                    align: "center",
+-                    dataIndex: 'txSystemStatus',
+-                    query: ["TX"]
+-                }
++                // {
++                //     title: '账户状态',
++                //     align: "center",
++                //     dataIndex: 'dyStatus',
++                //     query: ["DY"]
++                // },
++                // {
++                //     title: '用户审核状态',
++                //     align: "center",
++                //     dataIndex: 'userReviewStatus',
++                //     customRender: function (t, r, index) {
++                //         const m = ['未送审', '待审核', '审核通过', '审核拒绝', '封禁']
++                //         return m[Number(r.userReviewStatus)]
++                //     },
++                //     query: ["KS"]
++                // },
++                // {
++                //     title: '客户系统状态',
++                //     align: "center",
++                //     dataIndex: 'txSystemStatus',
++                //     query: ["TX"]
++                // }
+             ],
+             url: {
+                 list: "/accountinfo/list",
+@@ -290,6 +317,10 @@ export default {
+     methods: {
+         show() {
+             this.visible = true;
++            // 每次打开弹窗都默认巨量-巨量广告
++            this.activeParentTab = 'DY';
++            this.activeChildTab.JL = 'DY-JLGG';
++            this.queryParam.channelSign = 'DY-JLGG';
+             this.resetData();
+             this.searchQuery();
+         },
+@@ -358,7 +389,8 @@ export default {
+         },
+         searchReset() {
+             this.queryParam = {
+-                isHaveData: 0
++                isHaveData: 0,
++                isBinding: 1
+             }
+             this.loadData(1);
+         },
+diff --git a/src/views/dashboard/components/businessTotal.vue b/src/views/dashboard/components/businessTotal.vue
+index 6b7194a33b66bdb1dabae3e5d5668db38d446b4a..b47e349f0b12cb2be0a75a8387e4eef4c50ab7f9 100644
+--- a/src/views/dashboard/components/businessTotal.vue
++++ b/src/views/dashboard/components/businessTotal.vue
+@@ -247,11 +247,13 @@ export default {
+                 title: {
+                     ...this.chartOptions.title,
+                     subtext: `统计周期：${this.dateRange[0]} 至 ${this.dateRange[1]}`,
++                    top: 0,
+                 },
+                 series: [
+                     {
+                         ...this.chartOptions.series[0],
+                         data: this.chartList,
++                        center: ['50%', '62%'],
+                     },
+                 ],
+             };
+diff --git a/src/views/dashboard/components/businessTotalDays.vue b/src/views/dashboard/components/businessTotalDays.vue
+index 62bb397d667a4f28c21fb4ad4819778fdc25a5b0..a005fb9290880e9a70ea00fa453ad7dea7285fe6 100644
+--- a/src/views/dashboard/components/businessTotalDays.vue
++++ b/src/views/dashboard/components/businessTotalDays.vue
+@@ -210,6 +210,7 @@ export default {
+             const dateMap = {};
+             const platforms = new Set();
+             rawData.forEach((item) => {
++                if (!item.business_name) return;
+                 if (!dateMap[item.date_time]) {
+                     dateMap[item.date_time] = {};
+                 }
+@@ -221,6 +222,7 @@ export default {
+             const legendData = [];
+             platforms.forEach((platform) => {
+                 const platformData = dates.map((date) => dateMap[date][platform] || 0);
++                // console.log(platform)
+                 series.push({
+                     name: platform,
+                     type: 'bar',
+@@ -236,6 +238,7 @@ export default {
+                 title: {
+                     ...this.chartOptions.title,
+                     subtext: `统计周期：${this.dateRange[0]} 至 ${this.dateRange[1]}`,
++                    top: 0
+                 },
+                 legend: {
+                     ...this.chartOptions.legend,
+@@ -244,6 +247,7 @@ export default {
+                 xAxis: {
+                     ...this.chartOptions.xAxis,
+                     data: dates,
++                    center: ['50%', '62%'],
+                 },
+                 series: series,
+             };
+diff --git a/src/views/dashboard/components/platformTotal.vue b/src/views/dashboard/components/platformTotal.vue
+index ca025739292bc404fd5a78a0c4a51eae50a7056b..ab5c3ae91d4f68447bba566fa8190fbed0da74c2 100644
+--- a/src/views/dashboard/components/platformTotal.vue
++++ b/src/views/dashboard/components/platformTotal.vue
+@@ -228,11 +228,13 @@ export default {
+                 title: {
+                     ...this.chartOptions.title,
+                     subtext: `统计周期：${this.dateRange[0]} 至 ${this.dateRange[1]}`,
++                    top: 0
+                 },
+                 series: [
+                     {
+                         ...this.chartOptions.series[0],
+                         data: this.chartList,
++                        center: ['50%', '62%'],
+                     },
+                 ],
+             };
+diff --git a/src/views/rebateManage/vue/TabRebatemanageList.vue b/src/views/rebateManage/vue/TabRebatemanageList.vue
+index 39fe79be34837266e8f1bfb359fe2774d64aed5a..f36cec83447739683f1dc33081e86bd21f1a15b1 100644
+--- a/src/views/rebateManage/vue/TabRebatemanageList.vue
++++ b/src/views/rebateManage/vue/TabRebatemanageList.vue
+@@ -15,7 +15,7 @@
+               <a-button type="primary" @click="searchReset" icon="reload" style="margin-left: 8px">重置</a-button>
+               <a @click="handleToggleSearch" style="margin-left: 8px">
+                 {{ toggleSearchStatus ? '收起' : '展开' }}
+-                <a-icon :type="toggleSearchStatus ? 'up' : 'down'"/>
++                <a-icon :type="toggleSearchStatus ? 'up' : 'down'" />
+               </a>
+             </span>
+           </a-col>
+@@ -28,14 +28,16 @@
+     <div class="table-operator">
+       <a-button @click="handleAdd" type="primary" icon="plus">新增</a-button>
+       <a-button type="primary" icon="download" @click="handleExportXls('返点比例管理')">导出</a-button>
+-      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
++      <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl"
++        @change="handleImportExcel">
+         <a-button type="primary" icon="import">导入</a-button>
+       </a-upload>
+       <!-- 高级查询区域 -->
+-      <j-super-query :fieldList="superFieldList" ref="superQueryModal" @handleSuperQuery="handleSuperQuery"></j-super-query>
++      <j-super-query :fieldList="superFieldList" ref="superQueryModal"
++        @handleSuperQuery="handleSuperQuery"></j-super-query>
+       <a-dropdown v-if="selectedRowKeys.length > 0">
+         <a-menu slot="overlay">
+-          <a-menu-item key="1" @click="batchDel"><a-icon type="delete"/>删除</a-menu-item>
++          <a-menu-item key="1" @click="batchDel"><a-icon type="delete" />删除</a-menu-item>
+         </a-menu>
+         <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /></a-button>
+       </a-dropdown>
+@@ -44,22 +46,14 @@
+     <!-- table区域-begin -->
+     <div>
+       <div class="ant-alert ant-alert-info" style="margin-bottom: 16px;">
+-        <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{ selectedRowKeys.length }}</a>项
++        <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{
++          selectedRowKeys.length }}</a>项
+         <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+       </div>
+ 
+-      <a-table
+-        ref="table"
+-        size="middle"
+-        :scroll="{x:true}"
+-        bordered
+-        rowKey="id"
+-        :columns="columns"
+-        :dataSource="dataSource"
+-        :pagination="ipagination"
+-        :loading="loading"
+-        :rowSelection="{selectedRowKeys: selectedRowKeys, onChange: onSelectChange}"
+-        class="j-table-force-nowrap"
++      <a-table ref="table" size="middle" :scroll="{ x: true }" bordered rowKey="id" :columns="columns"
++        :dataSource="dataSource" :pagination="ipagination" :loading="loading"
++        :rowSelection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }" class="j-table-force-nowrap"
+         @change="handleTableChange">
+ 
+         <template slot="htmlSlot" slot-scope="text">
+@@ -67,17 +61,12 @@
+         </template>
+         <template slot="imgSlot" slot-scope="text,record">
+           <span v-if="!text" style="font-size: 12px;font-style: italic;">无图片</span>
+-          <img v-else :src="getImgView(text)" :preview="record.id" height="25px" alt="" style="max-width:80px;font-size: 12px;font-style: italic;"/>
++          <img v-else :src="getImgView(text)" :preview="record.id" height="25px" alt=""
++            style="max-width:80px;font-size: 12px;font-style: italic;" />
+         </template>
+         <template slot="fileSlot" slot-scope="text">
+           <span v-if="!text" style="font-size: 12px;font-style: italic;">无文件</span>
+-          <a-button
+-            v-else
+-            :ghost="true"
+-            type="primary"
+-            icon="download"
+-            size="small"
+-            @click="downloadFile(text)">
++          <a-button v-else :ghost="true" type="primary" icon="download" size="small" @click="downloadFile(text)">
+             下载
+           </a-button>
+         </template>
+@@ -110,101 +99,101 @@
+ 
+ <script>
+ 
+-  import '@/assets/less/TableExpand.less'
+-  import { mixinDevice } from '@/utils/mixin'
+-  import { JeecgListMixin } from '@/mixins/JeecgListMixin'
+-  import TabRebatemanageModal from './modules/TabRebatemanageModal'
++import '@/assets/less/TableExpand.less'
++import { mixinDevice } from '@/utils/mixin'
++import { JeecgListMixin } from '@/mixins/JeecgListMixin'
++import TabRebatemanageModal from './modules/TabRebatemanageModal'
+ 
+-  export default {
+-    name: 'TabRebatemanageList',
+-    mixins:[JeecgListMixin, mixinDevice],
+-    components: {
+-      TabRebatemanageModal
+-    },
+-    data () {
+-      return {
+-        description: '返点比例管理管理页面',
+-        // 表头
+-        columns: [
+-          {
+-            title: '#',
+-            dataIndex: '',
+-            key:'rowIndex',
+-            width:60,
+-            align:"center",
+-            customRender:function (t,r,index) {
+-              return parseInt(index)+1;
+-            }
+-          },
+-          {
+-            title:'删除标识（0：未删除1：已删除）',
+-            align:"center",
+-            dataIndex: 'delFlag'
+-          },
+-          {
+-            title:'客户编号id',
+-            align:"center",
+-            dataIndex: 'customerId'
+-          },
+-          {
+-            title:'客户名称',
+-            align:"center",
+-            dataIndex: 'customerName'
+-          },
+-          {
+-            title:'返点比例',
+-            align:"center",
+-            dataIndex: 'rebate'
+-          },
+-          {
+-            title:'生效日期',
+-            align:"center",
+-            dataIndex: 'effectiveDate'
+-          },
+-          {
+-            title: '操作',
+-            dataIndex: 'action',
+-            align:"center",
+-            fixed:"right",
+-            width:147,
+-            scopedSlots: { customRender: 'action' }
++export default {
++  name: 'TabRebatemanageList',
++  mixins: [JeecgListMixin, mixinDevice],
++  components: {
++    TabRebatemanageModal
++  },
++  data() {
++    return {
++      description: '返点比例管理管理页面',
++      // 表头
++      columns: [
++        {
++          title: '#',
++          dataIndex: '',
++          key: 'rowIndex',
++          width: 60,
++          align: "center",
++          customRender: function (t, r, index) {
++            return parseInt(index) + 1;
+           }
+-        ],
+-        url: {
+-          list: "/rebateManage/tabRebatemanage/list",
+-          delete: "/rebateManage/tabRebatemanage/delete",
+-          deleteBatch: "/rebateManage/tabRebatemanage/deleteBatch",
+-          exportXlsUrl: "/rebateManage/tabRebatemanage/exportXls",
+-          importExcelUrl: "rebateManage/tabRebatemanage/importExcel",
+-          
+         },
+-        dictOptions:{},
+-        superFieldList:[],
+-      }
+-    },
+-    created() {
++        {
++          title: '删除标识（0：未删除1：已删除）',
++          align: "center",
++          dataIndex: 'delFlag'
++        },
++        {
++          title: '客户编号id',
++          align: "center",
++          dataIndex: 'customerId'
++        },
++        {
++          title: '客户名称',
++          align: "center",
++          dataIndex: 'customerName'
++        },
++        {
++          title: '返点比例',
++          align: "center",
++          dataIndex: 'rebate'
++        },
++        {
++          title: '生效日期',
++          align: "center",
++          dataIndex: 'effectiveDate'
++        },
++        {
++          title: '操作',
++          dataIndex: 'action',
++          align: "center",
++          fixed: "right",
++          width: 147,
++          scopedSlots: { customRender: 'action' }
++        }
++      ],
++      url: {
++        list: "/rebateManage/tabRebatemanage/list",
++        delete: "/rebateManage/tabRebatemanage/delete",
++        deleteBatch: "/rebateManage/tabRebatemanage/deleteBatch",
++        exportXlsUrl: "/rebateManage/tabRebatemanage/exportXls",
++        importExcelUrl: "rebateManage/tabRebatemanage/importExcel",
++
++      },
++      dictOptions: {},
++      superFieldList: [],
++    }
++  },
++  created() {
+     this.getSuperFieldList();
++  },
++  computed: {
++    importExcelUrl: function () {
++      return `${window._CONFIG['domianURL']}/${this.url.importExcelUrl}`;
+     },
+-    computed: {
+-      importExcelUrl: function(){
+-        return `${window._CONFIG['domianURL']}/${this.url.importExcelUrl}`;
+-      },
++  },
++  methods: {
++    initDictConfig() {
+     },
+-    methods: {
+-      initDictConfig(){
+-      },
+-      getSuperFieldList(){
+-        let fieldList=[];
+-        fieldList.push({type:'string',value:'delFlag',text:'删除标识（0：未删除1：已删除）',dictCode:''})
+-        fieldList.push({type:'string',value:'customerId',text:'客户编号id',dictCode:''})
+-        fieldList.push({type:'string',value:'customerName',text:'客户名称',dictCode:''})
+-        fieldList.push({type:'double',value:'rebate',text:'返点比例',dictCode:''})
+-        fieldList.push({type:'datetime',value:'effectiveDate',text:'生效日期'})
+-        this.superFieldList = fieldList
+-      }
++    getSuperFieldList() {
++      let fieldList = [];
++      fieldList.push({ type: 'string', value: 'delFlag', text: '删除标识（0：未删除1：已删除）', dictCode: '' })
++      fieldList.push({ type: 'string', value: 'customerId', text: '客户编号id', dictCode: '' })
++      fieldList.push({ type: 'string', value: 'customerName', text: '客户名称', dictCode: '' })
++      fieldList.push({ type: 'double', value: 'rebate', text: '返点比例', dictCode: '' })
++      fieldList.push({ type: 'datetime', value: 'effectiveDate', text: '生效日期' })
++      this.superFieldList = fieldList
+     }
+   }
++}
+ </script>
+ <style scoped>
+-  @import '~@assets/less/common.less';
++@import '~@assets/less/common.less';
+ </style>
+\ No newline at end of file
+diff --git a/src/views/rebateTemplate/index.vue b/src/views/rebateTemplate/index.vue
+index 3a45ffe719eb1bb172e90cb9244c278322135bd2..16c0002ae026af792a6a7c044576cafa60469aff 100644
+--- a/src/views/rebateTemplate/index.vue
++++ b/src/views/rebateTemplate/index.vue
+@@ -141,7 +141,7 @@ export default {
+     },
+     data() {
+         return {
+-            description: '这是用户管理页面',
++            description: '返点政策模板',
+             queryParam: {},
+             recycleBinVisible: false,
+             columns: [
+@@ -156,7 +156,7 @@ export default {
+                   }
+                 },*/
+                 {
+-                    title: '返点政策模板名称',
++                    title: '',
+                     align: "center",
+                     dataIndex: 'username',
+                     width: 200,
+diff --git a/src/views/templateRebate/modules/TabBiddingRebateTemplateForm.vue b/src/views/templateRebate/modules/TabBiddingRebateTemplateForm.vue
+index 81504030b197717eca4c9167799dbba10abe792f..d56460fec37b25d452031d79e40fbac5467425ae 100644
+--- a/src/views/templateRebate/modules/TabBiddingRebateTemplateForm.vue
++++ b/src/views/templateRebate/modules/TabBiddingRebateTemplateForm.vue
+@@ -55,6 +55,15 @@ export default {
+       },
+       confirmLoading: false,
+       validatorRules: {
++        channelSign: [
++          { required: true, message: '请选择渠道标识', trigger: 'change' }
++        ],
++        classification: [
++          { required: true, message: '请输入结算行业外部分类', trigger: 'blur' }
++        ],
++        label: [
++          { required: true, message: '请选择标签', trigger: 'change' }
++        ]
+       },
+       url: {
+         add: "/biddingRebateTemplate/add",
+diff --git a/t.js b/t.js
+index 6fe6f61b2588089a784afa3e31af20742da67fbc..e075f5dc62c31541397c442bff8862e449f1bb90 100644
+--- a/t.js
++++ b/t.js
+@@ -1,20 +1,19 @@
+-function a() {
+-    // console.log(1)
+-    setTimeout(() => {
+-        // console.log(2)
+-    }, 0)
+-    // console.log(3)
+-    queueMicrotask(() => {
+-        // console.log(4)
+-    })
+-    new Promise((res, rej) => {
+-        res(5)
+-        // console.log(6)
+-    }).then(_ => {
+-        // console.log(7)
+-    })
+-}
+-
+-// console.log(8)
+-a()
+-// console.log(9)
+\ No newline at end of file
++{
++    "code": 0,
++        "message": "OK",
++            "request_id": "202507031809227161D0D88FCA4795191B",
++                "data": {
++        "query_list": [
++            {
++                "query_id": "ucjBELLDrXyXDfpS1751537324867",
++                "query_status": 3,
++                "task_list": [
++                    {
++                        "create_time": "2025-07-03 18:08:53",
++                        "task_id": "hSeBWOgCDAEqxyPX1751537333093"
++                    }
++                ]
++            }
++        ]
++    }
++}
+\ No newline at end of file

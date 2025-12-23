@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>首发素材消耗计算测试</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .summary {
+            background-color: #e8f4f8;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>首发和优质素材消耗计算结果</h1>
+    <div id="results"></div>
+
+    <script>
+        // 返点上下限（暂定）
+        const REBATE_MIN = 0;
+        const REBATE_MAX = 0.01;
+
+        // 从d.json读取数据（这里需要手动粘贴数据）
+        // 为了测试，我先用几个示例数据
+        const testData = [
+            {
+                "id": "1994280022390738944",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7499379739577090086",
+                "materialTags": "FIRST_PUBLISH_MATERIAL",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "YES",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 0.070,
+                "performanceCost": 0.070,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022390738945",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7499379716653105178",
+                "materialTags": "FIRST_PUBLISH_MATERIAL",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "YES",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 0.920,
+                "performanceCost": 0.920,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022390738946",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7498940901507579942",
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 0.090,
+                "performanceCost": 0.090,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022390738948",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828893534450700",
+                "advertiserName": "百姓车评人-",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "黄美肖",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": null,
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "属于直播返点类型 非优质",
+                "isCalHighMaterialCostRateDenominato": "NO",
+                "invalidHighMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.000,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "属于直播返点类型 非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "NO",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.000,
+                "cost": 1.010,
+                "performanceCost": 1.010,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022394933250",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1832699626352843",
+                "advertiserName": "沃小沃汽车服务部-1",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "新车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "长沙六江文化传媒有限公司",
+                "optimizerName": "黄美肖",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": null,
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "属于直播返点类型 非优质",
+                "isCalHighMaterialCostRateDenominato": "NO",
+                "invalidHighMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "highMaterialCostRateMolecular": 0.000,
+                "highMaterialCostRateDenominato": 0.000,
+                "highMaterialCostRateMetric": 0.000,
+                "highMaterialCostRateTargetValue": 0.000,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "属于直播返点类型 非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "NO",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "firstEffectiveMaterialCostRateMolecular": 0.000,
+                "firstEffectiveMaterialCostRateDenominato": 0.000,
+                "firstEffectiveMaterialCostRateMetric": 0.000,
+                "firstEffectiveMaterialCostRateTargetValue": 0.000,
+                "cost": 15.920,
+                "performanceCost": 15.920,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022394933254",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7499379748480385034",
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 0.460,
+                "performanceCost": 0.460,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022394933260",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7498940846769799177",
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 0.920,
+                "performanceCost": 0.920,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022394933263",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7498940850405457947",
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 1.050,
+                "performanceCost": 1.050,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022394933271",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7499379743746916379",
+                "materialTags": "HIGH_QUALITY_MATERIAL",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "YES",
+                "invalidHighMaterialCostRateMolecularReason": "",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 93.660,
+                "performanceCost": 93.660,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022394933272",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828896014812618",
+                "advertiserName": "胡子侃车",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": null,
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "属于直播返点类型 非优质",
+                "isCalHighMaterialCostRateDenominato": "NO",
+                "invalidHighMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.000,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "属于直播返点类型 非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "NO",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.000,
+                "cost": 1835.790,
+                "performanceCost": 1835.790,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022399127552",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828896014369433",
+                "advertiserName": "胡子侃车-系统投",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "黄美肖",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": null,
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "属于直播返点类型 非优质",
+                "isCalHighMaterialCostRateDenominato": "NO",
+                "invalidHighMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.000,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "属于直播返点类型 非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "NO",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.000,
+                "cost": 155.750,
+                "performanceCost": 155.750,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022399127554",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828896014812618",
+                "advertiserName": "胡子侃车",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "黄美肖",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": null,
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "属于直播返点类型 非优质",
+                "isCalHighMaterialCostRateDenominato": "NO",
+                "invalidHighMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.000,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "属于直播返点类型 非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "NO",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.000,
+                "cost": 437.690,
+                "performanceCost": 437.690,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022399127560",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7498940859599224870",
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 0.020,
+                "performanceCost": 0.020,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022399127563",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1832699626965259",
+                "advertiserName": "沃小沃汽车服务部-2",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "新车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "长沙六江文化传媒有限公司",
+                "optimizerName": "黄美肖",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": null,
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "属于直播返点类型 非优质",
+                "isCalHighMaterialCostRateDenominato": "NO",
+                "invalidHighMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "highMaterialCostRateMolecular": 0.000,
+                "highMaterialCostRateDenominato": 0.000,
+                "highMaterialCostRateMetric": 0.000,
+                "highMaterialCostRateTargetValue": 0.000,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "属于直播返点类型 非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "NO",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "firstEffectiveMaterialCostRateMolecular": 0.000,
+                "firstEffectiveMaterialCostRateDenominato": 0.000,
+                "firstEffectiveMaterialCostRateMetric": 0.000,
+                "firstEffectiveMaterialCostRateTargetValue": 0.000,
+                "cost": 25.210,
+                "performanceCost": 25.210,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022399127564",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895928717587",
+                "advertiserName": "搬砖小浩说车-素材户",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "赖周玲",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": "7499379719403257865",
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "非优质",
+                "isCalHighMaterialCostRateDenominato": "YES",
+                "invalidHighMaterialCostRateDenominatoReason": "",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.602,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "YES",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.709,
+                "cost": 0.590,
+                "performanceCost": 0.590,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            },
+            {
+                "id": "1994280022399127568",
+                "createBy": "system",
+                "createTime": "2025-11-28 13:39:43",
+                "updateBy": null,
+                "updateTime": null,
+                "delFlag": "0",
+                "rebateMaterialTaskId": "1994279821217001473",
+                "agentId": "1817398842810377",
+                "agentGroupName": "上海岂量信息科技有限公司",
+                "statPeriod": "2025-05",
+                "advertiserId": "1828895929231435",
+                "advertiserName": "四海汽车--阿贤",
+                "operatorTag": "ZIYUNYING",
+                "rebateCalcPolicyType": "CAR_POLICY",
+                "rebateCalcSettlementStatsType": "NORMAL_INDUSTRY",
+                "rebateCalcFirstIndustryName": "汽车",
+                "rebateCalcSecondIndustryName": "二手车线下零售",
+                "rebateCalcExternalIndustryCategory": "竞价二类",
+                "customerName": "深圳市赤兔星驰文化传播有限公司",
+                "optimizerName": "黄美肖",
+                "agentSaleName": "",
+                "secondAdAgentId": null,
+                "isLiveRebateType": "YES",
+                "materialId": null,
+                "materialTags": "",
+                "isCutSimilarMaterial": "NO",
+                "isInSimilarMaterialQueue": "NO",
+                "appKey": "AD",
+                "isCalHighMaterialCostRebate": "NO",
+                "invalidHighMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非优质",
+                "highMaterialCostRebateRate": 0.000,
+                "isCalFirstEffectiveMaterialCostRebate": "NO",
+                "invalidFirstEffectiveMaterialCostReason": "不在政策返点范围内 属于直播返点类型 非首发",
+                "firstEffectiveMaterialCostRebateRate": 0.000,
+                "isCalLiveMaterialRebate": "NO",
+                "liveCostRebateRate": 0.000,
+                "isCalHighMaterialCostRateMolecular": "NO",
+                "invalidHighMaterialCostRateMolecularReason": "属于直播返点类型 非优质",
+                "isCalHighMaterialCostRateDenominato": "NO",
+                "invalidHighMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "highMaterialCostRateMolecular": 9366000.000,
+                "highMaterialCostRateDenominato": 11915000.000,
+                "highMaterialCostRateMetric": 0.786,
+                "highMaterialCostRateTargetValue": 0.000,
+                "isCalFirstEffectiveMaterialCostRateMolecular": "NO",
+                "invalidFirstEffectiveMaterialCostRateMolecularReason": "属于直播返点类型 非首发",
+                "isCalFirstEffectiveMaterialCostRateDenominato": "NO",
+                "invalidFirstEffectiveMaterialCostRateDenominatoReason": "属于直播返点类型",
+                "firstEffectiveMaterialCostRateMolecular": 245000.000,
+                "firstEffectiveMaterialCostRateDenominato": 11915000.000,
+                "firstEffectiveMaterialCostRateMetric": 0.021,
+                "firstEffectiveMaterialCostRateTargetValue": 0.000,
+                "cost": 2.440,
+                "performanceCost": 2.440,
+                "highCostRebateAmount": 0.000,
+                "firstEffectiveCostRebateAmount": 0.000,
+                "liveCostRebateAmount": 0.000
+            }
+        ]
+        // 分组函数
+        function getGroupKey(item) {
+            return [
+                item.operatorTag,
+                item.rebateCalcSettlementStatsType,
+                item.rebateCalcSecondIndustryName,
+                item.rebateCalcExternalIndustryCategory,
+                item.agentGroupName
+            ].join('|');
+        }
+
+        // 计算单条数据的返点比例（通用函数，支持首发和优质）
+        function calculateRebateRate(item, groupMetric, groupTarget, type) {
+            type = type || 'firstRelease'; // 默认为首发
+
+            let metric, target, invalidReason;
+
+            if (type === 'highQuality') {
+                // 优质素材（保持 null 不变，不转换为 0）
+                metric = (item.highMaterialCostRateMetric !== null && item.highMaterialCostRateMetric !== undefined) ? item.highMaterialCostRateMetric : null;
+                target = (item.highMaterialCostRateTargetValue !== null && item.highMaterialCostRateTargetValue !== undefined) ? item.highMaterialCostRateTargetValue : null;
+                // 使用 invalidHighMaterialCostRateMolecularReason（优质占比分子剔除原因）来判断
+                invalidReason = item.invalidHighMaterialCostRateMolecularReason || item.invalidHighMaterialCostReason || '';
+            } else {
+                // 首发素材（保持 null 不变，不转换为 0）
+                metric = (item.firstEffectiveMaterialCostRateMetric !== null && item.firstEffectiveMaterialCostRateMetric !== undefined) ? item.firstEffectiveMaterialCostRateMetric : null;
+                target = (item.firstEffectiveMaterialCostRateTargetValue !== null && item.firstEffectiveMaterialCostRateTargetValue !== undefined) ? item.firstEffectiveMaterialCostRateTargetValue : null;
+                // 使用 invalidFirstEffectiveMaterialCostRateMolecularReason（首发占比分子剔除原因）来判断
+                invalidReason = item.invalidFirstEffectiveMaterialCostRateMolecularReason || item.invalidFirstEffectiveMaterialCostReason || '';
+            }
+
+            const secondIndustry = item.rebateCalcSecondIndustryName || '';
+
+            // 使用组的指标和目标（如果组有值），否则使用当前项的指标和目标
+            const finalMetric = groupMetric !== null && groupMetric !== undefined ? groupMetric : metric;
+            const finalTarget = groupTarget !== null && groupTarget !== undefined ? groupTarget : target;
+
+            // 优先级1：剔除汽车厂商
+            if (secondIndustry === '汽车厂商') {
+                return { rebateRate: 0, reason: '剔除-汽车厂商' };
+            }
+
+            // 优先级2：如果指标和目标都是0或null，且包含直播，按照返点上限
+            if ((finalMetric === null || finalMetric === undefined || finalMetric === 0) &&
+                (finalTarget === null || finalTarget === undefined || finalTarget === 0) &&
+                invalidReason && invalidReason.includes('直播')) {
+                return { rebateRate: parseFloat(REBATE_MAX.toFixed(6)), reason: '直播类型-取上限' };
+            }
+
+            // 优先级3：根据指标和目标值计算（如果指标和目标都有值）
+            if (finalMetric !== null && finalMetric !== undefined && finalTarget !== null && finalTarget !== undefined) {
+                // 指标和目标都为0
+                if (finalMetric === 0 && finalTarget === 0) {
+                    return { rebateRate: 0, reason: '指标和目标都为0' };
+                }
+                // 指标 >= 目标，取返点上限
+                if (finalMetric >= finalTarget && finalTarget > 0) {
+                    return { rebateRate: parseFloat(REBATE_MAX.toFixed(6)), reason: `指标(${finalMetric}) >= 目标(${finalTarget})` };
+                }
+                // 指标 < 目标，按公式计算
+                if (finalMetric < finalTarget && finalTarget > 0) {
+                    const rebateRate = REBATE_MIN + (REBATE_MAX - REBATE_MIN) * (finalMetric / finalTarget);
+                    return { rebateRate: parseFloat(rebateRate.toFixed(6)), reason: `指标(${finalMetric}) < 目标(${finalTarget})，按公式计算` };
+                }
+            }
+
+            // 默认情况
+            return { rebateRate: 0, reason: '未知情况' };
+        }
+
+        // 处理数据（支持首发和优质两种类型）
+        function processData(data, type) {
+            type = type || 'firstRelease'; // 默认为首发
+
+            // 根据类型确定字段名
+            const metricField = type === 'highQuality'
+                ? 'highMaterialCostRateMetric'
+                : 'firstEffectiveMaterialCostRateMetric';
+            const targetField = type === 'highQuality'
+                ? 'highMaterialCostRateTargetValue'
+                : 'firstEffectiveMaterialCostRateTargetValue';
+
+            // 第一步：按政策粒度分组，计算每条数据的返点比例
+            const policyGroups = {};
+            const itemsWithRebate = [];
+
+            // 按政策粒度分组
+            data.forEach(item => {
+                const key = getGroupKey(item);
+                if (!policyGroups[key]) {
+                    policyGroups[key] = [];
+                }
+                policyGroups[key].push(item);
+            });
+
+            // 对每组数据进行处理，计算返点比例
+            Object.keys(policyGroups).forEach(groupKey => {
+                const groupItems = policyGroups[groupKey];
+
+                // 获取组的指标和目标值（取非0值，应该都一样）
+                let groupMetric = null;
+                let groupTarget = null;
+
+                groupItems.forEach(item => {
+                    // 保持 null/undefined 不变，不转换为 0
+                    const metric = (item[metricField] !== null && item[metricField] !== undefined) ? item[metricField] : null;
+                    const target = (item[targetField] !== null && item[targetField] !== undefined) ? item[targetField] : null;
+
+                    if (metric !== null && metric > 0 && groupMetric === null) {
+                        groupMetric = metric;
+                    }
+                    if (target !== null && target > 0 && groupTarget === null) {
+                        groupTarget = target;
+                    }
+                });
+
+                // 如果组内没有非0值，使用第一个的指标和目标（保持 null 不变）
+                if (groupMetric === null && groupItems.length > 0) {
+                    const firstMetric = groupItems[0][metricField];
+                    groupMetric = (firstMetric !== null && firstMetric !== undefined) ? firstMetric : null;
+                }
+                if (groupTarget === null && groupItems.length > 0) {
+                    const firstTarget = groupItems[0][targetField];
+                    groupTarget = (firstTarget !== null && firstTarget !== undefined) ? firstTarget : null;
+                }
+
+                // 处理组内每条数据，计算返点比例
+                groupItems.forEach(item => {
+                    const rebateInfo = calculateRebateRate(item, groupMetric, groupTarget, type);
+                    const rebateAmount = rebateInfo.rebateRate * (item.performanceCost || 0);
+
+                    itemsWithRebate.push({
+                        ...item,
+                        rebateRate: rebateInfo.rebateRate,
+                        rebateAmount: rebateAmount,
+                        groupMetric: groupMetric,
+                        groupTarget: groupTarget,
+                        reason: rebateInfo.reason
+                    });
+                });
+            });
+
+            // 第二步：按二级行业+运营标签汇总
+            const statGroups = {};
+
+            itemsWithRebate.forEach(item => {
+                // 按二级行业+运营标签分组
+                const statKey = [
+                    item.rebateCalcSecondIndustryName,
+                    item.operatorTag
+                ].join('|');
+
+                if (!statGroups[statKey]) {
+                    statGroups[statKey] = {
+                        rebateCalcSecondIndustryName: item.rebateCalcSecondIndustryName,
+                        operatorTag: item.operatorTag,
+                        items: [],
+                        totalRebateAmount: 0,
+                        totalPerformanceCost: 0,
+                        metrics: [],
+                        targets: [],
+                        reasons: []
+                    };
+                }
+
+                statGroups[statKey].items.push(item);
+                // 只累加业绩消耗，不累加返点金额（返点金额后面用返点比例×业绩消耗汇总计算）
+                statGroups[statKey].totalPerformanceCost += (item.performanceCost || 0);
+
+                // 收集指标和目标值
+                if (item.groupMetric !== null && item.groupMetric !== undefined) {
+                    statGroups[statKey].metrics.push(item.groupMetric);
+                }
+                if (item.groupTarget !== null && item.groupTarget !== undefined) {
+                    statGroups[statKey].targets.push(item.groupTarget);
+                }
+                // 收集reason
+                if (item.reason) {
+                    statGroups[statKey].reasons.push(item.reason);
+                }
+            });
+
+            // 生成汇总结果
+            const result = [];
+            Object.keys(statGroups).forEach(key => {
+                const group = statGroups[key];
+
+                // 确定组的指标值和目标值（取最常见的非0值）
+                let finalMetric = null;
+                let finalTarget = null;
+
+                // 统计指标值出现频率（只统计非0值）
+                const metricCounts = {};
+                let hasNonZeroMetric = false;
+                group.metrics.forEach(m => {
+                    if (m > 0) {
+                        metricCounts[m] = (metricCounts[m] || 0) + 1;
+                        hasNonZeroMetric = true;
+                    }
+                });
+                if (Object.keys(metricCounts).length > 0) {
+                    finalMetric = parseFloat(Object.keys(metricCounts).reduce((a, b) =>
+                        metricCounts[a] > metricCounts[b] ? a : b
+                    ));
+                } else if (group.metrics.length > 0 && !hasNonZeroMetric) {
+                    // 如果所有指标都是0，设置为0（不是null）
+                    finalMetric = 0;
+                }
+
+                // 统计目标值出现频率（只统计非0值）
+                const targetCounts = {};
+                let hasNonZeroTarget = false;
+                group.targets.forEach(t => {
+                    if (t > 0) {
+                        targetCounts[t] = (targetCounts[t] || 0) + 1;
+                        hasNonZeroTarget = true;
+                    }
+                });
+                if (Object.keys(targetCounts).length > 0) {
+                    finalTarget = parseFloat(Object.keys(targetCounts).reduce((a, b) =>
+                        targetCounts[a] > targetCounts[b] ? a : b
+                    ));
+                } else if (group.targets.length > 0 && !hasNonZeroTarget) {
+                    // 如果所有目标都是0，设置为0（不是null）
+                    finalTarget = 0;
+                }
+
+                // 统计最常见的reason
+                let finalReason = null;
+                if (group.reasons && group.reasons.length > 0) {
+                    const reasonCounts = {};
+                    group.reasons.forEach(r => {
+                        reasonCounts[r] = (reasonCounts[r] || 0) + 1;
+                    });
+                    if (Object.keys(reasonCounts).length > 0) {
+                        finalReason = Object.keys(reasonCounts).reduce((a, b) =>
+                            reasonCounts[a] > reasonCounts[b] ? a : b
+                        );
+                    }
+                }
+
+                // 检查是否包含一条或以上直播类型
+                const hasLiveReason = group.reasons && group.reasons.length > 0 &&
+                    group.reasons.some(r => r && r.includes('直播'));
+
+                // 计算返点比例
+                let rebateRate = null;
+                // 优先级1：剔除汽车厂商
+                if (group.rebateCalcSecondIndustryName === '汽车厂商') {
+                    rebateRate = 0; // 剔除
+                }
+                // 优先级2：如果指标和目标都是0或null，且包含一条或以上直播，按照返点上限
+                else if ((finalMetric === null || finalMetric === 0) &&
+                    (finalTarget === null || finalTarget === 0) &&
+                    hasLiveReason) {
+                    rebateRate = parseFloat(REBATE_MAX.toFixed(6));
+                }
+                // 优先级3：根据指标和目标值计算
+                else if (finalMetric !== null && finalTarget !== null) {
+                    if (finalMetric >= finalTarget && finalTarget > 0) {
+                        rebateRate = parseFloat(REBATE_MAX.toFixed(6));
+                    } else if (finalMetric < finalTarget && finalTarget > 0) {
+                        const calculatedRate = REBATE_MIN + (REBATE_MAX - REBATE_MIN) * (finalMetric / finalTarget);
+                        rebateRate = parseFloat(calculatedRate.toFixed(6));
+                    } else if (finalMetric === 0 && finalTarget === 0) {
+                        rebateRate = parseFloat((0).toFixed(6));
+                    }
+                }
+
+                // 返点金额 = 返点比例 × 业绩消耗汇总
+                const totalRebateAmount = rebateRate !== null ? rebateRate * group.totalPerformanceCost : 0;
+
+                result.push({
+                    rebateCalcSecondIndustryName: group.rebateCalcSecondIndustryName,
+                    operatorTag: group.operatorTag,
+                    metric: finalMetric,
+                    target: finalTarget,
+                    rebateRate: rebateRate,
+                    rebateRateMax: REBATE_MAX,
+                    rebateRateMin: REBATE_MIN,
+                    totalRebateAmount: totalRebateAmount,
+                    totalPerformanceCost: group.totalPerformanceCost,
+                    itemCount: group.items.length,
+                    reason: finalReason
+                });
+            });
+
+            return result;
+        }
+
+        // 执行计算（首发和优质）
+        const firstReleaseResults = processData(testData, 'firstRelease');
+        const highQualityResults = processData(testData, 'highQuality');
+
+        // 计算首发汇总
+        const firstReleaseTotalRebateAmount = firstReleaseResults.reduce((sum, item) => sum + (item.totalRebateAmount || 0), 0);
+        const firstReleaseTotalPerformanceCost = firstReleaseResults.reduce((sum, item) => sum + (item.totalPerformanceCost || 0), 0);
+        const firstReleaseTotalItemCount = firstReleaseResults.reduce((sum, item) => sum + (item.itemCount || 0), 0);
+
+        // 计算优质汇总
+        const highQualityTotalRebateAmount = highQualityResults.reduce((sum, item) => sum + (item.totalRebateAmount || 0), 0);
+        const highQualityTotalPerformanceCost = highQualityResults.reduce((sum, item) => sum + (item.totalPerformanceCost || 0), 0);
+        const highQualityTotalItemCount = highQualityResults.reduce((sum, item) => sum + (item.itemCount || 0), 0);
+
+        // 输出结果
+        let html = '';
+
+        // 首发素材消耗结果
+        html += '<h2>首发素材消耗计算结果</h2>';
+        html += '<div class="summary">';
+        html += `<p><strong>汇总分组数:</strong> ${firstReleaseResults.length}</p>`;
+        html += `<p><strong>明细数据条数:</strong> ${firstReleaseTotalItemCount}</p>`;
+        html += `<p><strong>总业绩消耗:</strong> ${firstReleaseTotalPerformanceCost.toFixed(2)}</p>`;
+        html += `<p><strong>总返点金额:</strong> ${firstReleaseTotalRebateAmount.toFixed(4)}</p>`;
+        html += '</div>';
+
+        html += '<table><thead><tr>';
+        html += '<th>二级行业</th><th>运营标签</th>';
+        html += '<th>[首发消耗占比]指标值</th><th>[首发消耗占比]目标值</th>';
+        html += '<th>[首发消耗占比]返点比例</th><th>[首发消耗占比]返点比例上限</th><th>[首发消耗占比]返点比例下限</th>';
+        html += '<th>业绩消耗汇总</th><th>返点金额汇总</th><th>明细条数</th><th>计算原因</th>';
+        html += '</tr></thead><tbody>';
+
+        firstReleaseResults.forEach(item => {
+            html += '<tr>';
+            html += `<td>${item.rebateCalcSecondIndustryName || 'NULL'}</td>`;
+            html += `<td>${item.operatorTag || 'NULL'}</td>`;
+            html += `<td>${item.metric !== null ? item.metric.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.target !== null ? item.target.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.rebateRate !== null ? item.rebateRate.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.rebateRateMax !== null ? item.rebateRateMax.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.rebateRateMin !== null ? item.rebateRateMin.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.totalPerformanceCost.toFixed(2)}</td>`;
+            html += `<td>${item.totalRebateAmount.toFixed(4)}</td>`;
+            html += `<td>${item.itemCount}</td>`;
+            html += `<td>${item.reason || 'NULL'}</td>`;
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+
+        // 优质素材消耗结果
+        html += '<h2 style="margin-top: 40px;">优质素材消耗计算结果</h2>';
+        html += '<div class="summary">';
+        html += `<p><strong>汇总分组数:</strong> ${highQualityResults.length}</p>`;
+        html += `<p><strong>明细数据条数:</strong> ${highQualityTotalItemCount}</p>`;
+        html += `<p><strong>总业绩消耗:</strong> ${highQualityTotalPerformanceCost.toFixed(2)}</p>`;
+        html += `<p><strong>总返点金额:</strong> ${highQualityTotalRebateAmount.toFixed(4)}</p>`;
+        html += '</div>';
+
+        html += '<table><thead><tr>';
+        html += '<th>二级行业</th><th>运营标签</th>';
+        html += '<th>[优质消耗占比]指标值</th><th>[优质消耗占比]目标值</th>';
+        html += '<th>[优质消耗占比]返点比例</th><th>[优质消耗占比]返点比例上限</th><th>[优质消耗占比]返点比例下限</th>';
+        html += '<th>业绩消耗汇总</th><th>返点金额汇总</th><th>明细条数</th><th>计算原因</th>';
+        html += '</tr></thead><tbody>';
+
+        highQualityResults.forEach(item => {
+            html += '<tr>';
+            html += `<td>${item.rebateCalcSecondIndustryName || 'NULL'}</td>`;
+            html += `<td>${item.operatorTag || 'NULL'}</td>`;
+            html += `<td>${item.metric !== null ? item.metric.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.target !== null ? item.target.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.rebateRate !== null ? item.rebateRate.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.rebateRateMax !== null ? item.rebateRateMax.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.rebateRateMin !== null ? item.rebateRateMin.toFixed(4) : 'NULL'}</td>`;
+            html += `<td>${item.totalPerformanceCost.toFixed(2)}</td>`;
+            html += `<td>${item.totalRebateAmount.toFixed(4)}</td>`;
+            html += `<td>${item.itemCount}</td>`;
+            html += `<td>${item.reason || 'NULL'}</td>`;
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('results').innerHTML = html;
+    </script>
+</body>
+
+</html>

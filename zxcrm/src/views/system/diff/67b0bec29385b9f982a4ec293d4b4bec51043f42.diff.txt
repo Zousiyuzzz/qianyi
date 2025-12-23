@@ -1,0 +1,1165 @@
+diff --git a/dist.zip b/dist.zip
+index 97a5ad9df66bae2ef6bcff55e4852862c4b6af9f..1c1be18972b763eb65327677e7bf80d26bd86c52 100644
+Binary files a/dist.zip and b/dist.zip differ
+diff --git a/public/static/config.js b/public/static/config.js
+index e3c5e0f5cb0476cb6f1e35a66630134c67c9ef7a..be437e925142d2a1bef7b1bd8dd0630d10f91f9e 100644
+--- a/public/static/config.js
++++ b/public/static/config.js
+@@ -3,7 +3,7 @@
+  */
+ window._CONFIG = {
+   // 线上
+-  VUE_APP_API_BASE_URL: 'http://crm.zxmember.com/jeecg-boot',
++  // VUE_APP_API_BASE_URL: 'http://crm.zxmember.com/jeecg-boot',
+   // 家里
+   // VUE_APP_API_BASE_URL: 'http://192.168.1.11:8080/jeecg-boot/',
+   // 测试服务器
+@@ -15,7 +15,7 @@ window._CONFIG = {
+   // VUE_APP_API_BASE_URL: 'http://47.106.223.158:8080/jeecg-boot',
+   // VUE_APP_API_BASE_URL: 'http://n45ckpb.nat.ipyingshe.com/jeecg-boot',
+   // VUE_APP_API_BASE_URL: 'http://192.168.8.104:8080/jeecg-boot',
+-  // VUE_APP_API_BASE_URL: '/jeecg-boot',
++  VUE_APP_API_BASE_URL: '/jeecg-boot',
+   //单点登录地址
+   VUE_APP_CAS_BASE_URL: '',
+   //文件预览路径
+diff --git a/src/views/tools/ai/index.vue b/src/views/tools/ai/index.vue
+index 40f3714a14cb5dc4e36198ac435a62d2bfb4cb08..964f49a54645bb6840b99714501cb4f782bbd525 100644
+--- a/src/views/tools/ai/index.vue
++++ b/src/views/tools/ai/index.vue
+@@ -63,7 +63,9 @@
+                                                 }}</a-descriptions-item> -->
+                                             <a-descriptions-item label="创建时间">{{ selectedAiImage.createTime
+                                                 }}</a-descriptions-item>
+-                                            <a-descriptions-item label="生成模式">{{ selectedAiImage.genMode
++                                            <a-descriptions-item label="生成模式"
++                                                v-if="selectedAiImage.reqKey === 'i2i_portrait_photo'">{{
++                                                    selectedAiImage.genMode
+                                                 }}</a-descriptions-item>
+                                             <a-descriptions-item label="状态">{{ parseMainStateText(selectedAiImage.state)
+                                             }}</a-descriptions-item>
+@@ -119,7 +121,24 @@
+                                                 </div>
+                                                 <div class="sub-info-row"><b>图片URL:</b> {{ img.imageUrl }}</div>
+                                                 <div class="sub-info-row"><b>本地图片:</b> {{ img.localImageUrl }}</div>
+-                                                <div class="sub-info-row"><b>结果:</b> {{ img.llmResult }}</div>
++                                                <div class="sub-info-row"><b>原输入:</b>
++                                                    <template
++                                                        v-if="selectedAiImage.reqKey === 'seededit_v3.0' && isJson(img.llmResult)">
++                                                        {{ parseOri_prompt(img.llmResult) }}
++                                                    </template>
++                                                </div>
++                                                <div class="sub-info-row"><b>输入改写:</b>
++                                                    <template
++                                                        v-if="selectedAiImage.reqKey === 'seededit_v3.0' && isJson(img.llmResult)">
++                                                        {{ parseOri_vlm_input(img.llmResult) }}
++                                                    </template>
++                                                </div>
++                                                <div class="sub-info-row"><b>输出改写:</b>
++                                                    <template
++                                                        v-if="selectedAiImage.reqKey === 'seededit_v3.0' && isJson(img.llmResult)">
++                                                        {{ parseSeedEditV3Result(img.llmResult) }}
++                                                    </template>
++                                                </div>
+                                                 <div class="sub-info-row" v-if="img.errorMsg"><b>失败原因:</b> {{
+                                                     img.errorMsg }}</div>
+                                                 <div class="sub-info-row"><b>耗时:</b> {{ img.timeElapsed }}</div>
+@@ -276,7 +295,7 @@
+                             <a-input v-model="seedEditForm.seed" placeholder="输入-1为随机，正整数可复现" />
+                         </a-form-item>
+                         <a-form-item label="scale" :help="'文本描述影响的程度，该值越大代表文本描述影响程度越大，且输入图片影响程度越小。默认值：0.5，取值范围[0,1]'">
+-                            <a-input-number v-model="seedEditForm.scale" :min="0" :max="1" :step="0.01"
++                            <a-input-number v-model="seedEditForm.scale" :min="0" :max="1" :step="0.1"
+                                 style="width:100%" placeholder="建议默认0.5，范围0-1" />
+                         </a-form-item>
+                         <a-form-item label="生成数量">
+@@ -388,7 +407,7 @@ export default {
+                 imageUrl: '',
+                 prompt: '',
+                 seed: '-1',
+-                scale: 7,
++                scale: 0.5,
+                 quantity: 1,
+                 loading: false
+             },
+@@ -693,7 +712,8 @@ export default {
+                     order: 'desc'
+                 }
+                 if (this.aiImagePromptQuery && this.aiImagePromptQuery.trim()) {
+-                    params.prompt = this.aiImagePromptQuery.trim()
++                    const q = this.aiImagePromptQuery.trim();
++                    params.prompt = `*${q}*`;
+                 }
+                 const res = await aiImageGenerationApi.getList(params)
+                 if (res && res.success && res.result) {
+@@ -814,7 +834,9 @@ export default {
+             this.portraitForm.loading = true;
+             const formData = new FormData();
+             formData.append('imageFile', this.portraitForm.imageFile);
+-            formData.append('prompt', this.portraitForm.prompt);
++            // 替换 prompt 内的双引号为单引号
++            const prompt = this.portraitForm.prompt ? this.portraitForm.prompt.replace(/\"/g, "'") : '';
++            formData.append('prompt', prompt);
+             formData.append('width', this.portraitForm.width);
+             formData.append('height', this.portraitForm.height);
+             formData.append('gpen', this.portraitForm.gpen);
+@@ -860,7 +882,9 @@ export default {
+             this.seedEditForm.loading = true;
+             const formData = new FormData();
+             formData.append('imageFile', this.seedEditForm.imageFile);
+-            formData.append('prompt', this.seedEditForm.prompt);
++            // 替换 prompt 内的双引号为单引号
++            const prompt = this.seedEditForm.prompt ? this.seedEditForm.prompt.replace(/\"/g, "'") : '';
++            formData.append('prompt', prompt);
+             formData.append('seed', this.seedEditForm.seed);
+             formData.append('scale', this.seedEditForm.scale);
+             formData.append('quantity', this.seedEditForm.quantity);
+@@ -930,6 +954,41 @@ export default {
+             this.subImagePreviewUrl = this.getApiImageUrl(img.binaryDataBase64 ? 'data:image/png;base64,' + img.binaryDataBase64 : (img.localImageUrl || img.imageUrl));
+             this.subImagePreviewVisible = true;
+         },
++        // 新增：判断字符串是否为JSON
++        isJson(str) {
++            // console.log(str, 'strstrstrstrstrstrstrstrstrstrstrstrstrstrstrstrstr')
++            if (!str || typeof str !== 'string') return false;
++            try {
++                const obj = JSON.parse(str);
++                return typeof obj === 'object' && obj !== null;
++            } catch (e) {
++                return false;
++            }
++        },
++        parseSeedEditV3Result(str) {
++            try {
++                var obj = JSON.parse(str);
++                return (obj && obj.params && obj.params.vlm_output) ? obj.params.vlm_output : '[无解析结果]';
++            } catch (e) {
++                return '[解析失败]';
++            }
++        },
++        parseOri_prompt(str) {
++            try {
++                var obj = JSON.parse(str);
++                return (obj && obj.params && obj.params.ori_prompt) ? obj.params.ori_prompt : '[无解析结果]';
++            } catch (e) {
++                return '[解析失败]';
++            }
++        },
++        parseOri_vlm_input(str) {
++            try {
++                var obj = JSON.parse(str);
++                return (obj && obj.params && obj.params.vlm_input) ? obj.params.vlm_input : '[无解析结果]';
++            } catch (e) {
++                return '[解析失败]';
++            }
++        },
+     }
+ }
+ </script>
+@@ -1399,6 +1458,7 @@ export default {
+ 
+ .sub-image-list-wrapper {
+     margin-top: 32px;
++    padding: 10px;
+     overflow-y: auto;
+ 
+     .sub-image-list-vertical {
+@@ -1416,13 +1476,13 @@ export default {
+             align-items: center;
+             justify-content: flex-start;
+             padding: 20px 14px 14px 14px;
+-            transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1), transform 0.18s cubic-bezier(.4, 0, .2, 1);
++            transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1); // 移除transform的transition
++            will-change: box-shadow; // 只保留box-shadow
+             border: 1px solid #f0f0f5;
+-            will-change: box-shadow, transform;
+ 
+             &:hover {
+                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.13), 0 1.5px 6px rgba(0, 0, 0, 0.08);
+-                transform: translateY(-4px) scale(1.035);
++                // transform: translateY(-4px) scale(1.035); // 移除缩放和位移
+                 z-index: 2;
+             }
+ 
+diff --git a/src/views/tools/nopermission/ai.vue b/src/views/tools/nopermission/ai.vue
+index cad01f73694b898ee9192431daf1e70ee5563bb6..964f49a54645bb6840b99714501cb4f782bbd525 100644
+--- a/src/views/tools/nopermission/ai.vue
++++ b/src/views/tools/nopermission/ai.vue
+@@ -58,26 +58,28 @@
+                                     <div class="detail-info-side">
+                                         <a-descriptions title="详细信息" :column="1" size="small">
+                                             <a-descriptions-item label="ID">{{ selectedAiImage.id
+-                                            }}</a-descriptions-item>
++                                                }}</a-descriptions-item>
+                                             <!-- <a-descriptions-item label="创建人">{{ selectedAiImage.createBy
+                                                 }}</a-descriptions-item> -->
+                                             <a-descriptions-item label="创建时间">{{ selectedAiImage.createTime
+-                                            }}</a-descriptions-item>
+-                                            <a-descriptions-item label="生成模式">{{ selectedAiImage.genMode
+-                                            }}</a-descriptions-item>
+-                                            <a-descriptions-item label="状态">{{ parseMainStateText(selectedAiImage.state)
+                                                 }}</a-descriptions-item>
+-                                            <a-descriptions-item label="prompt">{{ selectedAiImage.prompt
++                                            <a-descriptions-item label="生成模式"
++                                                v-if="selectedAiImage.reqKey === 'i2i_portrait_photo'">{{
++                                                    selectedAiImage.genMode
++                                                }}</a-descriptions-item>
++                                            <a-descriptions-item label="状态">{{ parseMainStateText(selectedAiImage.state)
+                                             }}</a-descriptions-item>
++                                            <a-descriptions-item label="prompt">{{ selectedAiImage.prompt
++                                                }}</a-descriptions-item>
+                                             <a-descriptions-item label="图片URL">{{
+                                                 `${imagePrefix}/${selectedAiImage.imageInput}`
+-                                            }}</a-descriptions-item>
++                                                }}</a-descriptions-item>
+                                             <a-descriptions-item label="生成数量">{{ selectedAiImage.quantity
+-                                            }}</a-descriptions-item>
++                                                }}</a-descriptions-item>
+                                             <a-descriptions-item label="scale">{{ selectedAiImage.scale
+-                                            }}</a-descriptions-item>
++                                                }}</a-descriptions-item>
+                                             <a-descriptions-item label="seed">{{ selectedAiImage.seed
+-                                            }}</a-descriptions-item>
++                                                }}</a-descriptions-item>
+                                             <a-descriptions-item label="gpen"
+                                                 v-if="selectedAiImage.reqKey === 'i2i_portrait_photo'">{{
+                                                     selectedAiImage.gpen
+@@ -119,7 +121,24 @@
+                                                 </div>
+                                                 <div class="sub-info-row"><b>图片URL:</b> {{ img.imageUrl }}</div>
+                                                 <div class="sub-info-row"><b>本地图片:</b> {{ img.localImageUrl }}</div>
+-                                                <div class="sub-info-row"><b>结果:</b> {{ img.llmResult }}</div>
++                                                <div class="sub-info-row"><b>原输入:</b>
++                                                    <template
++                                                        v-if="selectedAiImage.reqKey === 'seededit_v3.0' && isJson(img.llmResult)">
++                                                        {{ parseOri_prompt(img.llmResult) }}
++                                                    </template>
++                                                </div>
++                                                <div class="sub-info-row"><b>输入改写:</b>
++                                                    <template
++                                                        v-if="selectedAiImage.reqKey === 'seededit_v3.0' && isJson(img.llmResult)">
++                                                        {{ parseOri_vlm_input(img.llmResult) }}
++                                                    </template>
++                                                </div>
++                                                <div class="sub-info-row"><b>输出改写:</b>
++                                                    <template
++                                                        v-if="selectedAiImage.reqKey === 'seededit_v3.0' && isJson(img.llmResult)">
++                                                        {{ parseSeedEditV3Result(img.llmResult) }}
++                                                    </template>
++                                                </div>
+                                                 <div class="sub-info-row" v-if="img.errorMsg"><b>失败原因:</b> {{
+                                                     img.errorMsg }}</div>
+                                                 <div class="sub-info-row"><b>耗时:</b> {{ img.timeElapsed }}</div>
+@@ -196,7 +215,8 @@
+                         </a-form-item>
+                         <a-form-item label="生图提示词"
+                             :help="'用于编辑图像的提示词。建议：长度<=120字符，过长有概率出图异常或不生效；编辑指令用自然语言；每次编辑用单指令更好；局部编辑时描述精准，尤其多个实体时要清楚描述对谁做什么；编辑效果不明显时可调整scale，数值越大越贴近指令执行；尽量用清晰高分辨率底图，豆包模型效果更好。\n示例：添加/删除实体：添加/删除xxx（删除图上的女孩/添加一道彩虹）；修改实体：把xxx改成xxx（把手里的鸡腿变成汉堡）；修改风格：改成xxx风格（改成漫画风格）；修改色彩：把xxx改成xx颜色（把衣服改成粉色的）；修改动作：修改表情动作（让他哭/笑/生气）；修改环境背景：背景换成xxx，在xxx（背景换成海边/在星空下）'">
+-                            <a-input v-model="portraitForm.prompt" placeholder="如：演唱会现场的合照，闪光灯拍摄" />
++                            <a-textarea v-model="portraitForm.prompt" placeholder="如：演唱会现场的合照，闪光灯拍摄"
++                                :auto-size="{ minRows: 2, maxRows: 4 }" />
+                         </a-form-item>
+                         <a-form-item label="生成宽度">
+                             <a-input-number v-model="portraitForm.width" :min="512" :max="2048" :step="1"
+@@ -267,14 +287,15 @@
+                         </a-form-item>
+                         <a-form-item label="生图提示词"
+                             :help="'用于编辑图像的提示词。建议：长度<=120字符，过长有概率出图异常或不生效；编辑指令用自然语言；每次编辑用单指令更好；局部编辑时描述精准，尤其多个实体时要清楚描述对谁做什么；编辑效果不明显时可调整scale，数值越大越贴近指令执行；尽量用清晰高分辨率底图，豆包模型效果更好。\n示例：添加/删除实体：添加/删除xxx（删除图上的女孩/添加一道彩虹）；修改实体：把xxx改成xxx（把手里的鸡腿变成汉堡）；修改风格：改成xxx风格（改成漫画风格）；修改色彩：把xxx改成xx颜色（把衣服改成粉色的）；修改动作：修改表情动作（让他哭/笑/生气）；修改环境背景：背景换成xxx，在xxx（背景换成海边/在星空下）'">
+-                            <a-input v-model="seedEditForm.prompt" placeholder="请输入编辑指令，如：把衣服改成粉色的" />
++                            <a-textarea v-model="seedEditForm.prompt" placeholder="请输入编辑指令，如：把衣服改成粉色的"
++                                :auto-size="{ minRows: 2, maxRows: 4 }" />
+                         </a-form-item>
+                         <a-form-item label="随机种子(seed)"
+                             :help="'随机种子，作为确定扩散初始状态的基础，默认-1（随机）。若随机种子为相同正整数且其他参数均一致，则生成内容极大概率效果一致。默认值：-1'">
+                             <a-input v-model="seedEditForm.seed" placeholder="输入-1为随机，正整数可复现" />
+                         </a-form-item>
+                         <a-form-item label="scale" :help="'文本描述影响的程度，该值越大代表文本描述影响程度越大，且输入图片影响程度越小。默认值：0.5，取值范围[0,1]'">
+-                            <a-input-number v-model="seedEditForm.scale" :min="0" :max="1" :step="0.01"
++                            <a-input-number v-model="seedEditForm.scale" :min="0" :max="1" :step="0.1"
+                                 style="width:100%" placeholder="建议默认0.5，范围0-1" />
+                         </a-form-item>
+                         <a-form-item label="生成数量">
+@@ -386,7 +407,7 @@ export default {
+                 imageUrl: '',
+                 prompt: '',
+                 seed: '-1',
+-                scale: 7,
++                scale: 0.5,
+                 quantity: 1,
+                 loading: false
+             },
+@@ -691,7 +712,8 @@ export default {
+                     order: 'desc'
+                 }
+                 if (this.aiImagePromptQuery && this.aiImagePromptQuery.trim()) {
+-                    params.prompt = this.aiImagePromptQuery.trim()
++                    const q = this.aiImagePromptQuery.trim();
++                    params.prompt = `*${q}*`;
+                 }
+                 const res = await aiImageGenerationApi.getList(params)
+                 if (res && res.success && res.result) {
+@@ -812,7 +834,9 @@ export default {
+             this.portraitForm.loading = true;
+             const formData = new FormData();
+             formData.append('imageFile', this.portraitForm.imageFile);
+-            formData.append('prompt', this.portraitForm.prompt);
++            // 替换 prompt 内的双引号为单引号
++            const prompt = this.portraitForm.prompt ? this.portraitForm.prompt.replace(/\"/g, "'") : '';
++            formData.append('prompt', prompt);
+             formData.append('width', this.portraitForm.width);
+             formData.append('height', this.portraitForm.height);
+             formData.append('gpen', this.portraitForm.gpen);
+@@ -858,7 +882,9 @@ export default {
+             this.seedEditForm.loading = true;
+             const formData = new FormData();
+             formData.append('imageFile', this.seedEditForm.imageFile);
+-            formData.append('prompt', this.seedEditForm.prompt);
++            // 替换 prompt 内的双引号为单引号
++            const prompt = this.seedEditForm.prompt ? this.seedEditForm.prompt.replace(/\"/g, "'") : '';
++            formData.append('prompt', prompt);
+             formData.append('seed', this.seedEditForm.seed);
+             formData.append('scale', this.seedEditForm.scale);
+             formData.append('quantity', this.seedEditForm.quantity);
+@@ -928,6 +954,41 @@ export default {
+             this.subImagePreviewUrl = this.getApiImageUrl(img.binaryDataBase64 ? 'data:image/png;base64,' + img.binaryDataBase64 : (img.localImageUrl || img.imageUrl));
+             this.subImagePreviewVisible = true;
+         },
++        // 新增：判断字符串是否为JSON
++        isJson(str) {
++            // console.log(str, 'strstrstrstrstrstrstrstrstrstrstrstrstrstrstrstrstr')
++            if (!str || typeof str !== 'string') return false;
++            try {
++                const obj = JSON.parse(str);
++                return typeof obj === 'object' && obj !== null;
++            } catch (e) {
++                return false;
++            }
++        },
++        parseSeedEditV3Result(str) {
++            try {
++                var obj = JSON.parse(str);
++                return (obj && obj.params && obj.params.vlm_output) ? obj.params.vlm_output : '[无解析结果]';
++            } catch (e) {
++                return '[解析失败]';
++            }
++        },
++        parseOri_prompt(str) {
++            try {
++                var obj = JSON.parse(str);
++                return (obj && obj.params && obj.params.ori_prompt) ? obj.params.ori_prompt : '[无解析结果]';
++            } catch (e) {
++                return '[解析失败]';
++            }
++        },
++        parseOri_vlm_input(str) {
++            try {
++                var obj = JSON.parse(str);
++                return (obj && obj.params && obj.params.vlm_input) ? obj.params.vlm_input : '[无解析结果]';
++            } catch (e) {
++                return '[解析失败]';
++            }
++        },
+     }
+ }
+ </script>
+@@ -1397,6 +1458,7 @@ export default {
+ 
+ .sub-image-list-wrapper {
+     margin-top: 32px;
++    padding: 10px;
+     overflow-y: auto;
+ 
+     .sub-image-list-vertical {
+@@ -1414,13 +1476,13 @@ export default {
+             align-items: center;
+             justify-content: flex-start;
+             padding: 20px 14px 14px 14px;
+-            transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1), transform 0.18s cubic-bezier(.4, 0, .2, 1);
++            transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1); // 移除transform的transition
++            will-change: box-shadow; // 只保留box-shadow
+             border: 1px solid #f0f0f5;
+-            will-change: box-shadow, transform;
+ 
+             &:hover {
+                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.13), 0 1.5px 6px rgba(0, 0, 0, 0.08);
+-                transform: translateY(-4px) scale(1.035);
++                // transform: translateY(-4px) scale(1.035); // 移除缩放和位移
+                 z-index: 2;
+             }
+ 
+diff --git a/t.js b/t.js
+index 34bd00c2425ce1970542d67a92003c135dc88229..4d457ae9504c379cefa13a9287796720afc21f45 100644
+--- a/t.js
++++ b/t.js
+@@ -151,4 +151,8 @@ function encryptPassword(password) {
+ 
+ // 测试
+ var password = "zhixiang2025@@";
+-// console.log("加密后的密码:", encryptPassword(password));
+\ No newline at end of file
++// console.log("加密后的密码:", encryptPassword(password));
++
++
++
++https://developers.e.qq.com/oauth/authorize?client_id=1112030526&redirect_uri=http://n45ckpb.nat.ipyingshe.com/jeecg-boot/syntony/tx/authCode&account_type=ACCOUNT_TYPE_WECHAT
+\ No newline at end of file
+diff --git a/t.json b/t.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4fc658fc49165a60773044b749a559e1b32655e0
+--- /dev/null
++++ b/t.json
+@@ -0,0 +1,754 @@
++{
++    "ret": 0,
++    "msg": "",
++    "data": {
++        "app_list": [
++            {
++                "app_id": "1112030526",
++                "app_name": "ZXCRM20",
++                "app_desc": "ZXCRM20",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV_OAHw5TwEX.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "oKFn9h2jwbBvj4Ds",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590547
++            },
++            {
++                "app_id": "1112030525",
++                "app_name": "ZXCRM19",
++                "app_desc": "ZXCRM19",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV-8C_HnuuaV.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "1hV0PPoeDFtJXfbm",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590529
++            },
++            {
++                "app_id": "1112030524",
++                "app_name": "ZXCRM18",
++                "app_desc": "ZXCRM18",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV-sDi2nF3bb.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "6PoeJXyuejHVWFNE",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590513
++            },
++            {
++                "app_id": "1112030523",
++                "app_name": "ZXCRM17",
++                "app_desc": "ZXCRM17",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV-ZBwYBOutz.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "K5aC4l6ZYXbpJXkc",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590493
++            },
++            {
++                "app_id": "1112030522",
++                "app_name": "ZXCRM16",
++                "app_desc": "ZXCRM16",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV-EAMa8QQQ0.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "SrxM7jmAdFau1RqK",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590474
++            },
++            {
++                "app_id": "1112030521",
++                "app_name": "ZXCRM15",
++                "app_desc": "ZXCRM15",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV9wCRuvgmEc.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "RYksSSg0DiQGpdcA",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590455
++            },
++            {
++                "app_id": "1112030520",
++                "app_name": "ZXCRM14",
++                "app_desc": "ZXCRM14",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV9UBqQ_O03L.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "Jm1FxlCXXbySMD9h",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590432
++            },
++            {
++                "app_id": "1112030519",
++                "app_name": "ZXCRM13",
++                "app_desc": "ZXCRM13",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV9ICvoOX5AX.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "sopS9K9Vkk8fxtRM",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590413
++            },
++            {
++                "app_id": "1112030518",
++                "app_name": "ZXCRM12",
++                "app_desc": "ZXCRM12",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV8zC5Q3OC7s.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "YNV8wHCHL26p3IEM",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590396
++            },
++            {
++                "app_id": "1112030517",
++                "app_name": "ZXCRM11",
++                "app_desc": "ZXCRM11",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV8jBQpTQq-6.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "9jr3RgcsuSjii7FX",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590377
++            },
++            {
++                "app_id": "1112030516",
++                "app_name": "ZXCRM10",
++                "app_desc": "ZXCRM10",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV8LAMOfgf8r.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "ShSQSjVMU9vfnwdy",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590360
++            },
++            {
++                "app_id": "1112030515",
++                "app_name": "ZXCRM9",
++                "app_desc": "ZXCRM9",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV74AEg1gZIz.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "gutygWdSza9q205L",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590340
++            },
++            {
++                "app_id": "1112030514",
++                "app_name": "ZXCRM8",
++                "app_desc": "ZXCRM8",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV7kBJAdElEo.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "sWq0Y1oRLglM37KN",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590321
++            },
++            {
++                "app_id": "1112030513",
++                "app_name": "ZXCRM7",
++                "app_desc": "ZXCRM7",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV7YCacpCXlj.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "p5ggXC3xhqM4XEZI",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590302
++            },
++            {
++                "app_id": "1112030512",
++                "app_name": "ZXCRM6",
++                "app_desc": "ZXCRM6",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV66BjJ0mlxY.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "mQ66iOTqnTePHmCc",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590282
++            },
++            {
++                "app_id": "1112030511",
++                "app_name": "ZXCRM5",
++                "app_desc": "ZXCRM5",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV6dBoYl-1u9.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "Wq1r1MUNYrpJCfPZ",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590257
++            },
++            {
++                "app_id": "1112030510",
++                "app_name": "ZXCRM4",
++                "app_desc": "ZXCRM4",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOV51Bhe-b80f.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "G4ERWs3EJiLQFHOo",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748590221
++            },
++            {
++                "app_id": "1112030503",
++                "app_name": "\u6267\u8c61CRM3",
++                "app_desc": "\u6d4b\u8bd5",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoORf-Bor9Dtc8.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "2d2Sq3HDacODCLuO",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748572180
++            },
++            {
++                "app_id": "1112030500",
++                "app_name": "\u6267\u8c61CRM2",
++                "app_desc": "\u62c9\u53d6\u6d88\u8017\u6570\u636e",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoOCZbBmjFZyb3.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "VYhu6m6e35TkbMWX",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1748510398
++            },
++            {
++                "app_id": "1112030218",
++                "app_name": "\u6267\u8c61CRM1",
++                "app_desc": "\u7528\u4e8e\u62c9\u53d6\u6d88\u8017\u6570\u636e\u5185\u90e8\u7edf\u8ba1",
++                "app_icon": "http:\/\/p.qpic.cn\/gdt\/0\/EAAALRBAFoAFoAAAJtmBoJFbUDqvLaSmg.jpg\/0?ck=8f7f7b356f8cab71804f6b309b0facb4",
++                "app_redirect_url": "http:\/\/n45ckpb.nat.ipyingshe.com\/jeecg-boot\/syntony\/tx\/authCode",
++                "app_status": "NORMAL",
++                "app_secret": "9KzJA2zgTYTsOFZJ",
++                "app_domain_type": "PUBLIC_APP",
++                "api_authority": "",
++                "api_authority_desc": "",
++                "app_audit_failed_reason": "",
++                "app_upgrade_status": 3,
++                "app_permission": [
++                    {
++                        "scope_name": "ads_insights"
++                    },
++                    {
++                        "scope_name": "ads_management"
++                    },
++                    {
++                        "scope_name": "audience_management"
++                    },
++                    {
++                        "scope_name": "user_actions"
++                    },
++                    {
++                        "scope_name": "account_management"
++                    }
++                ],
++                "total_num_today": 0,
++                "fail_num_today": 0,
++                "succ_num_today": 0,
++                "access_token_expire_time": 4294967295,
++                "refresh_token_expire_time": 4294967295,
++                "correlation_time": 1747212175
++            }
++        ],
++        "page_conf": {
++            "page": 1,
++            "pagesize": 999,
++            "totalnum": 20,
++            "totalpage": 1
++        }
++    }
++}
+\ No newline at end of file

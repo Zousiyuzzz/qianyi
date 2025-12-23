@@ -1,0 +1,1536 @@
+diff --git a/src/components/dict/JSearchSelectTag.vue b/src/components/dict/JSearchSelectTag.vue
+index 803b72285ac3c3edf2e65426fe93d906e19ade1a..29dd857ac605c492e8a5fb2f16b5d64fd9232871 100644
+--- a/src/components/dict/JSearchSelectTag.vue
++++ b/src/components/dict/JSearchSelectTag.vue
+@@ -1,323 +1,293 @@
+ <template>
+ 
+-  <a-select
+-    v-if="async"
+-    showSearch
+-    labelInValue
+-    :disabled="disabled"
+-    :getPopupContainer="getParentContainer"
+-    @search="loadData"
+-    :placeholder="placeholder"
+-    v-model="selectedAsyncValue"
+-    style="width: 100%"
+-    :filterOption="false"
+-    @change="handleAsyncChange"
+-    allowClear
+-    :notFoundContent="loading ? undefined : null"
+-    :mode="mode"
+-  >
+-    <a-spin v-if="loading" slot="notFoundContent" size="small"/>
++  <a-select v-if="async" showSearch labelInValue :disabled="disabled" :getPopupContainer="getParentContainer"
++    @search="loadData" :placeholder="placeholder" v-model="selectedAsyncValue" style="width: 100%" :filterOption="false"
++    @change="handleAsyncChange" allowClear :notFoundContent="loading ? undefined : null" :mode="mode">
++    <a-spin v-if="loading" slot="notFoundContent" size="small" />
+     <a-select-option v-for="d in options" :key="d.value" :value="d.value">{{ d.text }}</a-select-option>
+   </a-select>
+ 
+-  <a-select
+-    v-else
+-    :getPopupContainer="getParentContainer"
+-    showSearch
+-    :disabled="disabled"
+-    :placeholder="placeholder"
+-    optionFilterProp="children"
+-    style="width: 100%"
+-    @change="handleChange"
+-    :filterOption="filterOption"
+-    v-model="selectedValue"
+-    allowClear
+-    :notFoundContent="loading ? undefined : null"
+-    :mode="mode">
+-    <a-spin v-if="loading" slot="notFoundContent" size="small"/>
++  <a-select v-else :getPopupContainer="getParentContainer" showSearch :disabled="disabled" :placeholder="placeholder"
++    optionFilterProp="children" style="width: 100%" @change="handleChange" :filterOption="filterOption"
++    v-model="selectedValue" allowClear :notFoundContent="loading ? undefined : null" :mode="mode">
++    <a-spin v-if="loading" slot="notFoundContent" size="small" />
+     <a-select-option v-for="d in options" :key="d.value" :value="d.value">{{ d.text }}</a-select-option>
+   </a-select>
+ 
+ </template>
+ 
+ <script>
+-  import { ajaxGetDictItems,getDictItemsFromCache } from '@/api/api'
+-  import debounce from 'lodash/debounce';
+-  import { getAction } from '../../api/manage'
++import { ajaxGetDictItems, getDictItemsFromCache } from '@/api/api'
++import debounce from 'lodash/debounce';
++import { getAction } from '../../api/manage'
+ 
+-  export default {
+-    name: 'JSearchSelectTag',
+-    props:{
+-      disabled: Boolean,
+-      value: [String, Number],
+-      dictOptions: Array,
+-      async: Boolean,
+-      placeholder:{
+-        type:String,
+-        default:"请选择",
+-        required:false
+-      },
+-      dict:{
+-        type: String,
+-        default: '',
+-        required: false
+-      },
+-      popContainer:{
+-        type:String,
+-        default:'',
+-        required:false
+-      },
+-      pageSize:{
+-        type: Number,
+-        default: 10,
+-        required: false
+-      },
+-      getPopupContainer: {
+-        type:Function,
+-        default: null
+-      },
+-      mode:{
+-        type: String,
+-        default: '',
+-      },
++export default {
++  name: 'JSearchSelectTag',
++  props: {
++    disabled: Boolean,
++    value: [String, Number],
++    dictOptions: Array,
++    async: Boolean,
++    placeholder: {
++      type: String,
++      default: "请选择",
++      required: false
+     },
+-    data(){
+-      this.loadData = debounce(this.loadData, 800);//消抖
+-      this.lastLoad = 0;
+-      return {
+-        loading:false,
+-        selectedValue:[],
+-        selectedAsyncValue:[],
+-        options: [],
+-      }
++    dict: {
++      type: String,
++      default: '',
++      required: false
+     },
+-    created(){
+-      this.initDictData();
++    popContainer: {
++      type: String,
++      default: '',
++      required: false
+     },
+-    watch:{
+-      "value":{
+-        immediate:true,
+-        handler(val){
+-          if(!val){
+-            if(val==0){
+-              this.initSelectValue()
+-            }else{
+-              this.selectedValue=[]
+-              this.selectedAsyncValue=[]
+-            }
+-          }else{
++    pageSize: {
++      type: Number,
++      default: 10,
++      required: false
++    },
++    getPopupContainer: {
++      type: Function,
++      default: null
++    },
++    mode: {
++      type: String,
++      default: '',
++    },
++  },
++  data() {
++    this.loadData = debounce(this.loadData, 800);//消抖
++    this.lastLoad = 0;
++    return {
++      loading: false,
++      selectedValue: [],
++      selectedAsyncValue: [],
++      options: [],
++    }
++  },
++  created() {
++    this.initDictData();
++  },
++  watch: {
++    "value": {
++      immediate: true,
++      handler(val) {
++        if (!val) {
++          if (val == 0) {
+             this.initSelectValue()
++          } else {
++            this.selectedValue = []
++            this.selectedAsyncValue = []
+           }
+-        }
+-      },
+-      "dict":{
+-        handler(){
+-          this.initDictData()
+-        }
+-      },
+-      'dictOptions':{
+-        deep: true,
+-        handler(val){
+-          if(val && val.length>0){
+-            this.options = [...val]
+-          }
++        } else {
++          this.initSelectValue()
+         }
+       }
+     },
+-    methods:{
+-      initSelectValue(){
+-        if(this.async){
+-          if(!this.selectedAsyncValue || !this.selectedAsyncValue.key || this.selectedAsyncValue.key!=this.value){
+-            // console.log("这才请求后台")
+-            //update-begin-author:taoyan date:20220112 for: 方法initSelectValue 根据下拉框实际值查询下拉框的显示的文本 因后台接口只处理3个参数，所以将过滤条件去掉
+-            // TODO 隐患 查询效率问题 还是应该在后台作筛选
+-            let itemDictStr = this.dict
+-            let arr = itemDictStr.split(',')
+-            if(arr && arr.length==4){
+-              // 删除最后一个元素
+-              arr.pop();
+-              itemDictStr = arr.join(',')
+-            }
+-            //update-end-author:taoyan date:20220112 for: 方法initSelectValue 根据下拉框实际值查询下拉框的显示的文本 因后台接口只处理3个参数，所以将过滤条件去掉
+-            getAction(`/sys/dict/loadDictItem/${itemDictStr}`,{key:this.value}).then(res=>{
+-              if(res.success){
+-                //update-begin---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
+-                //判断是否多选
+-                if(this.mode === 'multiple'){
+-                  if(res.result && res.result.length>0){
+-                    let itemArray = [];
+-                    let valueArray = this.value.split(",")
+-                    for (let i = 0; i < res.result.length; i++) {
+-                      itemArray.push({
+-                        key:valueArray[i],
+-                        label:res.result[i]
+-                      })
+-                    }
+-                    this.selectedAsyncValue = itemArray
+-                  }else{
+-                    this.selectedAsyncValue = []
+-                    this.selectedValue = []
+-                  }
+-                }else{
+-                  let obj = {
+-                    key:this.value,
+-                    label:res.result
++    "dict": {
++      handler() {
++        this.initDictData()
++      }
++    },
++    'dictOptions': {
++      deep: true,
++      handler(val) {
++        if (val && val.length > 0) {
++          this.options = [...val]
++        }
++      }
++    }
++  },
++  methods: {
++    initSelectValue() {
++      if (this.async) {
++        if (!this.selectedAsyncValue || !this.selectedAsyncValue.key || this.selectedAsyncValue.key != this.value) {
++          //update-begin-author:taoyan date:20220112 for: 方法initSelectValue 根据下拉框实际值查询下拉框的显示的文本 因后台接口只处理3个参数，所以将过滤条件去掉
++          // TODO 隐患 查询效率问题 还是应该在后台作筛选
++          let itemDictStr = this.dict
++          let arr = itemDictStr.split(',')
++          if (arr && arr.length == 4) {
++            // 删除最后一个元素
++            arr.pop();
++            itemDictStr = arr.join(',')
++          }
++          //update-end-author:taoyan date:20220112 for: 方法initSelectValue 根据下拉框实际值查询下拉框的显示的文本 因后台接口只处理3个参数，所以将过滤条件去掉
++          getAction(`/sys/dict/loadDictItem/${itemDictStr}`, { key: this.value }).then(res => {
++            if (res.success) {
++              //update-begin---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
++              //判断是否多选
++              if (this.mode === 'multiple') {
++                if (res.result && res.result.length > 0) {
++                  let itemArray = [];
++                  let valueArray = this.value.split(",")
++                  for (let i = 0; i < res.result.length; i++) {
++                    itemArray.push({
++                      key: valueArray[i],
++                      label: res.result[i]
++                    })
+                   }
+-                  this.selectedAsyncValue = {...obj}
++                  this.selectedAsyncValue = itemArray
++                } else {
++                  this.selectedAsyncValue = []
++                  this.selectedValue = []
++                }
++              } else {
++                let obj = {
++                  key: this.value,
++                  label: res.result
+                 }
+-                //update-end---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选--------------
++                this.selectedAsyncValue = { ...obj }
+               }
+-            })
+-          }
+-        }else{
+-          //update-begin---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
+-          //判断是否为多选
+-          if(this.mode==='multiple'){
+-            if(this.value){
+-              this.selectedValue = this.value.split(",");
+-            }else{
+-              this.selectedValue = []
++              //update-end---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选--------------
+             }
+-          }else{
+-            this.selectedValue = this.value.toString()
++          })
++        }
++      } else {
++        //update-begin---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
++        //判断是否为多选
++        if (this.mode === 'multiple') {
++          if (this.value) {
++            this.selectedValue = this.value.split(",");
++          } else {
++            this.selectedValue = []
+           }
+-          //update-end---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
++        } else {
++          this.selectedValue = this.value.toString()
+         }
+-      },
+-      loadData(value){
+-        // console.log("数据加载",value)
+-        this.lastLoad +=1
+-        const currentLoad = this.lastLoad
+-        this.options = []
+-        this.loading=true
+-        // 字典code格式：table,text,code
+-        getAction(`/sys/dict/loadDict/${this.dict}`,{keyword:value, pageSize: this.pageSize}).then(res=>{
+-          this.loading=false
+-          if(res.success){
+-            if(currentLoad!=this.lastLoad){
+-              return
+-            }
+-            this.options = res.result
+-            // console.log("我是第一个",res)
+-          }else{
+-            this.$message.warning(res.message)
++        //update-end---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
++      }
++    },
++    loadData(value) {
++      this.lastLoad += 1
++      const currentLoad = this.lastLoad
++      this.options = []
++      this.loading = true
++      // 字典code格式：table,text,code
++      getAction(`/sys/dict/loadDict/${this.dict}`, { keyword: value, pageSize: this.pageSize }).then(res => {
++        this.loading = false
++        if (res.success) {
++          if (currentLoad != this.lastLoad) {
++            return
+           }
++          this.options = res.result
++        } else {
++          this.$message.warning(res.message)
++        }
+ 
+-        })
++      })
+ 
+-      },
+-      initDictData(){
+-        if(!this.async){
+-          //如果字典项集合有数据
+-          if(this.dictOptions && this.dictOptions.length>0){
+-            this.options = [...this.dictOptions]
+-          }else{
+-            //根据字典Code, 初始化字典数组
+-            let dictStr = ''
+-            if(this.dict){
+-                let arr = this.dict.split(',')
+-                if(arr[0].indexOf('where')>0){
+-                  let tbInfo = arr[0].split('where')
+-                  dictStr = tbInfo[0].trim()+','+arr[1]+','+arr[2]+','+encodeURIComponent(tbInfo[1])
+-                }else{
+-                  dictStr = this.dict
+-                }
+-                if (this.dict.indexOf(",") == -1) {
+-                  //优先从缓存中读取字典配置
+-                  if (getDictItemsFromCache(this.dictCode)) {
+-                    this.options = getDictItemsFromCache(this.dictCode);
+-                    return
+-                  }
+-                }
+-                ajaxGetDictItems(dictStr, null).then((res) => {
+-                  if (res.success) {
+-                    this.options = res.result;
+-                  }
+-                })
++    },
++    initDictData() {
++      if (!this.async) {
++        //如果字典项集合有数据
++        if (this.dictOptions && this.dictOptions.length > 0) {
++          this.options = [...this.dictOptions]
++        } else {
++          //根据字典Code, 初始化字典数组
++          let dictStr = ''
++          if (this.dict) {
++            let arr = this.dict.split(',')
++            if (arr[0].indexOf('where') > 0) {
++              let tbInfo = arr[0].split('where')
++              dictStr = tbInfo[0].trim() + ',' + arr[1] + ',' + arr[2] + ',' + encodeURIComponent(tbInfo[1])
++            } else {
++              dictStr = this.dict
+             }
+-          }
+-        }else{
+-          if(!this.dict){
+-            console.error('搜索组件未配置字典项')
+-          }else{
+-            //异步一开始也加载一点数据
+-            this.loading=true
+-            getAction(`/sys/dict/loadDict/${this.dict}`,{pageSize: this.pageSize, keyword:''}).then(res=>{
+-              this.loading=false
+-              if(res.success){
+-                this.options = res.result
+-              }else{
+-                this.$message.warning(res.message)
++            if (this.dict.indexOf(",") == -1) {
++              //优先从缓存中读取字典配置
++              if (getDictItemsFromCache(this.dictCode)) {
++                this.options = getDictItemsFromCache(this.dictCode);
++                return
++              }
++            }
++            ajaxGetDictItems(dictStr, null).then((res) => {
++              if (res.success) {
++                this.options = res.result;
+               }
+             })
+           }
+         }
+-      },
+-      filterOption(input, option) {
+-        return option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
+-      },
+-      handleChange (selectedValue) {
+-        // console.log("selectedValue",selectedValue)
+-        this.selectedValue = selectedValue
+-        this.callback()
+-      },
+-      handleAsyncChange(selectedObj){
+-        //update-begin-author:scott date:20201222 for:【搜索】搜索查询组件，删除条件，默认下拉还是上次的缓存数据，不好 JT-191
+-        if(selectedObj){
+-          this.selectedAsyncValue = selectedObj
+-          //update-begin---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
+-          if(this.mode ==='multiple'){
+-            let keyArray = []
+-            for (let i = 0; i < selectedObj.length; i++) {
+-              keyArray.push(selectedObj[i].key)
++      } else {
++        if (!this.dict) {
++          console.error('搜索组件未配置字典项')
++        } else {
++          //异步一开始也加载一点数据
++          this.loading = true
++          getAction(`/sys/dict/loadDict/${this.dict}`, { pageSize: this.pageSize, keyword: '' }).then(res => {
++            this.loading = false
++            if (res.success) {
++              this.options = res.result
++            } else {
++              this.$message.warning(res.message)
+             }
+-            this.selectedValue = keyArray
+-          }else{
+-            this.selectedValue = selectedObj.key
+-          }
+-          //update-end---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
+-        }else{
+-          this.selectedAsyncValue = null
+-          this.selectedValue = null
+-          this.options = null
+-          this.loadData("")
++          })
+         }
+-        this.callback()
+-        //update-end-author:scott date:20201222 for:【搜索】搜索查询组件，删除条件，默认下拉还是上次的缓存数据，不好 JT-191
+-      },
+-      callback(){
++      }
++    },
++    filterOption(input, option) {
++      return option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
++    },
++    handleChange(selectedValue) {
++      this.selectedValue = selectedValue
++      this.callback()
++    },
++    handleAsyncChange(selectedObj) {
++      //update-begin-author:scott date:20201222 for:【搜索】搜索查询组件，删除条件，默认下拉还是上次的缓存数据，不好 JT-191
++      if (selectedObj) {
++        this.selectedAsyncValue = selectedObj
+         //update-begin---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
+-        if(this.mode === 'multiple'){
+-          this.$emit('change',  this.selectedValue.join(","));
+-        }else{
+-          this.$emit('change', this.selectedValue);
++        if (this.mode === 'multiple') {
++          let keyArray = []
++          for (let i = 0; i < selectedObj.length; i++) {
++            keyArray.push(selectedObj[i].key)
++          }
++          this.selectedValue = keyArray
++        } else {
++          this.selectedValue = selectedObj.key
+         }
+         //update-end---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
+-      },
+-      setCurrentDictOptions(dictOptions){
+-        this.options = dictOptions
+-      },
+-      getCurrentDictOptions(){
+-        return this.options
+-      },
+-      getParentContainer(node){
+-        if(typeof this.getPopupContainer === 'function'){
+-          return this.getPopupContainer(node)
+-        } else if(!this.popContainer){
+-          return node.parentNode
+-        }else{
+-          return document.querySelector(this.popContainer)
+-        }
+-      },
+-
++      } else {
++        this.selectedAsyncValue = null
++        this.selectedValue = null
++        this.options = null
++        this.loadData("")
++      }
++      this.callback()
++      //update-end-author:scott date:20201222 for:【搜索】搜索查询组件，删除条件，默认下拉还是上次的缓存数据，不好 JT-191
+     },
+-    model: {
+-      prop: 'value',
+-      event: 'change'
+-    }
++    callback() {
++      //update-begin---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
++      if (this.mode === 'multiple') {
++        this.$emit('change', this.selectedValue.join(","));
++      } else {
++        this.$emit('change', this.selectedValue);
++      }
++      //update-end---author:wangshuai ---date:20221115  for：[issues/4213]JSearchSelectTag改造支持多选------------
++    },
++    setCurrentDictOptions(dictOptions) {
++      this.options = dictOptions
++    },
++    getCurrentDictOptions() {
++      return this.options
++    },
++    getParentContainer(node) {
++      if (typeof this.getPopupContainer === 'function') {
++        return this.getPopupContainer(node)
++      } else if (!this.popContainer) {
++        return node.parentNode
++      } else {
++        return document.querySelector(this.popContainer)
++      }
++    },
++
++  },
++  model: {
++    prop: 'value',
++    event: 'change'
+   }
++}
+ </script>
+ 
+-<style scoped>
+-
+-</style>
+\ No newline at end of file
++<style scoped></style>
+\ No newline at end of file
+diff --git a/src/views/customerManager/TabCustomermanageList.vue b/src/views/customerManager/TabCustomermanageList.vue
+index e06c1522a2926b755987f755b3c6f52e59011167..6d8a11194e86fbc34a6f8ed277d1789298cb0891 100644
+--- a/src/views/customerManager/TabCustomermanageList.vue
++++ b/src/views/customerManager/TabCustomermanageList.vue
+@@ -196,7 +196,7 @@ export default {
+         {
+           title: '回款间隔天数',
+           align: "center",
+-          dataIndex: 'paymentDate'
++          dataIndex: 'intervalDays'
+         },
+         // {
+         //   title: '实际还款日期',
+diff --git a/src/views/customerManager/modules/TabCustomermanageForm.vue b/src/views/customerManager/modules/TabCustomermanageForm.vue
+index 097d39c6ef2896bc5b5f477e12ba0b7d5afb2a4c..d5d136b65124a1a9843c682ea454bf1339b5023e 100644
+--- a/src/views/customerManager/modules/TabCustomermanageForm.vue
++++ b/src/views/customerManager/modules/TabCustomermanageForm.vue
+@@ -41,7 +41,7 @@
+           </a-col>
+           <a-col :span="24">
+             <a-form-model-item label="客户回款间隔天数" :labelCol="labelCol" :wrapperCol="wrapperCol" prop="intervalDays">
+-              <a-input-number v-model="model.intervalDays" placeholder="请输入客户回款间隔天数" :min="1" :max="31" :precision="0"
++              <a-input-number v-model="model.intervalDays" placeholder="请输入客户回款间隔天数" :min="1" :precision="0"
+                 style="width: 100%;"></a-input-number>
+             </a-form-model-item>
+           </a-col>
+@@ -233,12 +233,17 @@ export default {
+             method = 'put';
+           }
+ 
+-          const paymentDateChanged = this.model.paymentDate !== this.oldPaymentDate;
+-          if (isAdd || paymentDateChanged) {
++          // const paymentDateChanged = this.model.paymentDate !== this.oldPaymentDate;
++          // if (isAdd || paymentDateChanged) {
++
++          // }
++          try {
+             const interval = Number(this.model.intervalDays) || 0;
+             this.model.preIntervalDays = interval - 10;
+             this.model.monthApart = Math.floor(interval / 30);
+             this.model.days = interval % 30;
++          } catch (error) {
++            // console.log(error)
+           }
+           httpAction(httpurl, this.model, method).then((res) => {
+             if (res.success) {
+diff --git a/src/views/dashboard/Analysis.vue b/src/views/dashboard/Analysis.vue
+index 688cedc84cdd77a9131bee1765c48de001e8a83d..8f4df35097fc0e198bfca6bb77800641a9026cbe 100644
+--- a/src/views/dashboard/Analysis.vue
++++ b/src/views/dashboard/Analysis.vue
+@@ -1,19 +1,95 @@
+ <template>
+   <div>
+-    <index-chart v-if="currentPermissionType === 'total'" :dateRange="dateRange"
+-      @update:dateRange="dateRange = $event" />
+-    <BusinessChart v-else-if="currentPermissionType === 'channel'" :dateRange="dateRange"
+-      @update:dateRange="dateRange = $event" />
+-    <salsChart v-else-if="currentPermissionType === 'sales'" :dateRange="dateRange"
+-      @update:dateRange="dateRange = $event" />
+-    <NoPermission v-else />
+-    <div v-if="currentPermissionType !== 'none'" style="width: 100%;text-align: right;margin-top: 20px">
++    <div v-if="currentPermissionType !== 'none'" style="width: 100%;text-align: right;margin:10px 0 20px 0;">
+       <a-radio-group v-model="indexStyle">
+         <a-radio v-if="hasTotalPermission" :value="1">汇总</a-radio>
+         <a-radio v-if="hasChannelPermission" :value="2">渠道</a-radio>
+         <a-radio v-if="hasSalesPermission" :value="3">销售</a-radio>
++        <a-radio :value="4">利润</a-radio>
+       </a-radio-group>
+     </div>
++
++    <index-chart v-if="indexStyle === 1" :dateRange="dateRange" @update:dateRange="dateRange = $event" />
++    <BusinessChart v-else-if="indexStyle === 2" :dateRange="dateRange" @update:dateRange="dateRange = $event" />
++    <salsChart v-else-if="indexStyle === 3" :dateRange="dateRange" @update:dateRange="dateRange = $event" />
++
++    <!-- 利润图表，支持多种类型 -->
++    <div v-if="indexStyle === 4">
++      <div class="top">
++        <div class="top-item">
++          <div class="top-icon"><a-icon type="dollar" /></div>
++          <div class="top-content">
++            <div class="top-label">总消耗</div>
++            <div class="top-value">¥{{ (totalProfitValues.totalCharged || 0).toFixed(2) }}</div>
++          </div>
++        </div>
++        <div class="top-item">
++          <div class="top-icon"><a-icon type="property-safety" /></div>
++          <div class="top-content">
++            <div class="top-label">应回款</div>
++            <div class="top-value">¥{{ (totalProfitValues.revenue || 0).toFixed(2) }}</div>
++          </div>
++        </div>
++        <div class="top-item">
++          <div class="top-icon"><a-icon type="check-circle" /></div>
++          <div class="top-content">
++            <div class="top-label">已回款</div>
++            <div class="top-value">¥{{ (totalProfitValues.paymentMoney || 0).toFixed(2) }}</div>
++          </div>
++        </div>
++        <div class="top-item">
++          <div class="top-icon"><a-icon type="rise" /></div>
++          <div class="top-content">
++            <div class="top-label">实际净利</div>
++            <div class="top-value">¥{{ (totalProfitValues.actualNetProfit || 0).toFixed(2) }}</div>
++          </div>
++        </div>
++        <div class="top-item">
++          <div class="top-icon"><a-icon type="line-chart" /></div>
++          <div class="top-content">
++            <div class="top-label">预估净利润</div>
++            <div class="top-value">¥{{ (totalProfitValues.estimatedNetProfit || 0).toFixed(2) }}</div>
++          </div>
++        </div>
++      </div>
++      <div
++        style="background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); padding: 24px 24px 8px 24px; margin-bottom: 24px;">
++        <compare-line-chart v-model="profitMonth" :chartData="chartData" :chartType="chartType" :loading="chartLoading"
++          @month-change="onProfitMonthChange" />
++        <a-radio-group v-model="chartType" style="margin: 16px 0;">
++          <a-radio value="bar">柱状图</a-radio>
++          <a-radio value="line">折线图</a-radio>
++        </a-radio-group>
++      </div>
++      <!-- 未回款完成名单 -->
++      <div style="background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); padding: 24px;">
++        <div style="font-weight: bold; font-size: 16px; margin-bottom: 12px;">未回款完成名单</div>
++        <div style="margin-bottom: 12px;">
++          <a-radio-group v-model="unpaidSortType" @change="onUnpaidSortChange">
++            <a-radio value="revenue">应回款排序</a-radio>
++            <a-radio value="unpaid">未回款排序</a-radio>
++            <a-radio value="overdue">逾期天数排序</a-radio>
++          </a-radio-group>
++        </div>
++        <a-spin :spinning="unpaidSortLoading">
++          <div ref="unpaidTableWrapper" style="min-height: 420px;">
++            <a-table v-if="!unpaidSortLoading" :dataSource="sortedUnpaidList" :pagination="false"
++              :rowKey="(record, index) => record.customer_name + '_' + index" size="small" bordered :scroll="{ y: 380 }"
++              :columns="[
++                { title: '客户名称', dataIndex: 'customer_name', key: 'customer_name' },
++                { title: '应回款', dataIndex: 'revenue', key: 'revenue', customRender: t => Number(t).toFixed(3) },
++                { title: '已回款', dataIndex: 'payment_money', key: 'payment_money', customRender: t => Number(t).toFixed(3) },
++                { title: '未回款', dataIndex: 'unpaid', key: 'unpaid', customRender: t => Number(t).toFixed(3) },
++                { title: '应回款日期', dataIndex: 'due_date', key: 'due_date' },
++                { title: '最后回款日期', dataIndex: 'payment_date', key: 'payment_date' },
++                { title: '逾期天数', dataIndex: 'overdue', key: 'overdue' }
++              ]" key="table" />
++            <div v-else :style="{ height: '420px' }" key="loading-placeholder"></div>
++          </div>
++        </a-spin>
++      </div>
++    </div>
++    <NoPermission v-else-if="currentPermissionType === 'none'" />
+   </div>
+ </template>
+ 
+@@ -22,7 +98,9 @@ import IndexChart from './IndexChart'
+ import BusinessChart from './bisnussChart.vue'
+ import salsChart from './salsChart.vue'
+ import NoPermission from './NoPermission.vue'
++import CompareLineChart from './CompareLineChart.vue'
+ import { mapState } from 'vuex'
++import { getAction } from '@/api/manage'
+ 
+ function getYesterday(num = 1) {
+   const date = new Date();
+@@ -49,7 +127,8 @@ export default {
+     IndexChart,
+     BusinessChart,
+     salsChart,
+-    NoPermission
++    NoPermission,
++    CompareLineChart
+   },
+   data() {
+     const yesterday = getYesterday();
+@@ -61,14 +140,28 @@ export default {
+         '最近一周': getDateRange(7),
+         '最近一月': getDateRange(30),
+         '最近一年': getDateRange(365)
+-      }
++      },
++      profitMonth: new Date().toISOString().slice(0, 7),
++      chartData: [],
++      chartLoading: false,
++      chartType: 'bar',
++      unpaidList: [],
++      unpaidSortType: 'revenue',
++      unpaidSortLoading: false,
++      chartSortKey: 'revenue',
++      chartSortOrder: 'desc',
++      chartDataTopN: 20,
+     }
+   },
+-  created() {
+-
+-  },
++  created() { },
+   mounted() {
+-    // console.log(this.permissionMenuList, 'permissionMenuList')
++    this.fetchChartData();
++    // 页面加载时滚动到最顶部
++    this.$nextTick(() => {
++      setTimeout(() => {
++        window.scrollTo({ top: 0, behavior: 'smooth' });
++      }, 300);
++    });
+   },
+   computed: {
+     ...mapState({
+@@ -91,22 +184,293 @@ export default {
+       if (this.hasChannelPermission) return 'channel'
+       if (this.hasSalesPermission) return 'sales'
+       return 'none'
++    },
++    totalProfitValues() {
++      const data = this.chartData || [];
++      if (data.length === 0) {
++        return { totalCharged: 0, revenue: 0, paymentMoney: 0, actualNetProfit: 0, estimatedNetProfit: 0 };
++      }
++
++      const getNetProfit = (i) => {
++        const revenue = Number(i.revenue) || 0;
++        const actual_rebate_amount = Number(i.actual_rebate_amount) || 0;
++        const project_cost = Number(i.project_cost) || 0;
++        const material_cost = Number(i.material_cost) || 0;
++        return revenue - actual_rebate_amount - project_cost - material_cost;
++      };
++
++      const getEstimatedNetProfit = (i) => {
++        const revenue = Number(i.revenue) || 0;
++        const estimated_rebate_amount = Number(i.estimated_rebate_amount) || 0;
++        const project_cost = Number(i.project_cost) || 0;
++        const material_cost = Number(i.material_cost) || 0;
++        return revenue - estimated_rebate_amount - project_cost - material_cost;
++      };
++
++      return data.reduce((acc, row) => {
++        acc.totalCharged += Number(row.total_charged) || 0;
++        acc.revenue += Number(row.revenue) || 0;
++        acc.paymentMoney += Number(row.payment_money) || 0;
++        acc.actualNetProfit += getNetProfit(row);
++        acc.estimatedNetProfit += getEstimatedNetProfit(row);
++        return acc;
++      }, { totalCharged: 0, revenue: 0, paymentMoney: 0, actualNetProfit: 0, estimatedNetProfit: 0 });
++    },
++    processedChartData() {
++      let data = [...(this.chartData || [])];
++
++      const getNetProfit = (i) => {
++        const revenue = Number(i.revenue) || 0;
++        const actual_rebate_amount = Number(i.actual_rebate_amount) || 0;
++        const project_cost = Number(i.project_cost) || 0;
++        const material_cost = Number(i.material_cost) || 0;
++        return revenue - actual_rebate_amount - project_cost - material_cost;
++      };
++
++      data.sort((a, b) => {
++        let valA, valB;
++        const key = this.chartSortKey;
++        if (key === 'actual_net_profit') {
++          valA = getNetProfit(a);
++          valB = getNetProfit(b);
++        } else if (key === 'customer_name') {
++          valA = a[key] || '';
++          valB = b[key] || '';
++          if (this.chartSortOrder === 'asc') {
++            return valA.localeCompare(valB);
++          } else {
++            return valB.localeCompare(valA);
++          }
++        } else {
++          valA = Number(a[key]) || 0;
++          valB = Number(b[key]) || 0;
++        }
++
++        return this.chartSortOrder === 'asc' ? valA - valB : valB - valA;
++      });
++
++      if (this.chartDataTopN > 0) {
++        return data.slice(0, this.chartDataTopN);
++      }
++
++      return data;
++    },
++    sortedUnpaidList() {
++      // 计算排序
++      let arr = (this.unpaidList || []).slice();
++      if (this.unpaidSortType === 'revenue') {
++        arr.sort((a, b) => b.revenue - a.revenue);
++      } else if (this.unpaidSortType === 'unpaid') {
++        arr.sort((a, b) => b.unpaid - a.unpaid);
++      } else if (this.unpaidSortType === 'overdue') {
++        arr.sort((a, b) => b.overdue - a.overdue);
++      }
++      return arr;
+     }
+   },
+   watch: {
+-    currentPermissionType: {
+-      immediate: true,
+-      handler(val) {
+-        if (val === 'total') this.indexStyle = 1
+-        else if (val === 'channel') this.indexStyle = 2
+-        else if (val === 'sales') this.indexStyle = 3
+-      }
++    profitMonth(val) {
++      this.fetchChartData();
++    },
++    chartType(val) {
++      // 切换类型时自动刷新图表
++      this.$nextTick(() => {
++        if (this.$refs.compareChart) {
++          this.$refs.compareChart.initChart();
++        }
++      });
+     }
+   },
+   methods: {
+     handleRangeChange(dates) {
+       this.dateRange = dates;
++    },
++    onProfitMonthChange(val) {
++      this.profitMonth = val;
++      // fetchChartData会自动触发
++    },
++    fetchChartData() {
++      this.chartLoading = true;
++      let params = {};
++      if (this.profitMonth) {
++        params.month = [this.profitMonth];
++      }
++      params.pageNo = 1;
++      params.pageSize = 99999;
++      getAction('/agentdata/getAmountByCustomerIdAndMonth', params)
++        .then(res => {
++          if (res.success) {
++            this.chartData = res.result.records || res.result;
++            // 计算未回款名单，含应汇款日期和逾期天数
++            this.unpaidList = (this.chartData || []).map(row => {
++              const revenue = Number(row.revenue) || 0;
++              const payment = Number(row.payment_money) || 0;
++              const unpaid = +(revenue - payment).toFixed(3);
++              // 应汇款日期
++              const month = row.month;
++              const monthApart = Number(row.month_apart) || 0;
++              const days = Number(row.days) || 0;
++              let dueDate = new Date(month + '-01');
++              dueDate.setMonth(dueDate.getMonth() + monthApart);
++              dueDate.setDate(days > 0 ? days : 1);
++              const dueDateStr = dueDate.toISOString().slice(0, 10);
++              // 最后回款日期
++              const paymentDate = row.payment_date;
++              // 逾期天数
++              const now = new Date();
++              const overdue = Math.max(0, Math.floor((now - dueDate) / (1000 * 60 * 60 * 24)));
++              // --- 新增利润相关字段 ---
++              const estimated_rebate_amount = Number(row.estimated_rebate_amount) || 0;
++              const actual_rebate_amount = Number(row.actual_rebate_amount) || 0;
++              const project_cost = Number(row.project_cost) || 0;
++              const material_cost = Number(row.material_cost) || 0;
++              const estimated_gross_profit = revenue - estimated_rebate_amount;
++              const actual_gross_profit = revenue - actual_rebate_amount;
++              const estimated_net_profit = revenue - estimated_rebate_amount - project_cost - material_cost;
++              const actual_net_profit = revenue - actual_rebate_amount - project_cost - material_cost;
++              return {
++                ...row,
++                unpaid,
++                due_date: dueDateStr,
++                payment_date: paymentDate,
++                overdue,
++                estimated_gross_profit: +estimated_gross_profit.toFixed(3),
++                actual_gross_profit: +actual_gross_profit.toFixed(3),
++                estimated_net_profit: +estimated_net_profit.toFixed(3),
++                actual_net_profit: +actual_net_profit.toFixed(3),
++              };
++            }).filter(row => row.unpaid > 0);
++            // chartData也补全利润字段
++            this.chartData = (this.chartData || []).map(row => {
++              const revenue = Number(row.revenue) || 0;
++              const estimated_rebate_amount = Number(row.estimated_rebate_amount) || 0;
++              const actual_rebate_amount = Number(row.actual_rebate_amount) || 0;
++              const project_cost = Number(row.project_cost) || 0;
++              const material_cost = Number(row.material_cost) || 0;
++              const estimated_gross_profit = revenue - estimated_rebate_amount;
++              const actual_gross_profit = revenue - actual_rebate_amount;
++              const estimated_net_profit = revenue - estimated_rebate_amount - project_cost - material_cost;
++              const actual_net_profit = revenue - actual_rebate_amount - project_cost - material_cost;
++              return {
++                ...row,
++                estimated_gross_profit: +estimated_gross_profit.toFixed(3),
++                actual_gross_profit: +actual_gross_profit.toFixed(3),
++                estimated_net_profit: +estimated_net_profit.toFixed(3),
++                actual_net_profit: +actual_net_profit.toFixed(3),
++              };
++            });
++          } else {
++            this.chartData = [];
++            this.unpaidList = [];
++            this.$message.error(res.message || '数据获取失败');
++          }
++        })
++        .catch(e => {
++          this.chartData = [];
++          this.unpaidList = [];
++          this.$message.error(e.message || '数据获取失败');
++        })
++        .finally(() => {
++          this.chartLoading = false;
++        });
++    },
++    onUnpaidSortChange() {
++      this.unpaidSortLoading = true;
++      setTimeout(() => {
++        this.unpaidSortLoading = false;
++        // 滚动到表格顶部
++        this.$nextTick(() => {
++          const wrapper = this.$refs.unpaidTableWrapper;
++          if (wrapper) {
++            wrapper.scrollTo({ top: 0, behavior: 'smooth' });
++          }
++        });
++      }, 600);
+     }
+   }
+ }
+-</script>
+\ No newline at end of file
++</script>
++
++<style scoped>
++.top {
++  display: flex;
++  justify-content: space-around;
++  padding: 16px 24px;
++  margin-bottom: 24px;
++  background: #fff;
++  border-radius: 8px;
++  border: 1px solid #f0f0f0;
++  transition: box-shadow 0.3s ease;
++  animation: fadeIn 0.5s ease-in;
++}
++
++.top-item {
++  display: flex;
++  align-items: center;
++  flex: 1;
++  padding: 0 16px;
++  position: relative;
++}
++
++.top-item:not(:last-child)::after {
++  content: '';
++  position: absolute;
++  right: 0;
++  top: 50%;
++  transform: translateY(-50%);
++  height: 40px;
++  width: 1px;
++  background: #f0f0f0;
++}
++
++.top-icon {
++  font-size: 32px;
++  color: #1890ff;
++  margin-right: 16px;
++}
++
++.top-content {
++  display: flex;
++  flex-direction: column;
++}
++
++.top-label {
++  font-size: 16px;
++  color: rgba(0, 0, 0, 0.65);
++  margin-bottom: 4px;
++}
++
++.top-value {
++  font-size: 28px;
++  font-weight: bold;
++  color: rgba(0, 0, 0, 0.85);
++}
++
++.list-enter-active {
++  animation: slideDown 0.5s;
++}
++
++@keyframes fadeIn {
++  from {
++    opacity: 0;
++    transform: translateY(10px);
++  }
++
++  to {
++    opacity: 1;
++    transform: translateY(0);
++  }
++}
++
++@keyframes slideDown {
++  from {
++    opacity: 0;
++    transform: translateY(-20px);
++  }
++
++  to {
++    opacity: 1;
++    transform: translateY(0);
++  }
++}
++</style>
+\ No newline at end of file
+diff --git a/src/views/dashboard/CompareLineChart.vue b/src/views/dashboard/CompareLineChart.vue
+new file mode 100644
+index 0000000000000000000000000000000000000000..0c1d58c9a310b8bf9a005effd4d580046073e2da
+--- /dev/null
++++ b/src/views/dashboard/CompareLineChart.vue
+@@ -0,0 +1,259 @@
++<template>
++    <div style="width: 100%;">
++        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
++            <span style="margin-right: 8px;">排序字段:</span>
++            <a-select v-model="sortKey" style="width: 140px;">
++                <a-select-option value="customer_name">客户名称</a-select-option>
++                <a-select-option value="total_charged">总消耗</a-select-option>
++                <a-select-option value="cash_drain">现金消耗</a-select-option>
++                <a-select-option value="revenue">应回款</a-select-option>
++                <a-select-option value="payment_money">已回款</a-select-option>
++                <a-select-option value="actual_net_profit">实际净利</a-select-option>
++                <a-select-option value="estimated_gross_profit">预估毛利</a-select-option>
++                <a-select-option value="actual_gross_profit">实际毛利润</a-select-option>
++                <a-select-option value="estimated_net_profit">预估净利</a-select-option>
++                <a-select-option value="actual_net_profit2">实际净利润</a-select-option>
++            </a-select>
++            <span style="margin-right: 8px;">排序方式:</span>
++            <a-radio-group v-model="sortOrder">
++                <a-radio-button value="desc">降序</a-radio-button>
++                <a-radio-button value="asc">升序</a-radio-button>
++            </a-radio-group>
++        </div>
++        <div style="margin-bottom: 16px; text-align: right;">
++            <a-month-picker v-model="month" placeholder="请选择月份" :value-format="'YYYY-MM'" style="width: 200px;"
++                @change="onMonthChange" />
++        </div>
++        <div style="width: 100%; height: 400px; position: relative;">
++            <a-spin :spinning="loading">
++                <div ref="chart" style="width: 100%; height: 400px;"></div>
++            </a-spin>
++        </div>
++    </div>
++</template>
++
++<script>
++import * as echarts from 'echarts';
++
++export default {
++    name: 'CompareLineChart',
++    props: {
++        chartData: {
++            type: Array,
++            required: true
++        },
++        chartType: {
++            type: String,
++            default: 'bar'
++        },
++        value: {
++            type: String,
++            default: ''
++        },
++        loading: {
++            type: Boolean,
++            default: false
++        }
++    },
++    data() {
++        return {
++            month: this.value,
++            sortKey: 'revenue',
++            sortOrder: 'desc',
++        }
++    },
++    watch: {
++        chartData: {
++            handler() {
++                this.initChart();
++            },
++            deep: true
++        },
++        chartType() {
++            this.initChart();
++        },
++        value(val) {
++            this.month = val;
++        },
++        month(val) {
++            this.$emit('input', val);
++            this.$emit('month-change', val);
++        },
++        sortKey() {
++            this.initChart();
++        },
++        sortOrder() {
++            this.initChart();
++        }
++    },
++    mounted() {
++        this.initChart();
++    },
++    methods: {
++        getSortedData() {
++            let data = [...(this.chartData || [])];
++            const key = this.sortKey;
++            // 兼容实际净利润字段
++            const getValue = (item) => {
++                if (key === 'actual_net_profit2') {
++                    return Number(item.actual_net_profit) || 0;
++                }
++                if (key === 'customer_name') {
++                    return item.customer_name || '';
++                }
++                return Number(item[key]) || 0;
++            };
++            data.sort((a, b) => {
++                let valA = getValue(a);
++                let valB = getValue(b);
++                if (key === 'customer_name') {
++                    return this.sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
++                }
++                return this.sortOrder === 'asc' ? valA - valB : valB - valA;
++            });
++            return data;
++        },
++        initChart() {
++            if (!this.$refs.chart) return;
++            const chart = echarts.init(this.$refs.chart);
++            const data = this.getSortedData();
++            const xData = data.map(i => i.customer_name);
++            const to3 = v => (Number(v) || 0).toFixed(3) * 1;
++            const totalCharged = data.map(i => to3(i.total_charged));
++            const cashDrain = data.map(i => to3(i.cash_drain));
++            const revenue = data.map(i => to3(i.revenue));
++            const paymentMoney = data.map(i => to3(i.payment_money));
++            const actualNetProfit = data.map(i => {
++                const revenue = Number(i.revenue) || 0;
++                const actual_rebate_amount = Number(i.actual_rebate_amount) || 0;
++                const project_cost = Number(i.project_cost) || 0;
++                const material_cost = Number(i.material_cost) || 0;
++                return (revenue - actual_rebate_amount - project_cost - material_cost).toFixed(3) * 1;
++            });
++            // 新增利润相关系列
++            const estimatedGrossProfit = data.map(i => Number(i.estimated_gross_profit) || 0);
++            const actualGrossProfit = data.map(i => Number(i.actual_gross_profit) || 0);
++            const estimatedNetProfit = data.map(i => Number(i.estimated_net_profit) || 0);
++            const actualNetProfit2 = data.map(i => Number(i.actual_net_profit) || 0);
++
++            // --- start: 计算右侧Y轴的动态范围 ---
++            const rightAxisData = paymentMoney.concat(actualNetProfit);
++            let yAxis2Options = {};
++
++            if (rightAxisData.length > 0) {
++                let minVal = Math.min(...rightAxisData);
++                let maxVal = Math.max(...rightAxisData);
++
++                // 确保0在范围内，如果所有值都为正，则从0开始
++                if (minVal > 0) {
++                    minVal = 0;
++                }
++
++                if (minVal === maxVal) {
++                    const delta = Math.abs(minVal) * 0.2 || 10;
++                    minVal -= delta;
++                    maxVal += delta;
++                } else {
++                    const padding = (maxVal - minVal) * 0.1;
++                    // 只在maxVal上加padding，避免minVal低于实际最小值太多
++                    if (maxVal !== 0) {
++                        maxVal += padding;
++                    }
++                    // 如果minVal是负数，也给它一点padding
++                    if (minVal < 0) {
++                        minVal -= padding;
++                    }
++                }
++
++                if (minVal === maxVal) {
++                    maxVal += 1;
++                }
++
++                yAxis2Options = {
++                    min: parseFloat(minVal.toFixed(2)),
++                    max: parseFloat(maxVal.toFixed(2)),
++                };
++            }
++            // --- end: 计算右侧Y轴的动态范围 ---
++
++            let option = {};
++            if (this.chartType === 'bar' || this.chartType === 'line') {
++                option = {
++                    tooltip: { trigger: 'axis' },
++                    legend: { data: ['总消耗', '现金消耗', '应回款', '已回款', '实际净利', '预估毛利', '实际毛利润', '预估净利', '实际净利润'] },
++                    xAxis: { type: 'category', data: xData },
++                    yAxis: [
++                        {
++                            type: 'value',
++                            name: '金额',
++                            position: 'left',
++                            axisLine: { show: true },
++                            axisLabel: { formatter: '{value}' },
++                            min: 0,
++                        },
++                        {
++                            type: 'value',
++                            name: '已回款/净利',
++                            position: 'right',
++                            axisLine: { show: true },
++                            axisLabel: { formatter: '{value}' },
++                            ...yAxis2Options
++                        }
++                    ],
++                    series: [
++                        { name: '总消耗', type: this.chartType, data: totalCharged, yAxisIndex: 0 },
++                        { name: '现金消耗', type: this.chartType, data: cashDrain, yAxisIndex: 0 },
++                        { name: '应回款', type: this.chartType, data: revenue, yAxisIndex: 0 },
++                        { name: '已回款', type: this.chartType, data: paymentMoney, yAxisIndex: 1 },
++                        { name: '实际净利', type: this.chartType, data: actualNetProfit, yAxisIndex: 1 },
++                        { name: '预估毛利', type: this.chartType, data: estimatedGrossProfit, yAxisIndex: 1 },
++                        { name: '实际毛利润', type: this.chartType, data: actualGrossProfit, yAxisIndex: 1 },
++                        { name: '预估净利', type: this.chartType, data: estimatedNetProfit, yAxisIndex: 1 },
++                        { name: '实际净利润', type: this.chartType, data: actualNetProfit2, yAxisIndex: 1 },
++                    ],
++                    dataZoom: [
++                        {
++                            type: 'slider',
++                            show: true,
++                            xAxisIndex: 0,
++                            start: 0,
++                            end: 100
++                        },
++                        {
++                            type: 'inside',
++                            xAxisIndex: 0,
++                            start: 0,
++                            end: 100
++                        }
++                    ]
++                }
++            } else if (this.chartType === 'pie') {
++                option = {
++                    tooltip: { trigger: 'item' },
++                    legend: { orient: 'vertical', left: 'left' },
++                    series: [
++                        {
++                            name: '应回款占比',
++                            type: 'pie',
++                            radius: '60%',
++                            data: data.map(i => ({ name: i.customer_name, value: to3(i.revenue) })),
++                            emphasis: {
++                                itemStyle: {
++                                    shadowBlur: 10,
++                                    shadowOffsetX: 0,
++                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
++                                }
++                            }
++                        }
++                    ]
++                }
++            }
++            chart.clear();
++            chart.setOption(option);
++        },
++        onMonthChange(val) {
++            this.month = val;
++        }
++    }
++};
++</script>
+\ No newline at end of file
+diff --git a/src/views/dashboard/salsChart.vue b/src/views/dashboard/salsChart.vue
+index 13a7ac91dc31d1e65316b63fec48bcf0f5488722..8eff98cdda31d3752aa73ea1d92fe01033b242e2 100644
+--- a/src/views/dashboard/salsChart.vue
++++ b/src/views/dashboard/salsChart.vue
+@@ -163,8 +163,8 @@ export default {
+     handleDateChange(dates) {
+       if (dates && dates.length === 2) {
+         this.$emit('update:dateRange', [
+-          dates[0].format('YYYY-MM-DD'),
+-          dates[1].format('YYYY-MM-DD')
++          dates[0],
++          dates[1]
+         ]);
+       }
+     },
+diff --git a/src/views/moneyManager/BackmoneyList.vue b/src/views/moneyManager/BackmoneyList.vue
+index 44c09448452c489ef9a4045e440e844c5b70591c..1ab32cc83633fe720547cf61946f7aaa8130a25d 100644
+--- a/src/views/moneyManager/BackmoneyList.vue
++++ b/src/views/moneyManager/BackmoneyList.vue
+@@ -176,7 +176,52 @@ export default {
+           customRender: (text) => text ? Number(text).toFixed(3) : '0.000',
+           slots: { title: 'revenueTitle' }
+         },
++        {
++          title: '已回款',
++          align: "center",
++          dataIndex: 'payment_money',
++          width: 120,
++          customRender: (text) => text ? Number(text).toFixed(3) : '0.000'
++        },
++        {
++          title: '最后回款日期',
++          align: "center",
++          dataIndex: 'payment_date',
++          width: 120,
++          customRender: (text) => text ? text : '未回款'
++        },
++        {
++          title: '逾期天数',
++          align: "center",
++          width: 200,
++          customRender: (text, row) => {
++            // 误差值，允许自定义，默认0
++            const tolerance = 0;
++            // 1. 计算应回款日期
++            const month = row.month;
++            const monthApart = Number(row.month_apart) || 0;
++            const days = Number(row.days) || 0;
++            // 补全为1号
++            let dueDate = new Date(month + '-01');
++            // 加上month_apart个月
++            dueDate.setMonth(dueDate.getMonth() + monthApart);
++            // days为0时为1号，否则为days号
++            dueDate.setDate(days > 0 ? days : 1);
++
++            // 2. 获取回款日期
++            let paymentDate = row.payment_date ? new Date(row.payment_date) : null;
++            // 3. 计算逾期天数
++            let compareDate = paymentDate || new Date();
++            let diff = Math.floor((compareDate - dueDate) / (1000 * 60 * 60 * 24));
+ 
++            // 4. 返回结果
++            if (diff <= tolerance) {
++              return '未逾期';
++            } else {
++              return diff + '天';
++            }
++          }
++        },
+         {
+           title: '预估消耗成本',
+           align: "center",
+@@ -240,7 +285,6 @@ export default {
+             return (cost).toFixed(3);
+           }
+         },
+-
+         {
+           title: '实际净利',
+           align: "center",
+@@ -254,19 +298,7 @@ export default {
+             return (cost).toFixed(3);
+           }
+         },
+-        {
+-          title: '已回款',
+-          align: "center",
+-          dataIndex: 'payment_money',
+-          width: 120,
+-          customRender: (text) => text ? Number(text).toFixed(3) : '0.000'
+-        },
+-        // {
+-        //   title: '备注',
+-        //   align: "center",
+-        //   dataIndex: 'remarks',
+-        //   width: 200
+-        // },
++
+       ],
+       url: {
+         // list: "/agentdata/getTotalByCustomerIdAndMonth",
+diff --git a/src/views/projectManager/TabProjectmanageList.vue b/src/views/projectManager/TabProjectmanageList.vue
+index 66d5bf9172b20711f57498587ab5499723201cc7..1ca18152b525646db224a942ac5b7a5331b5a135 100644
+--- a/src/views/projectManager/TabProjectmanageList.vue
++++ b/src/views/projectManager/TabProjectmanageList.vue
+@@ -86,7 +86,7 @@
+         @change="handleTableChange" :rowClassName="setRowBackground">
+ 
+         <template slot="htmlSlot" slot-scope="text">
+-          <div v-html="text"></div>
++          <div v-html="e"></div>
+         </template>
+         <template slot="imgSlot" slot-scope="text,record">
+           <span v-if="!text" style="font-size: 12px;font-style: italic;">无图片</span>
+@@ -215,7 +215,7 @@ export default {
+         {
+           title: '销售',
+           align: "center",
+-          dataIndex: 'salesPersonName',
++          dataIndex: 'salesPersonId_dictText',
+           width: 150
+         },
+         {
+diff --git a/src/views/system/modules/UserModal.vue b/src/views/system/modules/UserModal.vue
+index 06b252b8406ba0b2c6610d90e0a40221125123e8..e11c06c230638d38a00760a854a99d3141b299a8 100644
+--- a/src/views/system/modules/UserModal.vue
++++ b/src/views/system/modules/UserModal.vue
+@@ -53,7 +53,7 @@
+           <!-- <span style="color: #9f9f9f;">渠道为空则渠道</span> -->
+         </a-form-model-item>
+         <!-- <a-form-model-item label="职务" :labelCol="labelCol" :wrapperCol="wrapperCol">
+-          <j-select-position placeholder="请选择职务" :multiple="false" v-model="model.post" />
++          <j-select-position placeholder="请选择职务" :multiple="false" v-model="model.po st" />
+         </a-form-model-item> -->
+ 
+         <a-form-model-item label="角色分配" :labelCol="labelCol" :wrapperCol="wrapperCol" v-show="!roleDisabled">
+diff --git a/t.js b/t.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..6fe6f61b2588089a784afa3e31af20742da67fbc
+--- /dev/null
++++ b/t.js
+@@ -0,0 +1,20 @@
++function a() {
++    // console.log(1)
++    setTimeout(() => {
++        // console.log(2)
++    }, 0)
++    // console.log(3)
++    queueMicrotask(() => {
++        // console.log(4)
++    })
++    new Promise((res, rej) => {
++        res(5)
++        // console.log(6)
++    }).then(_ => {
++        // console.log(7)
++    })
++}
++
++// console.log(8)
++a()
++// console.log(9)
+\ No newline at end of file
+diff --git a/t.json b/t.json
+deleted file mode 100644
+index 35e7ad3235394bd1350f2af751fd95e3dd840cd7..0000000000000000000000000000000000000000
+--- a/t.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-[
+-    {
+-        "date": "2025-05",
+-        "user": "1",
+-        "快手KA": "50%",
+-        "gonzzi": 10000
+-    }
+-]
+\ No newline at end of file

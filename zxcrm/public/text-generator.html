@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WDXL字体文字图片生成器</title>
+    <style>
+        @font-face {
+            font-family: 'WDXL Lubrifont SC Local';
+            src: url('./WDXLLubrifontSC-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-family: 'WDXL Lubrifont SC Local', 'Microsoft YaHei', sans-serif;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .control-group input,
+        .control-group select,
+        .control-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-picker input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .preview {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .margin-preview {
+            border: 2px dashed #ccc;
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            position: relative;
+            min-height: 100px;
+        }
+
+        .margin-preview::before {
+            content: '画布边界';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: white;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .margin-visual {
+            border: 1px solid #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            margin: 5px;
+            padding: 5px;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .margin-visual::before {
+            content: '内容区域';
+            position: absolute;
+            top: -8px;
+            left: 5px;
+            background: white;
+            padding: 1px 6px;
+            font-size: 10px;
+            color: #ff6b6b;
+        }
+
+        .text-preview {
+            font-family: 'WDXL Lubrifont SC Local', 'Microsoft YaHei', sans-serif;
+            text-align: center;
+            word-wrap: break-word;
+            max-width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .download-section {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 0 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .canvas-container {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        #textCanvas {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WDXL字体文字图片生成器</h1>
+            <p>使用WDXL Lubrifont SC字体生成高清文字图片</p>
+        </div>
+
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="textInput">输入文字：</label>
+                    <textarea id="textInput" rows="4" placeholder="请输入要生成的文字内容...">云枢管理平台</textarea>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontSize">字体大小：<span id="fontSizeValue">60px</span></label>
+                    <input type="range" id="fontSize" min="20" max="200" value="60">
+                </div>
+
+                <div class="control-group">
+                    <label for="textColor">文字颜色：</label>
+                    <div class="color-picker">
+                        <input type="color" id="textColor" value="#000000">
+                        <span id="colorValue">#000000</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="bgColor">背景颜色：</label>
+                    <div class="color-picker">
+                        <input type="color" id="bgColor" value="#ffffff">
+                        <span id="bgColorValue">#ffffff</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="canvasWidth">画布宽度：<span id="canvasWidthValue">800px</span></label>
+                    <input type="range" id="canvasWidth" min="400" max="2000" value="800">
+                </div>
+
+                <div class="control-group">
+                    <label for="canvasHeight">画布高度：<span id="canvasHeightValue">400px</span></label>
+                    <input type="range" id="canvasHeight" min="200" max="1500" value="400">
+                </div>
+
+                <div class="control-group">
+                    <label for="textAlign">文字对齐：</label>
+                    <select id="textAlign">
+                        <option value="center">居中</option>
+                        <option value="left">左对齐</option>
+                        <option value="right">右对齐</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="lineHeight">行高：</label>
+                    <input type="range" id="lineHeight" min="1" max="3" step="0.1" value="1.2">
+                    <span id="lineHeightValue">1.2</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="textPadding">文字边距：<span id="textPaddingValue">0%</span></label>
+                    <input type="range" id="textPadding" min="0" max="30" value="0">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        控制文字距离内容区域边缘的距离（百分比）
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="textPaddingPx">文字边距（像素）：<span id="textPaddingPxValue">0px</span></label>
+                    <input type="range" id="textPaddingPx" min="0" max="200" value="0">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        直接设置文字边距的像素值（优先级高于百分比）
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="canvasPadding">画布内边距：<span id="canvasPaddingValue">0px</span></label>
+                    <input type="range" id="canvasPadding" min="0" max="100" value="0">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        在画布内部添加内边距
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="autoCrop" style="width: auto; margin-right: 8px;" checked>
+                        自动裁剪画布
+                    </label>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        自动调整画布大小以紧贴文字内容
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="singleLine" style="width: auto; margin-right: 8px;">
+                        一行显示
+                    </label>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        强制文字在一行内显示，不换行
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="showDebug" style="width: auto; margin-right: 8px;">
+                        显示调试信息
+                    </label>
+                    <div id="debugInfo" style="font-size: 12px; color: #666; margin-top: 5px; display: none;">
+                        显示画布和文字的实际尺寸信息
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>快速预设：</label>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button type="button" onclick="setPreset('tight')"
+                            style="padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            紧凑
+                        </button>
+                        <button type="button" onclick="setPreset('normal')"
+                            style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            标准
+                        </button>
+                        <button type="button" onclick="setPreset('loose')"
+                            style="padding: 5px 10px; background: #ffc107; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            宽松
+                        </button>
+                        <button type="button" onclick="setPreset('wide')"
+                            style="padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            宽边距
+                        </button>
+                        <button type="button" onclick="setPreset('none')"
+                            style="padding: 5px 10px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            无边距
+                        </button>
+                        <button type="button" onclick="setMinimalPadding()"
+                            style="padding: 5px 10px; background: #fd7e14; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                            最小边距
+                        </button>
+                        <button type="button" onclick="setTightFit()"
+                            style="padding: 5px 10px; background: #e83e8c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                            一键紧贴
+                        </button>
+                        <button type="button" onclick="setSingleLineTight()"
+                            style="padding: 5px 10px; background: #20c997; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                            一行紧贴
+                        </button>
+                        <button type="button" onclick="setUltraTight()"
+                            style="padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                            完全紧贴
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontFile">导入字体文件：</label>
+                    <input type="file" id="fontFile" accept=".ttf,.otf" style="padding: 8px;">
+                    <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                        支持TTF和OTF格式，文件大小建议不超过10MB
+                    </div>
+                    <div id="fontPreview"
+                        style="margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; display: none;">
+                        <strong>字体预览：</strong>
+                        <div id="fontPreviewText" style="margin-top: 5px; font-size: 16px;"></div>
+                        <div id="fontInfo" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontFamily">选择字体：</label>
+                    <select id="fontFamily">
+                        <option value="WDXL Lubrifont SC Local">WDXL Lubrifont SC Local</option>
+                        <option value="Microsoft YaHei">微软雅黑</option>
+                        <option value="SimSun">宋体</option>
+                        <option value="KaiTi">楷体</option>
+                        <option value="FangSong">仿宋</option>
+                        <option value="SimHei">黑体</option>
+                    </select>
+                    <button type="button" onclick="clearCustomFonts()"
+                        style="margin-top: 5px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        清除导入字体
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview">
+                <h3>实时预览</h3>
+                <div class="margin-preview">
+                    <div class="margin-visual">
+                        <div id="textPreview" class="text-preview">
+                            云枢管理平台
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 10px;">
+                    虚线框表示画布边界，红色框表示内容区域，文字会根据边距设置自动调整位置
+                </div>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <button class="btn" onclick="generateImage()">生成高清图片</button>
+            <button class="btn btn-secondary" onclick="downloadImage()">下载图片</button>
+            <button class="btn btn-secondary" onclick="copyToClipboard()">复制到剪贴板</button>
+
+            <div class="canvas-container">
+                <canvas id="textCanvas" style="display: none;"></canvas>
+                <div id="loading" class="loading" style="display: none;">正在生成图片...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const textInput = document.getElementById('textInput');
+        const fontSize = document.getElementById('fontSize');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const textColor = document.getElementById('textColor');
+        const colorValue = document.getElementById('colorValue');
+        const bgColor = document.getElementById('bgColor');
+        const bgColorValue = document.getElementById('bgColorValue');
+        const canvasWidth = document.getElementById('canvasWidth');
+        const canvasWidthValue = document.getElementById('canvasWidthValue');
+        const canvasHeight = document.getElementById('canvasHeight');
+        const canvasHeightValue = document.getElementById('canvasHeightValue');
+        const textAlign = document.getElementById('textAlign');
+        const lineHeight = document.getElementById('lineHeight');
+        const lineHeightValue = document.getElementById('lineHeightValue');
+        const fontFile = document.getElementById('fontFile');
+        const fontFamily = document.getElementById('fontFamily');
+        const fontPreview = document.getElementById('fontPreview');
+        const fontPreviewText = document.getElementById('fontPreviewText');
+        const fontInfo = document.getElementById('fontInfo');
+        const textPadding = document.getElementById('textPadding');
+        const textPaddingValue = document.getElementById('textPaddingValue');
+        const textPaddingPx = document.getElementById('textPaddingPx');
+        const textPaddingPxValue = document.getElementById('textPaddingPxValue');
+        const canvasPadding = document.getElementById('canvasPadding');
+        const canvasPaddingValue = document.getElementById('canvasPaddingValue');
+        const autoCrop = document.getElementById('autoCrop');
+        const singleLine = document.getElementById('singleLine');
+        const showDebug = document.getElementById('showDebug');
+        const debugInfo = document.getElementById('debugInfo');
+        const textPreview = document.getElementById('textPreview');
+        const canvas = document.getElementById('textCanvas');
+        const ctx = canvas.getContext('2d');
+        const loading = document.getElementById('loading');
+
+        // 存储自定义字体
+        let customFonts = new Map();
+
+        // 更新预览
+        function updatePreview() {
+            textPreview.style.fontSize = fontSize.value + 'px';
+            textPreview.style.color = textColor.value;
+            textPreview.style.textAlign = textAlign.value;
+            textPreview.style.fontFamily = fontFamily.value;
+            textPreview.textContent = textInput.value || '请输入文字...';
+
+            // 更新边距预览
+            const marginVisual = document.querySelector('.margin-visual');
+            if (marginVisual) {
+                const paddingPercent = parseInt(textPadding.value) / 100;
+                const canvasPaddingPx = parseInt(canvasPadding.value);
+
+                // 设置内容区域的边距
+                marginVisual.style.margin = `${canvasPaddingPx}px`;
+
+                // 设置文字区域的边距
+                const textPaddingPx = Math.max(5, paddingPercent * 100);
+                marginVisual.style.padding = `${textPaddingPx}px`;
+            }
+        }
+
+        // 更新显示值
+        function updateDisplayValues() {
+            fontSizeValue.textContent = fontSize.value + 'px';
+            colorValue.textContent = textColor.value;
+            bgColorValue.textContent = bgColor.value;
+            canvasWidthValue.textContent = canvasWidth.value + 'px';
+            canvasHeightValue.textContent = canvasHeight.value + 'px';
+            lineHeightValue.textContent = lineHeight.value;
+            textPaddingValue.textContent = textPadding.value + '%';
+            textPaddingPxValue.textContent = textPaddingPx.value + 'px';
+            canvasPaddingValue.textContent = canvasPadding.value + 'px';
+        }
+
+        // 事件监听器
+        textInput.addEventListener('input', updatePreview);
+        fontSize.addEventListener('input', () => {
+            updatePreview();
+            updateDisplayValues();
+        });
+        textColor.addEventListener('input', () => {
+            updatePreview();
+            updateDisplayValues();
+        });
+        bgColor.addEventListener('input', updateDisplayValues);
+        canvasWidth.addEventListener('input', updateDisplayValues);
+        canvasHeight.addEventListener('input', updateDisplayValues);
+        textAlign.addEventListener('change', updatePreview);
+        lineHeight.addEventListener('input', () => {
+            updatePreview();
+            updateDisplayValues();
+        });
+        textPadding.addEventListener('input', updateDisplayValues);
+        textPaddingPx.addEventListener('input', updateDisplayValues);
+        canvasPadding.addEventListener('input', updateDisplayValues);
+        showDebug.addEventListener('change', () => {
+            debugInfo.style.display = showDebug.checked ? 'block' : 'none';
+        });
+        fontFamily.addEventListener('change', updatePreview);
+
+        // 字体文件上传处理
+        fontFile.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 检查文件类型
+            if (!file.type.includes('font') && !file.name.toLowerCase().endsWith('.ttf') && !file.name.toLowerCase().endsWith('.otf')) {
+                alert('请选择有效的字体文件（TTF或OTF格式）');
+                return;
+            }
+
+            // 检查文件大小（10MB限制）
+            if (file.size > 10 * 1024 * 1024) {
+                alert('字体文件大小不能超过10MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const fontName = file.name.replace(/\.(ttf|otf)$/i, '');
+                const fontUrl = e.target.result;
+
+                // 创建字体样式
+                const fontFace = new FontFace(fontName, `url(${fontUrl})`);
+
+                fontFace.load().then(function (loadedFont) {
+                    // 添加字体到文档
+                    document.fonts.add(loadedFont);
+
+                    // 存储字体信息
+                    customFonts.set(fontName, {
+                        url: fontUrl,
+                        fontFace: loadedFont
+                    });
+
+                    // 添加到字体选择器
+                    const option = document.createElement('option');
+                    option.value = fontName;
+                    option.textContent = fontName;
+                    fontFamily.appendChild(option);
+
+                    // 自动选择新导入的字体
+                    fontFamily.value = fontName;
+                    updatePreview();
+
+                    // 显示字体预览
+                    fontPreview.style.display = 'block';
+                    fontPreviewText.style.fontFamily = fontName;
+                    fontPreviewText.textContent = `这是 ${fontName} 字体的预览效果 - 云枢管理平台`;
+
+                    // 显示字体信息
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    fontInfo.innerHTML = `
+                         <strong>字体信息：</strong><br>
+                         文件名：${file.name}<br>
+                         文件大小：${fileSize} MB<br>
+                         字体名称：${fontName}<br>
+                         导入时间：${new Date().toLocaleString()}
+                     `;
+
+                    alert(`字体 "${fontName}" 导入成功！`);
+                }).catch(function (error) {
+                    console.error('字体加载失败:', error);
+                    alert('字体加载失败，请检查文件格式是否正确');
+                });
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // 初始化
+        updatePreview();
+        updateDisplayValues();
+
+        // 生成图片
+        function generateImage() {
+            loading.style.display = 'block';
+
+            setTimeout(() => {
+                // 设置文字样式
+                ctx.font = `${fontSize.value}px "${fontFamily.value}", 'Microsoft YaHei', sans-serif`;
+                ctx.fillStyle = textColor.value;
+                ctx.textAlign = textAlign.value;
+                ctx.textBaseline = 'middle';
+
+                // 文字换行处理
+                const text = textInput.value || '请输入文字...';
+                const words = text.split('');
+                const lines = [];
+                let currentLine = '';
+
+                // 计算文字尺寸
+                let maxLineWidth = 0;
+                const lineHeightPx = fontSize.value * parseFloat(lineHeight.value);
+
+                if (singleLine.checked) {
+                    // 一行显示模式：强制所有文字在一行
+                    lines.push(text);
+                    const metrics = ctx.measureText(text);
+                    maxLineWidth = metrics.width;
+                } else {
+                    // 正常换行模式
+                    // 先计算每行的宽度
+                    for (let i = 0; i < words.length; i++) {
+                        const testLine = currentLine + words[i];
+                        const metrics = ctx.measureText(testLine);
+
+                        if (metrics.width > maxLineWidth) {
+                            maxLineWidth = metrics.width;
+                        }
+
+                        if (i === words.length - 1) {
+                            lines.push(testLine);
+                        } else {
+                            const nextChar = words[i + 1];
+                            const nextTestLine = testLine + nextChar;
+                            const nextMetrics = ctx.measureText(nextTestLine);
+
+                            if (nextMetrics.width > maxLineWidth && currentLine !== '') {
+                                lines.push(testLine);
+                                currentLine = nextChar;
+                                i++; // 跳过下一个字符
+                            } else {
+                                currentLine = testLine;
+                            }
+                        }
+                    }
+                }
+
+                // 计算画布尺寸
+                let canvasWidth, canvasHeight;
+
+                if (autoCrop.checked) {
+                    // 自动裁剪模式：根据文字内容调整画布大小
+                    const padding = parseInt(canvasPadding.value);
+                    const textPaddingPercent = parseInt(textPadding.value) / 100;
+                    const pixelPadding = parseInt(textPaddingPx.value);
+
+                    // 计算实际边距
+                    const finalTextPadding = pixelPadding > 0 ? pixelPadding : (maxLineWidth * textPaddingPercent);
+
+                    // 画布宽度 = 最大行宽度 + 左右边距 + 画布内边距
+                    canvasWidth = maxLineWidth + finalTextPadding * 2 + padding * 2;
+
+                    // 画布高度计算优化
+                    if (singleLine.checked) {
+                        // 一行显示：高度 = 行高 + 画布内边距
+                        canvasHeight = lineHeightPx + padding * 2;
+                    } else {
+                        // 多行显示：高度 = 总行高 + 画布内边距
+                        canvasHeight = lines.length * lineHeightPx + padding * 2;
+                    }
+
+                    // 确保最小尺寸
+                    canvasWidth = Math.max(canvasWidth, 50);
+                    canvasHeight = Math.max(canvasHeight, 30);
+                } else {
+                    // 手动模式：使用用户设置的尺寸
+                    canvasWidth = parseInt(canvasWidth.value);
+                    canvasHeight = parseInt(canvasHeight.value);
+                }
+
+                // 设置画布尺寸
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+
+                // 设置背景
+                ctx.fillStyle = bgColor.value;
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+                // 重新设置文字样式（画布重置后需要重新设置）
+                ctx.font = `${fontSize.value}px "${fontFamily.value}", 'Microsoft YaHei', sans-serif`;
+                ctx.fillStyle = textColor.value;
+                ctx.textAlign = textAlign.value;
+                ctx.textBaseline = 'middle';
+
+                // 计算绘制位置
+                const padding = parseInt(canvasPadding.value);
+                const contentWidth = canvasWidth - padding * 2;
+                const contentHeight = canvasHeight - padding * 2;
+
+                const textPaddingPercent = parseInt(textPadding.value) / 100;
+                const pixelPadding = parseInt(textPaddingPx.value);
+                const finalTextPadding = pixelPadding > 0 ? pixelPadding : (contentWidth * textPaddingPercent);
+
+                // 优化：如果所有边距都为0，直接使用画布边缘
+                const effectivePadding = (padding === 0 && finalTextPadding === 0) ? 0 : padding;
+                const effectiveTextPadding = (padding === 0 && finalTextPadding === 0) ? 0 : finalTextPadding;
+
+                // 绘制文字
+                const totalHeight = lines.length * lineHeightPx;
+
+                // 计算起始Y位置，确保文字紧贴边缘
+                let startY;
+                if (singleLine.checked) {
+                    // 一行显示模式：文字垂直居中
+                    startY = effectivePadding + (contentHeight - totalHeight) / 2 + lineHeightPx / 2;
+                } else {
+                    // 多行模式：文字从顶部开始，紧贴边缘
+                    startY = effectivePadding + lineHeightPx / 2;
+                }
+
+                lines.forEach((line, index) => {
+                    let x;
+                    switch (textAlign.value) {
+                        case 'left':
+                            x = effectivePadding + effectiveTextPadding;
+                            break;
+                        case 'right':
+                            x = effectivePadding + contentWidth - effectiveTextPadding;
+                            break;
+                        default:
+                            x = effectivePadding + contentWidth / 2;
+                    }
+
+                    ctx.fillText(line, x, startY + index * lineHeightPx);
+                });
+
+                canvas.style.display = 'block';
+                loading.style.display = 'none';
+
+                // 显示调试信息
+                if (showDebug.checked) {
+                    const debugText = `
+                           画布尺寸: ${canvasWidth} x ${canvasHeight}<br>
+                           画布内边距: ${padding}px<br>
+                           内容区域: ${contentWidth} x ${contentHeight}<br>
+                           文字边距: ${textPadding.value}% / ${textPaddingPx.value}px (实际: ${Math.round(finalTextPadding)}px)<br>
+                           最大行宽度: ${Math.round(maxLineWidth)}px<br>
+                           文字行数: ${lines.length}<br>
+                           自动裁剪: ${autoCrop.checked ? '开启' : '关闭'}<br>
+                           一行显示: ${singleLine.checked ? '开启' : '关闭'}
+                       `;
+                    debugInfo.innerHTML = debugText;
+                }
+            }, 100);
+        }
+
+        // 下载图片
+        function downloadImage() {
+            if (canvas.style.display === 'none') {
+                alert('请先生成图片！');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.download = `WDXL文字图片_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // 复制到剪贴板
+        async function copyToClipboard() {
+            if (canvas.style.display === 'none') {
+                alert('请先生成图片！');
+                return;
+            }
+
+            try {
+                canvas.toBlob(async (blob) => {
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    await navigator.clipboard.write([item]);
+                    alert('图片已复制到剪贴板！');
+                });
+            } catch (err) {
+                alert('复制失败，请手动下载图片。');
+                console.error('复制失败:', err);
+            }
+        }
+
+        // 设置边距预设
+        function setPreset(type) {
+            switch (type) {
+                case 'tight':
+                    textPadding.value = 5;
+                    textPaddingPx.value = 0;
+                    canvasPadding.value = 0;
+                    break;
+                case 'normal':
+                    textPadding.value = 10;
+                    textPaddingPx.value = 0;
+                    canvasPadding.value = 20;
+                    break;
+                case 'loose':
+                    textPadding.value = 15;
+                    textPaddingPx.value = 0;
+                    canvasPadding.value = 40;
+                    break;
+                case 'wide':
+                    textPadding.value = 20;
+                    textPaddingPx.value = 0;
+                    canvasPadding.value = 60;
+                    break;
+                case 'none':
+                    textPadding.value = 0;
+                    textPaddingPx.value = 0;
+                    canvasPadding.value = 0;
+                    break;
+            }
+            updateDisplayValues();
+        }
+
+        // 设置最小边距 - 确保文字紧贴边缘
+        function setMinimalPadding() {
+            textPadding.value = 0;
+            textPaddingPx.value = 0;
+            canvasPadding.value = 0;
+            updateDisplayValues();
+
+            // 立即生成图片以显示效果
+            setTimeout(generateImage, 100);
+
+            alert('已设置为最小边距！文字将紧贴画布边缘。');
+        }
+
+        // 一键紧贴 - 自动裁剪 + 最小边距
+        function setTightFit() {
+            autoCrop.checked = true;
+            singleLine.checked = true;
+            textPadding.value = 0;
+            textPaddingPx.value = 0;
+            canvasPadding.value = 0;
+            updateDisplayValues();
+
+            // 立即生成图片以显示效果
+            setTimeout(generateImage, 100);
+
+            alert('已设置为一键紧贴！画布将自动调整大小以紧贴文字内容，文字强制一行显示。');
+        }
+
+        // 一行紧贴 - 专门用于一行显示
+        function setSingleLineTight() {
+            autoCrop.checked = true;
+            singleLine.checked = true;
+            textPadding.value = 0;
+            textPaddingPx.value = 0;
+            canvasPadding.value = 0;
+            updateDisplayValues();
+
+            // 立即生成图片以显示效果
+            setTimeout(generateImage, 100);
+
+            alert('已设置为一行紧贴！文字将在一行内显示，画布自动调整大小。');
+        }
+
+        // 完全紧贴 - 消除所有边距，文字紧贴画布边缘
+        function setUltraTight() {
+            autoCrop.checked = true;
+            singleLine.checked = true;
+            textPadding.value = 0;
+            textPaddingPx.value = 0;
+            canvasPadding.value = 0;
+            textAlign.value = 'left'; // 左对齐确保文字紧贴左边缘
+            updateDisplayValues();
+
+            // 立即生成图片以显示效果
+            setTimeout(generateImage, 100);
+
+            alert('已设置为完全紧贴！文字将紧贴画布边缘，无任何边距。');
+        }
+
+        // 清除自定义字体
+        function clearCustomFonts() {
+            if (customFonts.size === 0) {
+                alert('没有导入的自定义字体');
+                return;
+            }
+
+            if (confirm('确定要清除所有导入的字体吗？')) {
+                // 移除自定义字体选项
+                const options = fontFamily.querySelectorAll('option');
+                options.forEach(option => {
+                    if (customFonts.has(option.value)) {
+                        option.remove();
+                    }
+                });
+
+                // 清除字体存储
+                customFonts.clear();
+
+                // 重置为默认字体
+                fontFamily.value = 'WDXL Lubrifont SC Local';
+                updatePreview();
+
+                // 隐藏字体预览
+                fontPreview.style.display = 'none';
+
+                alert('已清除所有导入的字体');
+            }
+        }
+
+        // 页面加载完成后自动生成一次图片
+        window.addEventListener('load', () => {
+            // 确保使用最小边距、自动裁剪和一行显示作为默认设置
+            autoCrop.checked = true;
+            singleLine.checked = true;
+            textPadding.value = 0;
+            textPaddingPx.value = 0;
+            canvasPadding.value = 0;
+            updateDisplayValues();
+
+            setTimeout(generateImage, 500);
+        });
+    </script>
+</body>
+
+</html>

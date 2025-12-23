@@ -1,0 +1,156 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/modules/customerManager/index",
+      "style": {
+        "navigationBarTitleText": "客户",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/projectManager/index",
+      "style": {
+        "navigationBarTitleText": "项目",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/moneyManager/index",
+      "style": {
+        "navigationBarTitleText": "资金",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/materialManage/index",
+      "style": {
+        "navigationBarTitleText": "素材",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/native/index",
+      "style": {
+        "navigationBarTitleText": "原生示例",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/index",
+      "style": {
+        "navigationBarTitleText": "功能导航",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/finance/index",
+      "style": {
+        "navigationBarTitleText": "资金与返利",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/system/index",
+      "style": {
+        "navigationBarTitleText": "系统中心",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/webview/index",
+      "style": {
+        "navigationBarTitleText": "功能",
+        "navigationBarTextStyle": "black",
+        "navigationBarBackgroundColor": "#f6f8fb"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages/modules",
+      "pages": [
+        {
+          "path": "mediaRebate/index",
+          "style": {
+            "navigationBarTitleText": "返利与核算",
+            "navigationBarTextStyle": "white",
+            "navigationBarBackgroundColor": "#2e87ff"
+          }
+        }
+      ]
+    }
+  ],
+  "tabBar": {
+    "color": "#8a8a8a",
+    "selectedColor": "#1677ff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/tab/home.svg",
+        "selectedIconPath": "static/tab/home-active.svg"
+      },
+      {
+        "pagePath": "pages/modules/customerManager/index",
+        "text": "客户",
+        "iconPath": "static/tab/home.svg",
+        "selectedIconPath": "static/tab/home-active.svg"
+      },
+      {
+        "pagePath": "pages/modules/projectManager/index",
+        "text": "项目",
+        "iconPath": "static/tab/grid.svg",
+        "selectedIconPath": "static/tab/grid-active.svg"
+      },
+      {
+        "pagePath": "pages/modules/moneyManager/index",
+        "text": "资金",
+        "iconPath": "static/tab/money.svg",
+        "selectedIconPath": "static/tab/money-active.svg"
+      },
+      {
+        "pagePath": "pages/modules/materialManage/index",
+        "text": "素材",
+        "iconPath": "static/tab/grid.svg",
+        "selectedIconPath": "static/tab/grid-active.svg"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#2e87ff",
+    "backgroundColor": "#f6f8fb"
+  }
+}
