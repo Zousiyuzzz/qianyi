@@ -130,7 +130,17 @@ export default {
   },
   methods: {
     handleBack() {
-      uni.navigateBack()
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack({
+          delta: 1,
+          fail: () => {
+            uni.switchTab({ url: '/pages/modules/index' })
+          }
+        })
+      } else {
+        uni.switchTab({ url: '/pages/modules/index' })
+      }
     },
     setDirection(direction) {
       this.activeDirection = direction
@@ -220,58 +230,8 @@ export default {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  display: flex;
-  flex-direction: column;
-}
-
-.navbar {
-  background: #fff;
-  border-bottom: 1rpx solid #e5e5e5;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.navbar-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 88rpx;
-  padding: 0 24rpx;
-}
-
-.navbar-left {
-  width: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.back-icon {
-  font-size: 56rpx;
-  color: #333;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.navbar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.navbar-right {
-  width: 80rpx;
-}
+<style scoped lang="scss">
+@import '../../common/styles/ios-common.scss';
 
 .balance-section {
   background: linear-gradient(135deg, #2e87ff 0%, #1e6fd9 100%);
