@@ -6,7 +6,7 @@
           v-for="item in projectModules" 
           :key="item.title" 
           class="icon-item"
-          @click="openWeb(item.path)"
+          @click="openWeb(item)"
         >
           <view class="icon-wrapper" :style="{ background: item.gradient }">
             <text class="icon-text">{{ item.icon }}</text>
@@ -19,33 +19,36 @@
 </template>
 
 <script>
-import { buildAuthedWebUrl } from '../../../common/config'
+import { openWebView } from '../../../common/navigation'
 
 export default {
   data () {
     return {
       projectModules: [
-        { 
-          title: '项目管理', 
-          path: '/projectManager/TabProjectmanageList', 
+        {
+          title: '项目管理',
+          path: '/projectManager/TabProjectmanageList',
+          native: '/pages/project/index',
           icon: '📋',
           gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
         },
-        { 
-          title: '项目资金池', 
-          path: '/projectFundPool/TabProjectFundPoolList', 
+        {
+          title: '项目资金池',
+          path: '/projectFundPool/TabProjectFundPoolList',
+          native: '/pages/project/fundPool',
           icon: '🏦',
           gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
         },
-        { 
-          title: '资金变动明细', 
-          path: '/projectFundPool/TabProjectFundPoolChangeLogList', 
+        {
+          title: '资金变动明细',
+          path: '/projectFundPool/TabProjectFundPoolChangeLogList',
+          native: '/pages/project/fundChangeLog',
           icon: '📊',
           gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
         },
-        { 
-          title: '返点政策模板', 
-          path: '/customerManager/CustomerRetabeTemplate', 
+        {
+          title: '返点政策模板',
+          path: '/customerManager/CustomerRetabeTemplate',
           icon: '📝',
           gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
         }
@@ -53,9 +56,8 @@ export default {
     }
   },
   methods: {
-    openWeb (path) {
-      const url = buildAuthedWebUrl(path)
-      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
+    openWeb (item) {
+      openWebView(item.path, item.title)
     }
   }
 }
