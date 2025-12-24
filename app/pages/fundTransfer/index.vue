@@ -202,7 +202,8 @@ export default {
         }
         const res = await getFundTransferRecordList(params)
         if (res && res.success) {
-          const records = res.result?.records || res.result?.list || []
+          const result = (res && res.result) ? res.result : {}
+          const records = result.records || result.list || []
           if (this.pageNo === 1) {
             this.dataList = records
           } else {

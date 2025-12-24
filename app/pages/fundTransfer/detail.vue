@@ -131,7 +131,8 @@ export default {
       try {
         const res = await getFundTransferRecordList({ id: this.recordId })
         if (res && res.success) {
-          const records = res.result?.records || res.result?.list || []
+          const result = (res && res.result) ? res.result : {}
+          const records = result.records || result.list || []
           if (records.length > 0) {
             this.recordData = records[0]
           } else {
