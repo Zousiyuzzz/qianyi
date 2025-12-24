@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import { buildAuthedWebUrl } from '../../../common/config'
+import { openWebView } from '../../../common/navigation'
 
 export default {
   data () {
@@ -57,12 +57,7 @@ export default {
   },
   methods: {
     openWeb (item) {
-      if (item.native) {
-        uni.navigateTo({ url: item.native })
-        return
-      }
-      const url = buildAuthedWebUrl(item.path)
-      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
+      openWebView(item.path, item.title)
     }
   }
 }
