@@ -22,7 +22,7 @@
 
 <script>
 import ModuleCard from '../../../components/ModuleCard.vue'
-import { openWebView } from '../../../common/navigation'
+import { buildWebUrl } from '../../../common/config'
 
 export default {
   components: { ModuleCard },
@@ -42,7 +42,8 @@ export default {
   },
   methods: {
     openWeb (path) {
-      openWebView(path)
+      const url = buildWebUrl(path)
+      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
     }
   }
 }

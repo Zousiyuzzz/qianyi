@@ -1,49 +1,104 @@
 <template>
   <scroll-view class="page" scroll-y>
-    <view class="banner gradient">
-      <view class="title">项目与资金池</view>
-      <view class="desc">面向移动端的项目、资金池与机器人配置入口，与 Web 版保持同层级访问控制。</view>
-    </view>
-
     <view class="section">
-      <view class="section-title">项目管理</view>
-      <module-card
-        v-for="item in projectModules"
-        :key="item.title"
-        :title="item.title"
-        :desc="item.desc"
-        :tag="item.tag"
-        @click="openWeb(item.path)"
-      />
+      <view class="icon-grid">
+        <view 
+          v-for="item in projectModules" 
+          :key="item.title" 
+          class="icon-item"
+          @click="openWeb(item.path)"
+        >
+          <view class="icon-wrapper" :style="{ background: item.gradient }">
+            <text class="icon-text">{{ item.icon }}</text>
+          </view>
+          <text class="icon-label">{{ item.title }}</text>
+        </view>
+      </view>
     </view>
   </scroll-view>
 </template>
 
 <script>
-import ModuleCard from '../../../components/ModuleCard.vue'
-import { openWebView } from '../../../common/navigation'
+import { buildAuthedWebUrl } from '../../../common/config'
 
 export default {
-  components: { ModuleCard },
   data () {
     return {
       projectModules: [
-        { title: '项目管理', path: '/projectManager/TabProjectmanageList', desc: '项目立项、进展与协作。', tag: 'H5' },
-        { title: '项目资金池', path: '/projectFundPool/TabProjectFundPoolList', desc: '资金池余额、分配与权限。', tag: 'H5' },
-        { title: '资金变动明细', path: '/projectFundPool/TabProjectFundPoolChangeLogList', desc: '资金流水与审核轨迹。', tag: 'H5' },
-        { title: '返点政策模板', path: '/customerManager/CustomerRetabeTemplate', desc: '政策模板维护与复用。', tag: 'H5' },
-        { title: '微信机器人配置', path: '/projectManager/wechatConfig', desc: '通知机器人配置。', tag: 'H5' }
+        { 
+          title: '项目管理', 
+          path: '/projectManager/TabProjectmanageList', 
+          icon: '📋',
+          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        },
+        { 
+          title: '项目资金池', 
+          path: '/projectFundPool/TabProjectFundPoolList', 
+          icon: '🏦',
+          gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+        },
+        { 
+          title: '资金变动明细', 
+          path: '/projectFundPool/TabProjectFundPoolChangeLogList', 
+          icon: '📊',
+          gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+        },
+        { 
+          title: '返点政策模板', 
+          path: '/customerManager/CustomerRetabeTemplate', 
+          icon: '📝',
+          gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+        }
       ]
     }
   },
   methods: {
     openWeb (path) {
-      openWebView(path)
+      const url = buildAuthedWebUrl(path)
+      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
     }
   }
 }
 </script>
 
 <style scoped>
-@import url('../styles.module.css');
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 20rpx;
+}
+.section {
+  padding: 24rpx 28rpx;
+}
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32rpx 20rpx;
+}
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.icon-wrapper {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+.icon-text {
+  font-size: 56rpx;
+  line-height: 1;
+}
+.icon-label {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  line-height: 1.4;
+}
 </style>

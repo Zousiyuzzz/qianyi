@@ -1,7 +1,12 @@
-import md5 from 'md5'
-
 //签名密钥串(前后端要一致，正式发布请自行修改)
 const signatureSecret = "dd05f1c54d63749eda95f9fa6d49v442a";
+
+// MD5 加密 - 使用 uniapp 兼容的方式
+import CryptoJS from 'crypto-js'
+
+const md5 = function(str) {
+  return CryptoJS.MD5(str).toString().toUpperCase();
+}
 
 export default class signMd5Utils {
   /**
@@ -29,6 +34,10 @@ export default class signMd5Utils {
    * @returns {string} 获取签名
    */
   static getSign(url, requestParams) {
+    // 确保 url 是字符串
+    if (!url || typeof url !== 'string') {
+      url = url || ''
+    }
     let urlParams = this.parseQueryString(url);
     let jsonObj = this.mergeObject(urlParams, requestParams || {});
     let requestBody = this.sortAsc(jsonObj);
@@ -40,6 +49,10 @@ export default class signMd5Utils {
    * @returns {{}} 将url中请求参数组装成json对象(url的?后面的参数)
    */
   static parseQueryString(url) {
+    // 确保 url 是字符串
+    if (!url || typeof url !== 'string') {
+      return {}
+    }
     let urlReg = /^[^\?]+\?([\w\W]+)$/,
       paramReg = /([^&=]+)=([\w\W]*?)(&|$|#)/g,
       urlArray = urlReg.exec(url),

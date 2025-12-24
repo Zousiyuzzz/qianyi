@@ -1,47 +1,98 @@
 <template>
   <scroll-view class="page" scroll-y>
-    <view class="banner gradient">
-      <view class="title">客户与回款</view>
-      <view class="desc">适配移动端的客户池海、回款登记与延期审批入口，保持原有权限与路由层级。</view>
-    </view>
-
     <view class="section">
-      <view class="section-title">客户与回款</view>
-      <module-card
-        v-for="item in modules"
-        :key="item.title"
-        :title="item.title"
-        :desc="item.desc"
-        :tag="item.tag"
-        @click="openWeb(item.path)"
-      />
+      <view class="icon-grid">
+        <view 
+          v-for="item in modules" 
+          :key="item.title" 
+          class="icon-item"
+          @click="openWeb(item.path)"
+        >
+          <view class="icon-wrapper" :style="{ background: item.gradient }">
+            <text class="icon-text">{{ item.icon }}</text>
+          </view>
+          <text class="icon-label">{{ item.title }}</text>
+        </view>
+      </view>
     </view>
   </scroll-view>
 </template>
 
 <script>
-import ModuleCard from '../../../components/ModuleCard.vue'
-import { openWebView } from '../../../common/navigation'
+import { buildAuthedWebUrl } from '../../../common/config'
 
 export default {
-  components: { ModuleCard },
   data () {
     return {
       modules: [
-        { title: '客户池海', path: '/customerManager/TabCustomermanageList', desc: '客户主数据、跟进与分配。', tag: 'H5' },
-        { title: '客户回款', path: '/customerManager/BackmoneyList', desc: '回款登记、核销与审批流。', tag: 'H5' },
-        { title: '回款延期', path: '/customerManager/delay', desc: '延期申请与审批记录。', tag: 'H5' }
+        { 
+          title: '客户池海', 
+          path: '/customerManager/TabCustomermanageList', 
+          icon: '👥',
+          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        },
+        { 
+          title: '客户回款', 
+          path: '/customerManager/BackmoneyList', 
+          icon: '💰',
+          gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+        },
+        { 
+          title: '回款延期', 
+          path: '/customerManager/delay', 
+          icon: '⏰',
+          gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+        }
       ]
     }
   },
   methods: {
     openWeb (path) {
-      openWebView(path)
+      const url = buildAuthedWebUrl(path)
+      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
     }
   }
 }
 </script>
 
 <style scoped>
-@import url('../styles.module.css');
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 20rpx;
+}
+.section {
+  padding: 24rpx 28rpx;
+}
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32rpx 20rpx;
+}
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.icon-wrapper {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+.icon-text {
+  font-size: 56rpx;
+  line-height: 1;
+}
+.icon-label {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  line-height: 1.4;
+}
 </style>

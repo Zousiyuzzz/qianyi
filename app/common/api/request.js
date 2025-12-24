@@ -1,5 +1,6 @@
 import qs from 'qs'
-import { API_ENV, STORAGE_KEYS } from '../config'
+import { API_ENV } from '../config'
+import { getToken, getTenantId, ACCESS_TOKEN, TENANT_ID } from '../auth'
 import signMd5Utils from '../utils/signMd5Utils'
 
 const defaultHeaders = {
@@ -7,7 +8,7 @@ const defaultHeaders = {
 }
 
 function buildUrl(path = '') {
-  const base = API_ENV.gateway || API_ENV.baseURL || ''
+  const base = API_ENV.gateway || API_ENV.baseURL || 'http://101.200.146.164:8000/jeecg-boot'
   if (!path) return base
   if (/^https?:\/\//i.test(path)) return path
   const normalizedBase = base.replace(/\/$/, '')
@@ -16,17 +17,19 @@ function buildUrl(path = '') {
 }
 
 function attachAuth(headers = {}) {
-  const token = uni.getStorageSync(STORAGE_KEYS.ACCESS_TOKEN)
-  const tenantId = uni.getStorageSync(STORAGE_KEYS.TENANT_ID)
+  const token = getToken()
+  const tenantId = getTenantId()
   if (token) headers['X-Access-Token'] = token
   headers['tenant-id'] = tenantId || 0
   return headers
 }
 
 function attachSign(url, data = {}) {
-  if (!API_ENV.enableEncrypt) return {}
+  // 确保 url 是字符串
+  const safeUrl = url || ''
+  // 始终添加签名，不检查 enableEncrypt（因为后端需要）
   return {
-    'X-Sign': signMd5Utils.getSign(url, data),
+    'X-Sign': signMd5Utils.getSign(safeUrl, data),
     'X-TIMESTAMP': signMd5Utils.getTimestamp()
   }
 }
@@ -65,13 +68,15 @@ export function request(options = {}) {
   const { data: normalizedData, params: normalizedParams } = normalizeData(finalMethod, data, params)
   const finalParams = finalMethod === 'GET' ? { _t: Date.parse(new Date()) / 1000, ...normalizedParams } : normalizedParams
   const requestUrl = buildUrl(url)
+  // 构建完整的URL用于签名（包含查询参数）
+  const queryString = finalParams && Object.keys(finalParams).length ? `?${qs.stringify(finalParams, { arrayFormat: 'repeat' })}` : ''
+  const fullUrl = `${requestUrl}${queryString}`
   const finalHeaders = {
     ...defaultHeaders,
     ...attachAuth({ ...headers }),
-    ...attachSign(url, normalizedData || finalParams || {})
+    ...attachSign(fullUrl, normalizedData || finalParams || {})
   }
 
-  const queryString = finalParams && Object.keys(finalParams).length ? `?${qs.stringify(finalParams, { arrayFormat: 'repeat' })}` : ''
   if (!hideLoading) {
     uni.showLoading({ title: '加载中', mask: true })
   }
@@ -103,8 +108,9 @@ export function request(options = {}) {
 }
 
 export function uploadFile({ url, filePath, name = 'file', formData = {}, headers = {}, skipErrorToast = false }) {
-  const requestUrl = buildUrl(url || API_ENV.uploadUrl)
-  const finalHeaders = { ...attachAuth({ ...headers }), ...attachSign(url, formData) }
+  const finalUrl = url || API_ENV.uploadUrl
+  const requestUrl = buildUrl(finalUrl)
+  const finalHeaders = { ...attachAuth({ ...headers }), ...attachSign(requestUrl, formData) }
   return new Promise((resolve, reject) => {
     uni.uploadFile({
       url: requestUrl,
@@ -131,8 +137,9 @@ export function uploadFile({ url, filePath, name = 'file', formData = {}, header
 }
 
 export function downloadFile({ url, filePath, headers = {}, skipErrorToast = false }) {
-  const requestUrl = buildUrl(url || API_ENV.downloadUrl)
-  const finalHeaders = { ...attachAuth({ ...headers }), ...attachSign(url, {}) }
+  const finalUrl = url || API_ENV.downloadUrl
+  const requestUrl = buildUrl(finalUrl)
+  const finalHeaders = { ...attachAuth({ ...headers }), ...attachSign(requestUrl, {}) }
   return new Promise((resolve, reject) => {
     uni.downloadFile({
       url: requestUrl,
@@ -156,14 +163,14 @@ export function downloadFile({ url, filePath, headers = {}, skipErrorToast = fal
 
 export function setToken(token) {
   if (token) {
-    uni.setStorageSync(STORAGE_KEYS.ACCESS_TOKEN, token)
+    uni.setStorageSync(ACCESS_TOKEN, token)
   } else {
-    uni.removeStorageSync(STORAGE_KEYS.ACCESS_TOKEN)
+    uni.removeStorageSync(ACCESS_TOKEN)
   }
 }
 
 export function setTenant(tenantId) {
   if (tenantId || tenantId === 0) {
-    uni.setStorageSync(STORAGE_KEYS.TENANT_ID, tenantId)
+    uni.setStorageSync(TENANT_ID, tenantId)
   }
 }

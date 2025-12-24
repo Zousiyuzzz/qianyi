@@ -19,6 +19,42 @@
       }
     },
     {
+      "path": "pages/modules/customerManager/index",
+      "style": {
+        "navigationBarTitleText": "客户",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/projectManager/index",
+      "style": {
+        "navigationBarTitleText": "项目",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/moneyManager/index",
+      "style": {
+        "navigationBarTitleText": "资金",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/modules/materialManage/index",
+      "style": {
+        "navigationBarTitleText": "素材",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#1677ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/native/index",
       "style": {
         "navigationBarTitleText": "原生示例",
@@ -55,7 +91,170 @@
       "style": {
         "navigationBarTitleText": "功能",
         "navigationBarTextStyle": "black",
-        "navigationBarBackgroundColor": "#f6f8fb"
+        "navigationBarBackgroundColor": "#f6f8fb",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/fundTransfer/index",
+      "style": {
+        "navigationBarTitleText": "充退处理列表",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/customer/index",
+      "style": {
+        "navigationBarTitleText": "客户池海",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/customer/detail",
+      "style": {
+        "navigationBarTitleText": "客户详情",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/customer/backmoney",
+      "style": {
+        "navigationBarTitleText": "回款状态",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/fundTransfer/detail",
+      "style": {
+        "navigationBarTitleText": "充退详情",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/customer/delay",
+      "style": {
+        "navigationBarTitleText": "回款延期",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/project/index",
+      "style": {
+        "navigationBarTitleText": "项目管理",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/project/fundPool",
+      "style": {
+        "navigationBarTitleText": "项目资金池",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/project/fundChangeLog",
+      "style": {
+        "navigationBarTitleText": "资金变动明细",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/project/detail",
+      "style": {
+        "navigationBarTitleText": "项目详情",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/account/index",
+      "style": {
+        "navigationBarTitleText": "账户列表",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/account/flow",
+      "style": {
+        "navigationBarTitleText": "账户流水",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/money/arrival",
+      "style": {
+        "navigationBarTitleText": "客户到账",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/money/refund",
+      "style": {
+        "navigationBarTitleText": "客户退款",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/material/index",
+      "style": {
+        "navigationBarTitleText": "素材列表",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/rebate/index",
+      "style": {
+        "navigationBarTitleText": "返点管理",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/channel/index",
+      "style": {
+        "navigationBarTitleText": "渠道列表",
+        "navigationBarTextStyle": "white",
+        "navigationBarBackgroundColor": "#2e87ff",
+        "navigationStyle": "custom"
       }
     }
   ],
@@ -63,38 +262,6 @@
     {
       "root": "pages/modules",
       "pages": [
-        {
-          "path": "customerManager/index",
-          "style": {
-            "navigationBarTitleText": "客户与回款",
-            "navigationBarTextStyle": "white",
-            "navigationBarBackgroundColor": "#2e87ff"
-          }
-        },
-        {
-          "path": "projectManager/index",
-          "style": {
-            "navigationBarTitleText": "项目与资金池",
-            "navigationBarTextStyle": "white",
-            "navigationBarBackgroundColor": "#2e87ff"
-          }
-        },
-        {
-          "path": "moneyManager/index",
-          "style": {
-            "navigationBarTitleText": "资金管理",
-            "navigationBarTextStyle": "white",
-            "navigationBarBackgroundColor": "#2e87ff"
-          }
-        },
-        {
-          "path": "materialManage/index",
-          "style": {
-            "navigationBarTitleText": "素材管理",
-            "navigationBarTextStyle": "white",
-            "navigationBarBackgroundColor": "#2e87ff"
-          }
-        },
         {
           "path": "mediaRebate/index",
           "style": {
@@ -107,13 +274,14 @@
     }
   ],
   "tabBar": {
-    "color": "#5f6b7c",
-    "selectedColor": "#2e87ff",
+    "color": "#8a8a8a",
+    "selectedColor": "#1677ff",
     "backgroundColor": "#ffffff",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/home/index",
-        "text": "首页",
+        "text": "数据看板",
         "iconPath": "static/tab/home.svg",
         "selectedIconPath": "static/tab/home-active.svg"
       },
@@ -124,14 +292,8 @@
         "selectedIconPath": "static/tab/grid-active.svg"
       },
       {
-        "pagePath": "pages/finance/index",
-        "text": "资金",
-        "iconPath": "static/tab/money.svg",
-        "selectedIconPath": "static/tab/money-active.svg"
-      },
-      {
-        "pagePath": "pages/system/index",
-        "text": "系统",
+        "pagePath": "pages/profile/index",
+        "text": "我的",
         "iconPath": "static/tab/setting.svg",
         "selectedIconPath": "static/tab/setting-active.svg"
       }

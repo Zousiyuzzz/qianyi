@@ -1,53 +1,104 @@
 <template>
   <scroll-view class="page" scroll-y>
-    <view class="banner gradient">
-      <view class="title">资金管理</view>
-      <view class="desc">将到账、退款、项目损失与抬头管理入口移动端化，表单逻辑沿用现有 Web 配置。</view>
-    </view>
-
     <view class="section">
-      <view class="section-title">资金与损益</view>
-      <module-card
-        v-for="item in moneyModules"
-        :key="item.title"
-        :title="item.title"
-        :desc="item.desc"
-        :tag="item.tag"
-        @click="openWeb(item.path)"
-      />
-      <view class="tip">当前版本复用 H5 表单，后续可按需替换为原生组件。</view>
+      <view class="icon-grid">
+        <view 
+          v-for="item in moneyModules" 
+          :key="item.title" 
+          class="icon-item"
+          @click="openWeb(item.path)"
+        >
+          <view class="icon-wrapper" :style="{ background: item.gradient }">
+            <text class="icon-text">{{ item.icon }}</text>
+          </view>
+          <text class="icon-label">{{ item.title }}</text>
+        </view>
+      </view>
     </view>
   </scroll-view>
 </template>
 
 <script>
-import ModuleCard from '../../../components/ModuleCard.vue'
-import { openWebView } from '../../../common/navigation'
+import { buildWebUrl } from '../../../common/config'
 
 export default {
-  components: { ModuleCard },
   data () {
     return {
       moneyModules: [
-        { title: '客户到账', path: '/moneyManager/Preparation', desc: '到账登记、核销与审批。', tag: 'H5' },
-        { title: '客户退款', path: '/moneyManager/Refund', desc: '退款流程与凭证上传。', tag: 'H5' },
-        { title: '到账记录', path: '/moneyManager/TabCmbTransactionRecordList', desc: '银行到账流水与核验。', tag: 'H5' },
-        { title: '银行转账', path: '/moneyManager/TabCmbPaymentTransferRecordList', desc: '企业转账记录与凭证。', tag: 'H5' },
-        { title: '项目损失', path: '/projectLossRecord/index', desc: '项目损益记录与核算。', tag: 'H5' },
-        { title: '合同管理', path: '/contranct/index', desc: '合同台账、收支与生命周期。', tag: 'H5' },
-        { title: '抬头管理', path: '/Manager/bankAccount', desc: '抬头、账户与开票信息维护。', tag: 'H5' },
-        { title: '卡号配置', path: '/moneyManager/TabBankAccountConfigList', desc: '收付款卡号集中配置与同步。', tag: 'H5' }
+        { 
+          title: '客户到账', 
+          path: '/moneyManager/Preparation', 
+          icon: '💵',
+          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        },
+        { 
+          title: '客户退款', 
+          path: '/moneyManager/Refund', 
+          icon: '↩️',
+          gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+        },
+        { 
+          title: '项目损失', 
+          path: '/projectLossRecord/index', 
+          icon: '📉',
+          gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+        },
+        { 
+          title: '抬头管理', 
+          path: '/Manager/bankAccount', 
+          icon: '🏛️',
+          gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+        }
       ]
     }
   },
   methods: {
     openWeb (path) {
-      openWebView(path)
+      const url = buildWebUrl(path)
+      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
     }
   }
 }
 </script>
 
 <style scoped>
-@import url('../styles.module.css');
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-top: 20rpx;
+}
+.section {
+  padding: 24rpx 28rpx;
+}
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32rpx 20rpx;
+}
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.icon-wrapper {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+.icon-text {
+  font-size: 56rpx;
+  line-height: 1;
+}
+.icon-label {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  line-height: 1.4;
+}
 </style>

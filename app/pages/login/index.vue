@@ -1,93 +1,99 @@
 <template>
   <view class="login-page">
-    <view class="hero">
-      <view class="title">执象云枢 CRM 投放系统</view>
-      <view class="subtitle">账号密码 / 手机号登录，登录后自动同步 Token 至 WebView。</view>
+    <!-- Logo区域 -->
+    <view class="logo-container">
+      <view class="logo-text">云游迹</view>
     </view>
 
-    <view class="card">
-      <view class="tabs">
-        <view :class="['tab', activeTab === 'account' ? 'active' : '']" @tap="activeTab = 'account'">
-          账号密码登录
-        </view>
-        <view :class="['tab', activeTab === 'phone' ? 'active' : '']" @tap="activeTab = 'phone'">
-          手机号登录
-        </view>
+    <!-- 登录表单 -->
+    <view class="form-container">
+      <view class="input-wrapper">
+        <input v-model.trim="account.username" class="input" placeholder="输入账号" placeholder-class="input-placeholder"
+          confirm-type="next" />
+      </view>
+      <view class="input-wrapper">
+        <input v-model.trim="account.password" class="input" placeholder="输入密码" placeholder-class="input-placeholder"
+          password />
       </view>
 
-      <view v-if="activeTab === 'account'" class="form">
-        <view class="form-item">
-          <text class="label">用户名</text>
-          <input v-model.trim="account.username" class="input" placeholder="请输入账户名" confirm-type="next" />
-        </view>
-        <view class="form-item">
-          <text class="label">密码</text>
-          <input v-model.trim="account.password" class="input" placeholder="请输入密码" password />
-        </view>
-      </view>
+      <button class="login-button" :loading="submitting" :disabled="submitting" @tap="handleSubmit">
+        登录
+      </button>
 
-      <view v-else class="form">
-        <view class="form-item">
-          <text class="label">手机号</text>
-          <input
-            v-model.trim="phone.mobile"
-            class="input"
-            placeholder="请输入手机号"
-            confirm-type="next"
-            type="number"
-          />
-        </view>
-        <view class="form-item row">
-          <view class="flex-1">
-            <text class="label">验证码</text>
-            <input v-model.trim="phone.captcha" class="input" placeholder="请输入验证码" type="number" />
-          </view>
-          <button class="captcha-btn" :disabled="smsCountdown > 0" @tap="getCaptcha">
-            {{ smsCountdown > 0 ? `${smsCountdown}s` : '获取验证码' }}
-          </button>
-        </view>
+      <view class="agreement-wrapper">
+        <checkbox-group @change="handleAgreementChange">
+          <label class="agreement-label">
+            <checkbox :checked="agreed" color="#2e87ff" />
+            <text class="agreement-text">已阅读并同意服务协议</text>
+          </label>
+        </checkbox-group>
       </view>
+    </view>
 
-      <button class="primary" :loading="submitting" @tap="handleSubmit">登录</button>
+    <!-- 底部按钮区域 -->
+    <view class="bottom-buttons">
+      <!-- <view class="bottom-btn-item" @tap="handlePhoneLogin">
+				<view class="bottom-btn-icon">📱</view>
+				<text class="bottom-btn-text">手机号登录</text>
+			</view>
+			<view class="bottom-btn-item" @tap="handleOtherLogin">
+				<view class="bottom-btn-icon">👤</view>
+				<text class="bottom-btn-text">其他方式登录</text>
+			</view>
+			<view class="bottom-btn-item" @tap="handleRegister">
+				<view class="bottom-btn-icon">➕</view>
+				<text class="bottom-btn-text">注册</text>
+			</view> -->
+      <view class="bottom-btn-item" @tap="handleMore">
+        <view class="bottom-btn-icon">⋯</view>
+        <text class="bottom-btn-text">更多</text>
+      </view>
     </view>
   </view>
 </template>
 
 <script>
-import { buildAuthedWebUrl } from '../../common/config'
-import { login, phoneLogin, requestSmsCaptcha } from '../../common/api'
-import { getLastWebRoute, hasValidToken, rememberWebRoute, setLoginSession } from '../../common/auth'
+import {
+  buildAuthedWebUrl
+} from '../../common/config'
+import {
+  login
+} from '../../common/api'
+import {
+  getLastWebRoute,
+  hasValidToken,
+  rememberWebRoute,
+  setLoginSession
+} from '../../common/auth'
 
 export default {
-  data () {
+  data() {
     return {
-      activeTab: 'account',
       submitting: false,
+      agreed: true,
       account: {
-        username: '',
-        password: ''
-      },
-      phone: {
-        mobile: '',
-        captcha: ''
-      },
-      smsCountdown: 0,
-      smsTimer: null
+        username: 'admin',
+        password: '123456'
+      }
     }
   },
-  onShow () {
+  onShow() {
     if (hasValidToken()) {
       this.redirectAfterLogin()
     }
   },
-  onUnload () {
-    this.clearSmsTimer()
-  },
   methods: {
-    showError (message) {
-      uni.showToast({ title: message || '请求失败', icon: 'none', duration: 2000 })
+    handleAgreementChange(e) {
+      this.agreed = e.detail.value.length > 0
     },
-    validateAccount () {
+    showError(message) {
+      uni.showToast({
+        title: message || '请求失败',
+        icon: 'none',
+        duration: 2000
+      })
+    },
+    validateAccount() {
       if (!this.account.username) {
         this.showError('请输入用户名')
         return false
@@ -96,44 +102,37 @@ export default {
         this.showError('请输入密码')
         return false
       }
-      return true
-    },
-    validatePhone () {
-      if (!this.phone.mobile) {
-        this.showError('请输入手机号')
-        return false
-      }
-      if (!/^1\d{10}$/.test(this.phone.mobile)) {
-        this.showError('手机号格式不正确')
-        return false
-      }
-      if (!this.phone.captcha) {
-        this.showError('请输入验证码')
+      if (!this.agreed) {
+        this.showError('请先同意服务协议')
         return false
       }
       return true
     },
-    async handleSubmit () {
+    async handleSubmit() {
       if (this.submitting) return
+      if (!this.validateAccount()) {
+        this.submitting = false
+        return
+      }
       this.submitting = true
       try {
-        let res
-        if (this.activeTab === 'account') {
-          if (!this.validateAccount()) return
-          res = await login({
-            username: this.account.username,
-            password: this.account.password
-          })
-        } else {
-          if (!this.validatePhone()) return
-          res = await phoneLogin({
-            mobile: this.phone.mobile,
-            captcha: this.phone.captcha
-          })
-        }
+        const res = await login({
+          username: this.account.username,
+          password: this.account.password,
+          checkKey: new Date().getTime(),
+          captcha: this.captcha || '', // 验证码，如果不需要可以为空
+          remember_me: true // 记住登录状态
+        })
         if (res && (res.code === '200' || res.success)) {
           const result = res.result || {}
-          setLoginSession(result)
+          // 确保token、userInfo等字段正确传递
+          const loginData = {
+            token: result.token,
+            userInfo: result.userInfo || {},
+            tenantId: result.tenantId,
+            tenantList: result.tenantList || []
+          }
+          setLoginSession(loginData)
           this.redirectAfterLogin()
         } else {
           this.showError(res.message || '登录失败')
@@ -144,50 +143,23 @@ export default {
         this.submitting = false
       }
     },
-    async getCaptcha () {
-      if (this.smsCountdown > 0) return
-      if (!this.phone.mobile) {
-        this.showError('请输入手机号')
-        return
-      }
-      if (!/^1\d{10}$/.test(this.phone.mobile)) {
-        this.showError('手机号格式不正确')
-        return
-      }
-      try {
-        await requestSmsCaptcha({
-          mobile: this.phone.mobile,
-          smsmode: '0'
-        })
-        this.smsCountdown = 60
-        this.smsTimer = setInterval(() => {
-          if (this.smsCountdown <= 1) {
-            this.clearSmsTimer()
-            return
-          }
-          this.smsCountdown -= 1
-        }, 1000)
-        uni.showToast({ title: '验证码已发送', icon: 'success', duration: 1500 })
-      } catch (e) {
-        this.showError(e.message || '验证码发送失败')
-      }
+    handlePhoneLogin() {
+      // 暂时空着
     },
-    clearSmsTimer () {
-      if (this.smsTimer) {
-        clearInterval(this.smsTimer)
-        this.smsTimer = null
-      }
-      this.smsCountdown = 0
+    handleOtherLogin() {
+      // 暂时空着
     },
-    redirectAfterLogin () {
-      const lastRoute = getLastWebRoute()
-      if (lastRoute) {
-        rememberWebRoute(lastRoute)
-        const url = buildAuthedWebUrl(lastRoute)
-        uni.reLaunch({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
-      } else {
-        uni.switchTab({ url: '/pages/home/index' })
-      }
+    handleRegister() {
+      // 暂时空着
+    },
+    handleMore() {
+      // 暂时空着
+    },
+    redirectAfterLogin() {
+      // 登录后直接跳转到首页，不清除之前保存的路由（用于其他场景）
+      uni.switchTab({
+        url: '/pages/home/index'
+      })
     }
   }
 }
@@ -196,87 +168,149 @@ export default {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #e8f1ff 0%, #f7f9fc 60%);
-  padding: 48rpx 32rpx;
+  background: #ffffff;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
-.hero {
-  margin-bottom: 32rpx;
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400rpx;
+  background: linear-gradient(180deg, rgba(168, 213, 255, 0.15) 0%, rgba(200, 179, 255, 0.1) 50%, transparent 100%);
+  pointer-events: none;
 }
-.title {
-  font-size: 40rpx;
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 120rpx;
+  padding-bottom: 80rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-text {
+  font-size: 72rpx;
   font-weight: 700;
-  color: #0f172a;
+  background: linear-gradient(135deg, #5dade2 0%, #9b59b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 4rpx;
 }
-.subtitle {
-  color: #475569;
-  font-size: 26rpx;
-  margin-top: 8rpx;
+
+.form-container {
+  flex: 1;
+  padding: 0 60rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
 }
-.card {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 28rpx 24rpx;
-  box-shadow: 0 16rpx 28rpx rgba(46, 135, 255, 0.14);
+
+.input-wrapper {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 48rpx;
+  margin-bottom: 32rpx;
+  box-shadow: rgba(136, 165, 191, 0.25) 3px 1px 8px 0px, rgba(255, 255, 255, 0.6) -3px -1px 8px 0px;
+  border: 1rpx solid #f0f0f0;
 }
-.tabs {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  background: #f5f7fb;
-  border-radius: 14rpx;
-  margin-bottom: 20rpx;
-}
-.tab {
-  text-align: center;
-  padding: 18rpx 0;
-  font-weight: 600;
-  color: #475569;
-}
-.tab.active {
-  background: #fff;
-  color: #2e87ff;
-  border-radius: 14rpx;
-  box-shadow: 0 10rpx 20rpx rgba(46, 135, 255, 0.12);
-}
-.form-item {
-  margin-bottom: 18rpx;
-}
-.label {
-  display: block;
-  font-size: 26rpx;
-  color: #334155;
-  margin-bottom: 8rpx;
-}
+
 .input {
   width: 100%;
-  background: #f8fafc;
-  border-radius: 12rpx;
-  padding: 18rpx 16rpx;
-  font-size: 28rpx;
+  height: 100rpx;
+  padding: 0 32rpx;
+  font-size: 32rpx;
+  color: #333;
+  background: transparent;
 }
-.row {
+
+.input-placeholder {
+  color: #999;
+  font-size: 32rpx;
+}
+
+.login-button {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #2e87ff 0%, #1e6fd9 100%);
+  color: #fff;
+  border-radius: 24rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+  margin-top: 20rpx;
+  box-shadow: 0 8rpx 20rpx rgba(46, 135, 255, 0.3);
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  justify-content: center;
+  border: none;
 }
-.flex-1 {
-  flex: 1;
+
+.login-button::after {
+  border: none;
 }
-.captcha-btn {
-  min-width: 180rpx;
-  background: #f1f5f9;
-  color: #0f172a;
-  border-radius: 12rpx;
-  font-size: 26rpx;
-}
-.primary {
-  margin-top: 12rpx;
+
+.agreement-wrapper {
   width: 100%;
-  background: #2e87ff;
-  color: #fff;
-  border-radius: 14rpx;
-  padding: 22rpx 0;
-  font-size: 30rpx;
-  font-weight: 700;
-  box-shadow: 0 12rpx 24rpx rgba(46, 135, 255, 0.35);
+  margin-top: 64rpx;
+  display: flex;
+  justify-content: center;
+}
+
+.agreement-label {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+}
+
+.agreement-text {
+  color: #666;
+  margin-left: 12rpx;
+  font-size: 24rpx;
+}
+
+.bottom-buttons {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 60rpx 40rpx 80rpx;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.bottom-btn-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-btn-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-bottom: 16rpx;
+}
+
+.bottom-btn-text {
+  font-size: 22rpx;
+  color: #666;
+  font-weight: 500;
 }
 </style>
