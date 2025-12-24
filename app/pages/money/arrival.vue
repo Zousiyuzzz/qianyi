@@ -148,7 +148,8 @@ export default {
         }
         const res = await getCustomerArrivalList(params)
         if (res && res.success) {
-          const records = res.result?.records || res.result?.list || []
+          const result = (res && res.result) ? res.result : {}
+          const records = result.records || result.list || []
           if (this.pageNo === 1) {
             this.dataList = records
           } else {
@@ -205,89 +206,33 @@ export default {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  display: flex;
-  flex-direction: column;
-}
-
-.navbar {
-  background: #fff;
-  border-bottom: 1rpx solid #e5e5e5;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.navbar-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 88rpx;
-  padding: 0 24rpx;
-}
-
-.navbar-left {
-  width: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.back-icon {
-  font-size: 56rpx;
-  color: #333;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.navbar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
-}
-
-.navbar-right {
-  width: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.add-icon {
-  font-size: 40rpx;
-  color: #2e87ff;
-  font-weight: 300;
-}
+<style scoped lang="scss">
+@import '../../common/styles/ios-common.scss';
 
 .search-section {
   background: #fff;
-  padding: 16rpx;
-  border-bottom: 1rpx solid #e5e5e5;
+  padding: 16rpx 16rpx 12rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
 .search-bar {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
-  border-radius: 48rpx;
-  padding: 0 20rpx;
-  height: 64rpx;
+  background: #ededf0;
+  border-radius: 999px;
+  padding: 0 18rpx;
+  height: 72rpx;
 }
 
 .search-input {
   flex: 1;
-  font-size: 26rpx;
-  color: #333;
+  font-size: 28rpx;
+  color: #1c1c1e;
 }
 
 .search-icon {
   font-size: 28rpx;
-  color: #999;
+  color: #8e8e93;
   margin-left: 12rpx;
 }
 

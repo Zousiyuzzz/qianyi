@@ -6,7 +6,7 @@
           v-for="item in modules" 
           :key="item.title" 
           class="icon-item"
-          @click="openWeb(item.path)"
+          @click="openWeb(item)"
         >
           <view class="icon-wrapper" :style="{ background: item.gradient }">
             <text class="icon-text">{{ item.icon }}</text>
@@ -25,21 +25,24 @@ export default {
   data () {
     return {
       modules: [
-        { 
-          title: '客户池海', 
-          path: '/customerManager/TabCustomermanageList', 
+        {
+          title: '客户池海',
+          path: '/customerManager/TabCustomermanageList',
+          native: '/pages/customer/index',
           icon: '👥',
           gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
         },
-        { 
-          title: '客户回款', 
-          path: '/customerManager/BackmoneyList', 
+        {
+          title: '客户回款',
+          path: '/customerManager/BackmoneyList',
+          native: '/pages/customer/backmoney',
           icon: '💰',
           gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
         },
-        { 
-          title: '回款延期', 
-          path: '/customerManager/delay', 
+        {
+          title: '回款延期',
+          path: '/customerManager/delay',
+          native: '/pages/customer/delay',
           icon: '⏰',
           gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
         }
@@ -47,8 +50,12 @@ export default {
     }
   },
   methods: {
-    openWeb (path) {
-      const url = buildAuthedWebUrl(path)
+    openWeb (item) {
+      if (item.native) {
+        uni.navigateTo({ url: item.native })
+        return
+      }
+      const url = buildAuthedWebUrl(item.path)
       uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
     }
   }

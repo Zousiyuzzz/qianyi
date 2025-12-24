@@ -33,10 +33,23 @@ const NATIVE_PAGES = {
   '/advertiserInfo/TabAdvertiserInfoList': '/pages/channel/agent'
 }
 
+// 暂未接入移动端的页面，避免跳转到空白 H5
+const NOT_READY_PAGES = new Set([
+  '/customerManager/CustomerRetabeTemplate'
+])
+
 export function openWebView (path, title = '') {
   // 检查是否有原生页面
   if (NATIVE_PAGES[path]) {
     uni.navigateTo({ url: NATIVE_PAGES[path] })
+    return
+  }
+
+  if (NOT_READY_PAGES.has(path)) {
+    uni.showToast({
+      title: '该功能暂未接入移动端',
+      icon: 'none'
+    })
     return
   }
   

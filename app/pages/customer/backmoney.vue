@@ -13,14 +13,15 @@
     <!-- 搜索栏 -->
     <view class="search-section">
       <view class="search-bar">
-        <input 
-          class="search-input" 
-          v-model="searchKeyword" 
+        <text class="search-icon" @click="handleSearch">🔎</text>
+        <input
+          class="search-input"
+          v-model="searchKeyword"
           placeholder="搜索项目、渠道"
           @confirm="handleSearch"
           confirm-type="search"
         />
-        <text class="search-icon" @click="handleSearch">🔍</text>
+        <text class="clear-icon" v-if="searchKeyword" @click.stop="clearSearch">×</text>
       </view>
     </view>
 
@@ -40,7 +41,10 @@
       >
         <view class="item-header">
           <view class="item-title">{{ item.customerName || item.proName || '未知' }}</view>
-          <view class="item-month">{{ item.month || '-' }}</view>
+          <view class="item-right">
+            <view class="month-chip">{{ item.month || '-' }}</view>
+            <text class="arrow-icon">›</text>
+          </view>
         </view>
         
         <view class="item-content">
@@ -129,7 +133,17 @@ export default {
   },
   methods: {
     handleBack() {
-      uni.navigateBack()
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack({
+          delta: 1,
+          fail: () => {
+            uni.switchTab({ url: '/pages/modules/index' })
+          }
+        })
+      } else {
+        uni.switchTab({ url: '/pages/modules/index' })
+      }
     },
     handleSearch() {
       if (this.searchKeyword) {
@@ -139,6 +153,14 @@ export default {
         delete this.queryParam.proName
         delete this.queryParam.business_name
       }
+      this.pageNo = 1
+      this.dataList = []
+      this.loadData()
+    },
+    clearSearch() {
+      this.searchKeyword = ''
+      delete this.queryParam.proName
+      delete this.queryParam.business_name
       this.pageNo = 1
       this.dataList = []
       this.loadData()
@@ -154,7 +176,8 @@ export default {
         }
         const res = await getBackmoneyList(params)
         if (res && res.success) {
-          const records = res.result?.records || res.result?.list || []
+          const result = (res && res.result) ? res.result : {}
+          const records = result.records || result.list || []
           if (this.pageNo === 1) {
             this.dataList = records
           } else {
@@ -206,170 +229,54 @@ export default {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  display: flex;
-  flex-direction: column;
-}
-
-.navbar {
-  background: #fff;
-  border-bottom: 1rpx solid #e5e5e5;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.navbar-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 88rpx;
-  padding: 0 24rpx;
-}
-
-.navbar-left {
-  width: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.back-icon {
-  font-size: 56rpx;
-  color: #333;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.navbar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.navbar-right {
-  width: 80rpx;
-}
-
-.search-section {
-  background: #fff;
-  padding: 16rpx;
-  border-bottom: 1rpx solid #e5e5e5;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  background: #f5f5f5;
-  border-radius: 48rpx;
-  padding: 0 20rpx;
-  height: 64rpx;
-}
-
-.search-input {
-  flex: 1;
-  font-size: 26rpx;
-  color: #333;
-}
-
-.search-icon {
-  font-size: 28rpx;
-  color: #999;
-  margin-left: 12rpx;
-}
-
-.list-scroll {
-  flex: 1;
-}
+<style scoped lang="scss">
+@import '../../common/styles/ios-common.scss';
 
 .list-item {
-  background: #fff;
-  margin: 12rpx 16rpx;
-  padding: 20rpx;
+  padding-bottom: 14rpx;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.month-chip {
+  padding: 6rpx 12rpx;
   border-radius: 12rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  font-size: 22rpx;
+  background: rgba(10, 132, 255, 0.1);
+  color: #0a84ff;
 }
 
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.item-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
-  flex: 1;
-}
-
-.item-month {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.item-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-  margin-bottom: 16rpx;
-}
-
-.item-row {
-  display: flex;
-  align-items: center;
-  font-size: 24rpx;
-}
-
-.label {
-  color: #666;
-  min-width: 120rpx;
-  font-size: 24rpx;
-}
-
-.value {
-  color: #333;
-  flex: 1;
-  font-size: 24rpx;
+.item-row .label {
+  width: 160rpx;
 }
 
 .value.amount {
-  color: #2e87ff;
+  color: #0a84ff;
   font-weight: 600;
 }
 
 .value.overdue {
-  color: #ff4d4f;
+  color: #ff3b30;
   font-weight: 600;
 }
 
 .item-actions {
-  padding-top: 16rpx;
-  border-top: 1rpx solid #f0f0f0;
+  padding-top: 12rpx;
+  border-top: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
 .action-btn {
   width: 100%;
-  height: 56rpx;
-  border-radius: 28rpx;
+  height: 62rpx;
+  border-radius: 16rpx;
   font-size: 24rpx;
-  background: #2e87ff;
+  background: #0a84ff;
   color: #fff;
   border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .action-btn::after {
@@ -380,9 +287,8 @@ export default {
 .no-more,
 .empty {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
-  font-size: 26rpx;
+  padding: 18rpx 0 28rpx;
+  color: #8e8e93;
+  font-size: 24rpx;
 }
 </style>
-

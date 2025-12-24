@@ -16,9 +16,10 @@
     <!-- 搜索栏 -->
     <view class="search-section">
       <view class="search-bar">
+        <text class="search-icon" @click="handleSearch">🔎</text>
         <input class="search-input" v-model="searchKeyword" placeholder="搜索客户主体" @confirm="handleSearch"
           confirm-type="search" />
-        <text class="search-icon" @click="handleSearch">🔍</text>
+        <text class="clear-icon" v-if="searchKeyword" @click.stop="clearSearch">×</text>
       </view>
     </view>
 
@@ -52,33 +53,39 @@
       <view class="list-item" v-for="(item, index) in dataList" :key="item.id || index" @click="handleItemClick(item)">
         <view class="item-header">
           <view class="item-title">{{ item.customerName || '未知客户' }}</view>
-          <view class="item-id">ID: {{ item.id }}</view>
+          <view class="item-right">
+            <view class="status-pill" :class="getCooperationStatusClass(item)">
+              {{ getCooperationStatus(item) }}
+            </view>
+            <text class="arrow-icon">›</text>
+          </view>
+        </view>
+
+        <view
+          class="item-subtitle"
+          v-if="item.projectsByClientDistinctOnOperationModes && item.projectsByClientDistinctOnOperationModes.length"
+        >
+          <text>{{ getOperationModes(item.projectsByClientDistinctOnOperationModes) }}</text>
         </view>
 
         <view class="item-content">
           <view class="item-row">
-            <text class="label">商务：</text>
+            <text class="label">商务</text>
             <text class="value">{{ item.salesPerson_dictText || '-' }}</text>
           </view>
           <view class="item-row">
-            <text class="label">运营方式：</text>
-            <text class="value">{{ getOperationModes(item.projectsByClientDistinctOnOperationModes) }}</text>
+            <text class="label">渠道</text>
+            <text class="value">{{ getChannels(item.lastConsumeTimeByProjectChannels) }}</text>
           </view>
           <view class="item-row">
-            <text class="label">已合作渠道：</text>
-            <text class="value channels">{{ getChannels(item.lastConsumeTimeByProjectChannels) }}</text>
-          </view>
-          <view class="item-row">
-            <text class="label">合作状态：</text>
-            <view class="status-badge" :class="getCooperationStatusClass(item)">
-              {{ getCooperationStatus(item) }}
-            </view>
+            <text class="label">客户ID</text>
+            <text class="value tertiary">{{ item.id || '-' }}</text>
           </view>
         </view>
 
         <view class="item-actions">
-          <button class="action-btn" @click.stop="handleDetail(item)">详情</button>
-          <button class="action-btn" @click.stop="handleConsume(item)">回款状态</button>
+          <button class="list-action-btn" @click.stop="handleDetail(item)">详情</button>
+          <button class="list-action-btn" @click.stop="handleConsume(item)">回款状态</button>
         </view>
       </view>
 
@@ -167,6 +174,13 @@ export default {
       this.dataList = []
       this.loadData()
     },
+    clearSearch() {
+      this.searchKeyword = ''
+      delete this.queryParam.customerName
+      this.pageNo = 1
+      this.dataList = []
+      this.loadData()
+    },
     handleBusinessChange(e) {
       const index = e.detail.value
       this.selectedBusiness = this.businessOptions[index]
@@ -203,7 +217,8 @@ export default {
         }
         const res = await getCustomerList(params)
         if (res && res.success) {
-          const records = res.result?.records || res.result?.list || []
+          const result = (res && res.result) ? res.result : {}
+          const records = result.records || result.list || []
           if (this.pageNo === 1) {
             this.dataList = records
           } else {
@@ -319,256 +334,107 @@ export default {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  display: flex;
-  flex-direction: column;
-}
-
-.navbar {
-  background: #fff;
-  border-bottom: 1rpx solid #e5e5e5;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.navbar-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 88rpx;
-  padding: 0 24rpx;
-}
-
-.navbar-left {
-  width: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.back-icon {
-  font-size: 56rpx;
-  color: #333;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.navbar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
-}
-
-.navbar-right {
-  width: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.filter-icon {
-  font-size: 28rpx;
-  color: #2e87ff;
-}
-
-.search-section {
-  background: #fff;
-  padding: 24rpx;
-  border-bottom: 1rpx solid #e5e5e5;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  background: #f5f5f5;
-  border-radius: 48rpx;
-  padding: 0 24rpx;
-  height: 72rpx;
-}
-
-.search-input {
-  flex: 1;
-  font-size: 28rpx;
-  color: #333;
-}
-
-.search-icon {
-  font-size: 32rpx;
-  color: #999;
-  margin-left: 16rpx;
-}
+<style scoped lang="scss">
+@import '../../common/styles/ios-common.scss';
 
 .filter-panel {
   background: #fff;
-  padding: 24rpx;
-  border-bottom: 1rpx solid #e5e5e5;
+  padding: 18rpx 16rpx 10rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
 .filter-item {
   display: flex;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 12rpx;
 }
 
 .filter-label {
-  font-size: 28rpx;
-  color: #666;
-  min-width: 140rpx;
+  width: 160rpx;
+  color: #8e8e93;
+  font-size: 26rpx;
 }
 
 .filter-value {
   flex: 1;
-  font-size: 28rpx;
-  color: #333;
-  padding: 16rpx 24rpx;
-  background: #f5f5f5;
-  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #1c1c1e;
+  padding: 14rpx 16rpx;
+  background: #f2f2f7;
+  border-radius: 14rpx;
 }
 
 .filter-actions {
   display: flex;
-  gap: 16rpx;
-  margin-top: 32rpx;
+  gap: 12rpx;
+  margin-top: 8rpx;
 }
 
 .filter-btn {
   flex: 1;
-  height: 72rpx;
-  border-radius: 36rpx;
-  font-size: 28rpx;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 16rpx;
+  font-size: 26rpx;
 }
 
 .filter-btn.reset {
-  background: #f5f5f5;
-  color: #666;
+  background: #ededf0;
+  color: #1c1c1e;
 }
 
 .filter-btn.confirm {
-  background: #2e87ff;
+  background: #0a84ff;
   color: #fff;
-}
-
-.filter-btn::after {
-  border: none;
-}
-
-.list-scroll {
-  flex: 1;
 }
 
 .list-item {
-  background: #fff;
-  margin: 12rpx 16rpx;
-  padding: 20rpx;
-  border-radius: 12rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
-
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16rpx;
   padding-bottom: 16rpx;
-  border-bottom: 1rpx solid #f0f0f0;
 }
 
-.item-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
-  flex: 1;
-}
-
-.item-id {
-  font-size: 22rpx;
-  color: #999;
-}
-
-.item-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-  margin-bottom: 16rpx;
-}
-
-.item-row {
+.item-right {
   display: flex;
   align-items: center;
-  font-size: 24rpx;
+  gap: 10rpx;
 }
 
-.label {
-  color: #666;
-  min-width: 120rpx;
-  font-size: 24rpx;
-}
-
-.value {
-  color: #333;
-  flex: 1;
-  font-size: 24rpx;
-}
-
-.value.channels {
-  color: #2e87ff;
-}
-
-.status-badge {
-  padding: 6rpx 16rpx;
-  border-radius: 12rpx;
-  font-size: 24rpx;
-  display: inline-block;
+.status-pill {
+  padding: 6rpx 14rpx;
+  border-radius: 999px;
+  font-size: 22rpx;
+  line-height: 1;
+  background: rgba(10, 132, 255, 0.08);
+  color: #0a84ff;
 }
 
 .status-normal {
-  background: #f6ffed;
-  color: #52c41a;
+  background: rgba(52, 199, 89, 0.12);
+  color: #34c759;
 }
 
 .status-slow {
-  background: #fff7e6;
-  color: #fa8c16;
+  background: rgba(255, 159, 10, 0.14);
+  color: #ff9f0a;
 }
 
 .status-pending {
-  background: #e6f7ff;
-  color: #1890ff;
+  background: rgba(255, 69, 58, 0.14);
+  color: #ff3b30;
 }
 
-.item-actions {
-  display: flex;
-  gap: 12rpx;
-  padding-top: 16rpx;
-  border-top: 1rpx solid #f0f0f0;
-  justify-content: flex-start;
+.item-subtitle text {
+  color: #6e6e73;
+  font-size: 24rpx;
 }
 
-.action-btn {
-  width: 25%;
-  height: 48rpx;
-  border-radius: 24rpx;
-  font-size: 22rpx;
-  background: #2e87ff;
-  color: #fff;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8rpx;
+.tertiary {
+  color: #6e6e73;
 }
 
-.action-btn::after {
+.list-action-btn {
+  background: #f6f6f8;
+  color: #0a84ff;
+}
+
+.list-action-btn::after {
   border: none;
 }
 
@@ -576,8 +442,8 @@ export default {
 .no-more,
 .empty {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
-  font-size: 26rpx;
+  padding: 18rpx 0 28rpx;
+  color: #8e8e93;
+  font-size: 24rpx;
 }
 </style>

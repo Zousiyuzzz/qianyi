@@ -1,15 +1,34 @@
 <template>
-  <scroll-view class="page" scroll-y>
-    <view class="app-header">
-      <view class="title">功能导航</view>
+  <scroll-view class="page modules-page" scroll-y>
+    <view class="navbar">
+      <view class="navbar-content">
+        <view class="navbar-left"></view>
+        <view class="navbar-title">功能导航</view>
+        <view class="navbar-right"></view>
+      </view>
     </view>
 
-    <view class="section" v-for="group in moduleGroups" :key="group.key">
-      <view class="section-title">{{ group.title }}</view>
+    <view class="intro-card">
+      <view class="intro-title">常用功能入口</view>
+      <view class="intro-desc">已适配移动端的场景可直接打开，未接入的功能会提示。</view>
+    </view>
+
+    <view class="section-card" v-for="group in moduleGroups" :key="group.key">
+      <view class="section-header">
+        <view>
+          <view class="section-title">{{ group.title }}</view>
+          <view class="section-desc">{{ group.description }}</view>
+        </view>
+        <view class="section-arrow">›</view>
+      </view>
       <view class="module-grid">
         <view class="module-item" v-for="mod in group.modules" :key="mod.title" @click="openModule(mod)">
           <view class="module-icon">{{ getModuleIcon(mod) }}</view>
-          <text class="module-name">{{ mod.title }}</text>
+          <view class="module-meta">
+            <text class="module-name">{{ mod.title }}</text>
+            <text class="module-desc">{{ mod.desc }}</text>
+          </view>
+          <text class="item-arrow">›</text>
         </view>
       </view>
     </view>
@@ -120,68 +139,122 @@ export default {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  background: #fff;
+<style scoped lang="scss">
+@import '../../common/styles/ios-common.scss';
+
+.modules-page {
+  background: #f2f2f7;
 }
 
-.app-header {
-  padding: 32rpx 28rpx;
+.intro-card {
+  margin: 20rpx 16rpx 12rpx;
+  padding: 20rpx;
   background: #fff;
-  /* margin-bottom: 20rpx; */
+  border-radius: 20rpx;
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.06);
 }
 
-.app-header .title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #1a1a1a;
+.intro-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 6rpx;
 }
 
-.section {
-  padding: 24rpx 28rpx;
+.intro-desc {
+  font-size: 24rpx;
+  color: #6e6e73;
+}
+
+.section-card {
   background: #fff;
-  margin-bottom: 20rpx;
+  margin: 12rpx 16rpx;
+  padding: 16rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.06);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rpx 6rpx 12rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 24rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111;
+}
+
+.section-desc {
+  font-size: 24rpx;
+  color: #6e6e73;
+  margin-top: 4rpx;
+}
+
+.section-arrow {
+  font-size: 34rpx;
+  color: #c7c7cc;
+  font-weight: 300;
 }
 
 .module-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 32rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 10rpx;
 }
 
 .module-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 16rpx;
+  padding: 16rpx 10rpx;
+  border-radius: 16rpx;
+  transition: background 0.12s ease;
+}
+
+.module-item:active {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .module-icon {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 20rpx;
+  width: 78rpx;
+  height: 78rpx;
+  border-radius: 18rpx;
   background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48rpx;
-  margin-bottom: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(46, 135, 255, 0.1);
+  font-size: 42rpx;
+  color: #1c1c1e;
+  box-shadow: 0 4rpx 12rpx rgba(46, 135, 255, 0.12);
+}
+
+.module-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
 .module-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111;
+}
+
+.module-desc {
   font-size: 24rpx;
-  color: #333;
-  text-align: center;
+  color: #6e6e73;
   line-height: 1.4;
-  word-break: break-all;
+}
+
+.item-arrow {
+  font-size: 32rpx;
+  color: #c7c7cc;
+  font-weight: 300;
 }
 </style>

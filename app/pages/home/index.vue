@@ -1,9 +1,22 @@
 <template>
-  <view class="page">
+  <view class="page home-page">
+    <view class="navbar">
+      <view class="navbar-content">
+        <view class="navbar-left"></view>
+        <view class="navbar-title">首页</view>
+        <view class="navbar-right" @click="loadDashboardData">
+          <text class="action-icon">⟳</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 看板数据 -->
-    <view class="section">
+    <view class="section-card">
       <view class="section-header">
-        <view class="section-title">数据看板</view>
+        <view>
+          <view class="section-title">数据看板</view>
+          <view class="section-desc">近7天核心经营指标</view>
+        </view>
         <view class="refresh-btn" @click="loadDashboardData">
           <text class="refresh-icon">🔄</text>
           <text>刷新</text>
@@ -45,7 +58,7 @@
     </view>
 
     <!-- 渠道消耗排行榜 -->
-    <view class="section">
+    <view class="section-card">
       <view class="section-header">
         <view class="section-title">渠道消耗排行</view>
         <view class="refresh-btn" @click="loadRankData">
@@ -53,9 +66,9 @@
         </view>
       </view>
       <view class="rank-list" v-if="!rankLoading && channelRankList.length > 0">
-        <view 
-          v-for="(item, index) in channelRankList.slice(0, 10)" 
-          :key="index" 
+        <view
+          v-for="(item, index) in channelRankList.slice(0, 10)"
+          :key="index"
           class="rank-item"
         >
           <view class="rank-info">
@@ -74,7 +87,7 @@
     </view>
 
     <!-- 项目消耗排行榜 -->
-    <view class="section">
+    <view class="section-card">
       <view class="section-header">
         <view class="section-title">项目消耗排行</view>
         <view class="refresh-btn" @click="loadRankData">
@@ -82,9 +95,9 @@
         </view>
       </view>
       <view class="rank-list" v-if="!rankLoading && projectRankList.length > 0">
-        <view 
-          v-for="(item, index) in projectRankList.slice(0, 10)" 
-          :key="index" 
+        <view
+          v-for="(item, index) in projectRankList.slice(0, 10)"
+          :key="index"
           class="rank-item"
           @click="openWeb(`/projectManager/TabProjectmanageList?proName=${encodeURIComponent(item.name)}`)"
         >
@@ -104,7 +117,7 @@
     </view>
 
     <!-- 商务消耗排行榜 -->
-    <view class="section">
+    <view class="section-card">
       <view class="section-header">
         <view class="section-title">商务消耗排行</view>
         <view class="refresh-btn" @click="loadRankData">
@@ -119,9 +132,9 @@
           <text class="table-cell value-col">现金消耗</text>
           <text class="table-cell num-col">账户数</text>
         </view>
-        <view 
-          v-for="(item, index) in businessRankList.slice(0, 10)" 
-          :key="index" 
+        <view
+          v-for="(item, index) in businessRankList.slice(0, 10)"
+          :key="index"
           class="table-row"
           @click="openWeb(`/dashboard/analysis?businessPerson=${encodeURIComponent(item.name)}`)"
         >
@@ -308,238 +321,198 @@ export default {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f7fa;
-  padding-top: 20rpx;
+<style scoped lang="scss">
+@import '../../common/styles/ios-common.scss';
+
+.home-page {
+  background: #f2f2f7;
 }
-.section {
-  padding: 24rpx 28rpx;
+
+.section-card {
+  background: #fff;
+  margin: 12rpx 16rpx;
+  padding: 18rpx 16rpx 12rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.06);
 }
-.section-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 12rpx;
-}
+
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 12rpx;
 }
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111;
+}
+
+.section-desc {
+  font-size: 24rpx;
+  color: #6e6e73;
+  margin-top: 4rpx;
+}
+
 .refresh-btn {
   display: flex;
   align-items: center;
   gap: 8rpx;
   font-size: 24rpx;
-  color: #1890ff;
-  padding: 8rpx 16rpx;
-  border-radius: 8rpx;
-  background: #f0f5ff;
+  color: #0a84ff;
+  padding: 10rpx 14rpx;
+  border-radius: 999px;
+  background: rgba(10, 132, 255, 0.12);
 }
+
 .refresh-icon {
   font-size: 28rpx;
 }
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
-  margin-top: 12rpx;
+  gap: 14rpx;
+  margin-top: 6rpx;
 }
+
 .dashboard-card {
-  background: #fff;
+  background: linear-gradient(145deg, #ffffff 0%, #f6f6f8 100%);
   border-radius: 16rpx;
-  padding: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  padding: 20rpx;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.7), 0 6rpx 18rpx rgba(0, 0, 0, 0.05);
 }
+
 .card-label {
   font-size: 24rpx;
-  color: #666;
-  margin-bottom: 12rpx;
-}
-.card-value {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #333;
+  color: #6e6e73;
   margin-bottom: 8rpx;
 }
+
+.card-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 6rpx;
+}
+
 .card-trend {
   font-size: 22rpx;
   display: flex;
   align-items: center;
 }
-.trend-up {
-  color: #f5222d;
-}
-.trend-down {
-  color: #52c41a;
-}
-.trend-neutral {
-  color: #999;
-}
+
+.trend-up { color: #ff3b30; }
+.trend-down { color: #34c759; }
+.trend-neutral { color: #8e8e93; }
+
 .dashboard-loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
-  font-size: 28rpx;
+  padding: 40rpx 0;
+  color: #8e8e93;
+  font-size: 26rpx;
 }
 
-/* 排行榜样式 */
 .rank-list {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
 .rank-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 14rpx 6rpx;
+  border-radius: 14rpx;
+  transition: background 0.12s ease;
 }
 
-.rank-item:last-child {
-  border-bottom: none;
+.rank-item:active {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .rank-info {
   display: flex;
   align-items: center;
-  flex: 1;
+  gap: 12rpx;
 }
 
 .rank-number {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 8rpx;
+  min-width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24rpx;
-  font-weight: 600;
-  margin-right: 16rpx;
-  flex-shrink: 0;
-}
-
-.rank-1 {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  font-weight: 700;
   color: #fff;
 }
 
-.rank-2 {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-  color: #fff;
-}
-
-.rank-3 {
-  background: linear-gradient(135deg, #cd7f32 0%, #e6a85c 100%);
-  color: #fff;
-}
-
-.rank-other {
-  background: #f5f5f5;
-  color: #666;
-}
+.rank-1 { background: linear-gradient(135deg, #ffd666 0%, #ff9f0a 100%); }
+.rank-2 { background: linear-gradient(135deg, #d6e4ff 0%, #0a84ff 100%); }
+.rank-3 { background: linear-gradient(135deg, #ffd6e7 0%, #ff375f 100%); }
+.rank-other { background: #e5e5ea; color: #4a4a4a; }
 
 .rank-name {
-  font-size: 28rpx;
-  color: #333;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 26rpx;
+  color: #1c1c1e;
 }
 
 .rank-value {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #1677ff;
+  font-weight: 700;
+  color: #0a84ff;
 }
 
 .rank-loading,
 .rank-empty {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
-  font-size: 28rpx;
-  background: #fff;
-  border-radius: 16rpx;
+  padding: 24rpx 0;
+  color: #8e8e93;
+  font-size: 24rpx;
 }
 
-/* 商务排行榜表格样式 */
 .business-rank-table {
-  background: #fff;
-  border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(0, 0, 0, 0.05);
 }
 
-.table-header {
-  display: flex;
-  background: #fafafa;
-  padding: 20rpx 16rpx;
-  border-bottom: 2rpx solid #f0f0f0;
-}
-
+.table-header,
 .table-row {
-  display: flex;
-  padding: 24rpx 16rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  display: grid;
+  grid-template-columns: 90rpx 1fr 200rpx 200rpx 120rpx;
+  padding: 14rpx 10rpx;
   align-items: center;
 }
 
-.table-row:last-child {
-  border-bottom: none;
+.table-header {
+  background: #f2f2f7;
+  color: #6e6e73;
+  font-weight: 700;
+  font-size: 24rpx;
 }
 
-.table-row:active {
-  background: #f5f5f5;
+.table-row {
+  border-top: 1rpx solid rgba(0, 0, 0, 0.05);
 }
 
 .table-cell {
-  font-size: 26rpx;
-  color: #333;
-}
-
-.rank-col {
-  width: 80rpx;
-  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #1c1c1e;
 }
 
 .name-col {
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 0 16rpx;
 }
 
-.value-col {
-  width: 140rpx;
-  text-align: right;
-  font-weight: 500;
-  color: #1677ff;
-  flex-shrink: 0;
-}
-
+.value-col,
 .num-col {
-  width: 100rpx;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.table-header .table-cell {
-  font-size: 24rpx;
-  color: #666;
-  font-weight: 600;
-}
-
-.table-header .value-col,
-.table-header .num-col {
   text-align: right;
 }
 </style>

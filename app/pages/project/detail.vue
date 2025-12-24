@@ -176,7 +176,17 @@ export default {
   },
   methods: {
     handleBack() {
-      uni.navigateBack()
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack({
+          delta: 1,
+          fail: () => {
+            uni.switchTab({ url: '/pages/modules/index' })
+          }
+        })
+      } else {
+        uni.switchTab({ url: '/pages/modules/index' })
+      }
     },
     async loadFundPool() {
       const res = await getProjectFundPool({ proId: this.projectId })
@@ -223,36 +233,10 @@ export default {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  background: #f2f2f7;
-}
+<style scoped lang="scss">
+@import '../../common/styles/ios-common.scss';
 
 /* Navbar */
-.navbar {
-  background: #fff;
-  border-bottom: 1rpx solid rgba(0, 0, 0, .06);
-}
-
-.navbar-content {
-  height: 88rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-}
-
-.back-icon {
-  font-size: 56rpx;
-}
-
-.navbar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 600;
-}
-
 /* Grouped list */
 .group {
   margin: 16rpx;

@@ -6,7 +6,7 @@
           v-for="item in materialModules" 
           :key="item.title" 
           class="icon-item"
-          @click="openWeb(item.path)"
+          @click="openWeb(item)"
         >
           <view class="icon-wrapper" :style="{ background: item.gradient }">
             <text class="icon-text">{{ item.icon }}</text>
@@ -31,9 +31,10 @@ export default {
           icon: '📈',
           gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
         },
-        { 
-          title: '素材列表', 
-          path: '/materialManage/index', 
+        {
+          title: '素材列表',
+          path: '/materialManage/index',
+          native: '/pages/material/index',
           icon: '🖼️',
           gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
         },
@@ -53,8 +54,12 @@ export default {
     }
   },
   methods: {
-    openWeb (path) {
-      const url = buildWebUrl(path)
+    openWeb (item) {
+      if (item.native) {
+        uni.navigateTo({ url: item.native })
+        return
+      }
+      const url = buildWebUrl(item.path)
       uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
     }
   }

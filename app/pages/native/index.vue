@@ -125,7 +125,7 @@ export default {
     handleLogin () {
       this.loginLoading = true
       login({ ...this.loginForm }).then((res) => {
-        this.sessionToken = res?.result?.token || ''
+        this.sessionToken = res && res.result && res.result.token ? res.result.token : ''
         uni.showToast({ title: '登录成功', icon: 'success' })
       }).finally(() => {
         this.loginLoading = false
@@ -144,7 +144,7 @@ export default {
     loadMenus () {
       this.menuLoading = true
       queryPermissionsByUser().then(res => {
-        this.menus = res?.result || []
+        this.menus = (res && res.result) ? res.result : []
       }).finally(() => {
         this.menuLoading = false
       })
@@ -164,7 +164,8 @@ export default {
       this.listLoading = true
       const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize }
       content.list(params).then(res => {
-        const records = res?.result?.records || res?.result || []
+        const result = (res && res.result) ? res.result : {}
+        const records = result.records || result || []
         if (force) {
           this.contentList = records
         } else {
@@ -199,7 +200,7 @@ export default {
           const filePath = chooseRes.tempFilePaths[0]
           this.uploadLoading = true
           uploadAction('/sys/common/upload', { filePath, formData: { biz: 'demo' } }).then(res => {
-            this.uploadResult = res?.message || '上传成功'
+            this.uploadResult = (res && res.message) ? res.message : '上传成功'
           }).finally(() => {
             this.uploadLoading = false
           })

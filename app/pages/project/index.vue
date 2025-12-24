@@ -328,7 +328,8 @@ export default {
         }
         const res = await getProjectList(params)
         if (res && res.success) {
-          const records = res.result?.records || res.result?.list || []
+          const result = (res && res.result) ? res.result : {}
+          const records = result.records || result.list || []
           if (this.pageNo === 1) this.dataList = records
           else this.dataList = [...this.dataList, ...records]
           this.hasMore = records.length >= this.pageSize
@@ -373,7 +374,13 @@ export default {
     // 兼容：如果后端有字典文本，优先用（你可以按实际字段名改）
     getItemStatusValue(item) {
       // 常见字段：status / statusValue
-      return item?.status ?? item?.statusValue ?? ''
+      if (item && item.status !== undefined) {
+        return item.status
+      }
+      if (item && item.statusValue !== undefined) {
+        return item.statusValue
+      }
+      return ''
     },
 
     // getStatusText(v) {
@@ -382,18 +389,18 @@ export default {
     // },
 
     // 不想显示“未知”也可以：这里控制
-    shouldShowStatus(item) {
-      const v = String(this.getItemStatusValue(item) ?? '')
-      // 如果你希望未知不展示，把 return 改成：return v === '1' || v === '2' || v === '3'
-      return true
-    },
+      shouldShowStatus(item) {
+        const v = String(this.getItemStatusValue(item) || '')
+        // 如果你希望未知不展示，把 return 改成：return v === '1' || v === '2' || v === '3'
+        return true
+      },
 
     // 仅用文字颜色做弱区分（无 dot）
-    getStatusTextClass(item) {
-      const v = String(this.getItemStatusValue(item) ?? '')
-      if (v === '1') return 'status-1'
-      if (v === '2') return 'status-2'
-      if (v === '3') return 'status-3'
+      getStatusTextClass(item) {
+        const v = String(this.getItemStatusValue(item) || '')
+        if (v === '1') return 'status-1'
+        if (v === '2') return 'status-2'
+        if (v === '3') return 'status-3'
       return 'status-0'
     },
 
