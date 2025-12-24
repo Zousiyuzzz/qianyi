@@ -6,7 +6,7 @@
           v-for="item in moneyModules" 
           :key="item.title" 
           class="icon-item"
-          @click="openWeb(item.path)"
+          @click="openWeb(item)"
         >
           <view class="icon-wrapper" :style="{ background: item.gradient }">
             <text class="icon-text">{{ item.icon }}</text>
@@ -25,15 +25,17 @@ export default {
   data () {
     return {
       moneyModules: [
-        { 
-          title: '客户到账', 
-          path: '/moneyManager/Preparation', 
+        {
+          title: '客户到账',
+          path: '/moneyManager/Preparation',
+          native: '/pages/money/arrival',
           icon: '💵',
           gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
         },
-        { 
-          title: '客户退款', 
-          path: '/moneyManager/Refund', 
+        {
+          title: '客户退款',
+          path: '/moneyManager/Refund',
+          native: '/pages/money/refund',
           icon: '↩️',
           gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
         },
@@ -53,8 +55,12 @@ export default {
     }
   },
   methods: {
-    openWeb (path) {
-      const url = buildWebUrl(path)
+    openWeb (item) {
+      if (item.native) {
+        uni.navigateTo({ url: item.native })
+        return
+      }
+      const url = buildWebUrl(item.path)
       uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(url)}` })
     }
   }
