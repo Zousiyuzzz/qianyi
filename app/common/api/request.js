@@ -31,9 +31,9 @@ function attachAuth(headers = {}) {
 }
 
 function attachSign(url, data = {}) {
-  // 确保 url 是字符串
+  // 仅在开启加密时才计算签名，保持与 pc 端（zxcrm）的行为一致
+  if (!API_ENV.enableEncrypt) return {}
   const safeUrl = url || ''
-  // 始终添加签名，不检查 enableEncrypt（因为后端需要）
   return {
     'X-Sign': signMd5Utils.getSign(safeUrl, data),
     'X-TIMESTAMP': signMd5Utils.getTimestamp()
