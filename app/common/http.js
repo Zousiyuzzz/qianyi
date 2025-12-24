@@ -38,24 +38,9 @@ function injectInterceptors() {
   interceptorReady = true
   uni.addInterceptor('request', {
     invoke(options) {
-      const headers = options.header || {}
-      const token = getToken()
-      const tenantId = getTenantId()
-
-      // 添加 token（只添加一次，如果 request.js 已经添加了就不再添加）
-      if (token && !headers['X-Access-Token']) {
-        headers['X-Access-Token'] = token
-      }
-      if (!headers['tenant-id']) {
-        headers['tenant-id'] = tenantId || 0
-      }
-
-      // 注意：签名和时间戳不在拦截器中添加
-      // 因为 request.js 中的 attachSign 会根据 enableEncrypt 决定是否添加
-      // 如果 request.js 已经添加了签名，这里就不需要再添加
-
-      options.header = headers
-      options.url = url
+      // 注意：request.js 已经处理了所有 headers（包括 token、tenant-id、签名等）
+      // 这里只需要处理 URL 规范化，不要覆盖 headers
+      options.url = normalizeUrl(options.url)
       return options
     },
     success(res) {

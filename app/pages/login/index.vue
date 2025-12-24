@@ -132,8 +132,20 @@ export default {
             tenantId: result.tenantId,
             tenantList: result.tenantList || []
           }
+          // 先保存 token
           setLoginSession(loginData)
-          this.redirectAfterLogin()
+          // 验证 token 是否保存成功
+          const savedToken = uni.getStorageSync('Access-Token')
+          if (!savedToken) {
+            console.error('[Login] Token save failed!')
+            this.showError('登录失败：Token保存失败')
+            return
+          }
+          console.log('[Login] Token saved successfully, length:', savedToken.length)
+          // 延迟一下再跳转，确保存储完成
+          setTimeout(() => {
+            this.redirectAfterLogin()
+          }, 100)
         } else {
           this.showError(res.message || '登录失败')
         }

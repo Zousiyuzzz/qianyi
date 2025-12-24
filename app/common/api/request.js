@@ -19,7 +19,13 @@ function buildUrl(path = '') {
 function attachAuth(headers = {}) {
   const token = getToken()
   const tenantId = getTenantId()
-  if (token) headers['X-Access-Token'] = token
+  // 调试：检查 token 是否存在
+  if (!token) {
+    console.warn('[attachAuth] Token not found, storage key:', ACCESS_TOKEN)
+  }
+  if (token) {
+    headers['X-Access-Token'] = token
+  }
   headers['tenant-id'] = tenantId || 0
   return headers
 }
@@ -76,6 +82,14 @@ export function request(options = {}) {
     ...attachAuth({ ...headers }),
     ...attachSign(fullUrl, normalizedData || finalParams || {})
   }
+
+  // 调试：打印请求头
+  console.log('[request] Headers:', {
+    'X-Access-Token': finalHeaders['X-Access-Token'] ? finalHeaders['X-Access-Token'].substring(0, 20) + '...' : 'missing',
+    'tenant-id': finalHeaders['tenant-id'],
+    'X-Sign': finalHeaders['X-Sign'] ? 'present' : 'missing',
+    'X-TIMESTAMP': finalHeaders['X-TIMESTAMP'] ? 'present' : 'missing'
+  })
 
   if (!hideLoading) {
     uni.showLoading({ title: '加载中', mask: true })

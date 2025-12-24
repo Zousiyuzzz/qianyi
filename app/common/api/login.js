@@ -2,17 +2,9 @@ import api from './index'
 import { request, setToken, setTenant } from './request'
 
 export function login(parameter) {
-  return request({ url: api.Login, method: 'POST', data: parameter }).then((res) => {
-    // token已经在登录页面通过setLoginSession保存，这里不需要重复保存
-    // 但为了兼容性，仍然保存一次
-    if (res?.result?.token) {
-      setToken(res.result.token)
-    }
-    if (res?.result?.tenantId) {
-      setTenant(res.result.tenantId)
-    }
-    return res
-  })
+  return request({ url: api.Login, method: 'POST', data: parameter })
+  // 注意：token 的保存由登录页面的 setLoginSession 处理
+  // 这里不再重复保存，避免时序问题
 }
 
 export function phoneLogin(parameter) {
