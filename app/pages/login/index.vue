@@ -2,7 +2,7 @@
   <view class="login-page">
     <!-- Logo区域 -->
     <view class="logo-container">
-      <view class="logo-text">云游迹</view>
+      <view class="logo-text">游云迹</view>
     </view>
 
     <!-- 登录表单 -->

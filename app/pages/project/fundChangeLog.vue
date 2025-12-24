@@ -135,7 +135,17 @@ export default {
   },
   methods: {
     handleBack() {
-      uni.navigateBack()
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack({
+          delta: 1,
+          fail: () => {
+            uni.switchTab({ url: '/pages/modules/index' })
+          }
+        })
+      } else {
+        uni.switchTab({ url: '/pages/modules/index' })
+      }
     },
     handleTypeChange(e) {
       const index = e.detail.value

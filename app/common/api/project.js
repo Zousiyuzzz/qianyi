@@ -43,3 +43,16 @@ export function getProjectFundChangesList(params) {
   })
 }
 
+// 项目资金池（单个项目）- 使用list接口，取第一条
+export function getProjectFundPool(params) {
+  return request({
+    url: '/projectFundPool/list',
+    method: 'GET',
+    params: {
+      proId: params.proId,
+      pageNo: 1,
+      pageSize: 1
+    }
+  })
+}
+

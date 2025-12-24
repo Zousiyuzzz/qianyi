@@ -16,13 +16,8 @@
     <!-- 搜索栏 -->
     <view class="search-section">
       <view class="search-bar">
-        <input 
-          class="search-input" 
-          v-model="searchKeyword" 
-          placeholder="搜索客户主体"
-          @confirm="handleSearch"
-          confirm-type="search"
-        />
+        <input class="search-input" v-model="searchKeyword" placeholder="搜索客户主体" @confirm="handleSearch"
+          confirm-type="search" />
         <text class="search-icon" @click="handleSearch">🔍</text>
       </view>
     </view>
@@ -31,12 +26,7 @@
     <view class="filter-panel" v-if="showFilter">
       <view class="filter-item">
         <text class="filter-label">商务：</text>
-        <picker 
-          mode="selector" 
-          :range="businessOptions" 
-          range-key="text"
-          @change="handleBusinessChange"
-        >
+        <picker mode="selector" :range="businessOptions" range-key="text" @change="handleBusinessChange">
           <view class="filter-value">
             {{ selectedBusiness ? selectedBusiness.text : '全部' }}
           </view>
@@ -44,12 +34,7 @@
       </view>
       <view class="filter-item">
         <text class="filter-label">运营方式：</text>
-        <picker 
-          mode="selector" 
-          :range="operationTypeOptions" 
-          range-key="text"
-          @change="handleOperationTypeChange"
-        >
+        <picker mode="selector" :range="operationTypeOptions" range-key="text" @change="handleOperationTypeChange">
           <view class="filter-value">
             {{ selectedOperationType ? selectedOperationType.text : '全部' }}
           </view>
@@ -62,25 +47,14 @@
     </view>
 
     <!-- 列表 -->
-    <scroll-view 
-      class="list-scroll" 
-      scroll-y 
-      @scrolltolower="loadMore"
-      :refresher-enabled="true"
-      :refresher-triggered="refreshing"
-      @refresherrefresh="handleRefresh"
-    >
-      <view 
-        class="list-item" 
-        v-for="(item, index) in dataList" 
-        :key="item.id || index"
-        @click="handleItemClick(item)"
-      >
+    <scroll-view class="list-scroll" scroll-y @scrolltolower="loadMore" :refresher-enabled="true"
+      :refresher-triggered="refreshing" @refresherrefresh="handleRefresh">
+      <view class="list-item" v-for="(item, index) in dataList" :key="item.id || index" @click="handleItemClick(item)">
         <view class="item-header">
           <view class="item-title">{{ item.customerName || '未知客户' }}</view>
           <view class="item-id">ID: {{ item.id }}</view>
         </view>
-        
+
         <view class="item-content">
           <view class="item-row">
             <text class="label">商务：</text>
@@ -161,7 +135,7 @@ export default {
     handleBack() {
       const pages = getCurrentPages()
       if (pages.length > 1) {
-        uni.navigateBack({ 
+        uni.navigateBack({
           delta: 1,
           fail: () => {
             uni.switchTab({ url: '/pages/modules/index' })
@@ -308,10 +282,10 @@ export default {
       const now = Date.now()
       const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
       const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000
-      
+
       let hasRecent = false
       let hasOld = false
-      
+
       item.lastConsumeTimeByProjectChannels.forEach(ch => {
         if (ch.last_consume_time) {
           const consumeTime = new Date(ch.last_consume_time).getTime()
@@ -322,7 +296,7 @@ export default {
           }
         }
       })
-      
+
       if (hasRecent) {
         return '正常合作'
       } else if (hasOld) {
@@ -577,19 +551,21 @@ export default {
   gap: 12rpx;
   padding-top: 16rpx;
   border-top: 1rpx solid #f0f0f0;
+  justify-content: flex-start;
 }
 
 .action-btn {
-  flex: 1;
-  height: 56rpx;
-  border-radius: 28rpx;
-  font-size: 24rpx;
+  width: 25%;
+  height: 48rpx;
+  border-radius: 24rpx;
+  font-size: 22rpx;
   background: #2e87ff;
   color: #fff;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 8rpx;
 }
 
 .action-btn::after {
@@ -605,4 +581,3 @@ export default {
   font-size: 26rpx;
 }
 </style>
-

@@ -33,7 +33,7 @@ function attachAuth(headers = {}) {
 function attachSign(url, data = {}) {
   // 确保 url 是字符串
   const safeUrl = url || ''
-  // 始终添加签名，不检查 enableEncrypt（因为后端需要）
+  // 始终添加签名（后端需要）
   return {
     'X-Sign': signMd5Utils.getSign(safeUrl, data),
     'X-TIMESTAMP': signMd5Utils.getTimestamp()
@@ -79,17 +79,22 @@ export function request(options = {}) {
   const fullUrl = `${requestUrl}${queryString}`
   const finalHeaders = {
     ...defaultHeaders,
-    ...attachAuth({ ...headers }),
-    ...attachSign(fullUrl, normalizedData || finalParams || {})
+    ...attachAuth({ ...headers })
+    // 注意：zxcrm web 版本不需要签名，只使用 X-Access-Token 和 tenant-id
+    // ...attachSign(fullUrl, normalizedData || finalParams || {})
   }
 
-  // 调试：打印请求头
-  console.log('[request] Headers:', {
-    'X-Access-Token': finalHeaders['X-Access-Token'] ? finalHeaders['X-Access-Token'].substring(0, 20) + '...' : 'missing',
+  // 调试：打印完整的请求信息
+  console.log('[request] URL:', fullUrl)
+  console.log('[request] Method:', finalMethod)
+  console.log('[request] Headers:', JSON.stringify({
+    'X-Access-Token': finalHeaders['X-Access-Token'] ? finalHeaders['X-Access-Token'].substring(0, 30) + '...' : 'missing',
     'tenant-id': finalHeaders['tenant-id'],
-    'X-Sign': finalHeaders['X-Sign'] ? 'present' : 'missing',
-    'X-TIMESTAMP': finalHeaders['X-TIMESTAMP'] ? 'present' : 'missing'
-  })
+    'X-Sign': finalHeaders['X-Sign'] || 'missing',
+    'X-TIMESTAMP': finalHeaders['X-TIMESTAMP'] || 'missing',
+    'Content-Type': finalHeaders['Content-Type']
+  }, null, 2))
+  console.log('[request] Data:', JSON.stringify(normalizedData || finalParams || {}, null, 2))
 
   if (!hideLoading) {
     uni.showLoading({ title: '加载中', mask: true })
