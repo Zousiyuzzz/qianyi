@@ -11,7 +11,7 @@ export const STORAGE_KEYS = {
 }
 
 export const API_ENV = {
-  baseURL: 'http://101.200.146.164:8000/jeecg-boot',
+  baseURL: 'http://192.168.8.197:8080/jeecg-boot',
   gateway: '',
   timeout: Number(process.env.VUE_APP_REQUEST_TIMEOUT || 60000),
   enableEncrypt: String(process.env.VUE_APP_ENABLE_ENCRYPT || 'false') === 'true',
@@ -20,19 +20,19 @@ export const API_ENV = {
 }
 
 export const MODULE_GROUPS = [
-  {
-    key: 'dashboard',
-    title: '报表与工作台',
-    description: '分析报表、汇总/渠道/销售/利润视图及个人工作台。',
-    modules: [
-      { title: '分析报表', path: '/dashboard/analysis', desc: '投放效果与经营趋势分析。' },
-      { title: '汇总报表', path: '/totalCharts', desc: '汇总视图（隐藏菜单亦可直接打开）。' },
-      { title: '渠道报表', path: '/channelCharts', desc: '渠道维度投放表现。' },
-      { title: '销售报表', path: '/salesCharts', desc: '销售趋势与贡献度。' },
-      { title: '利润菜单', path: '/lirunCharts', desc: '利润视图与经营健康度。' },
-      { title: '工作台', path: '/dashboard/workplace', desc: '个人工作台及常用卡片入口。' }
-    ]
-  },
+  // {
+  //   key: 'dashboard',
+  //   title: '报表与工作台',
+  //   description: '分析报表、汇总/渠道/销售/利润视图及个人工作台。',
+  //   modules: [
+  //     { title: '分析报表', path: '/dashboard/analysis', desc: '投放效果与经营趋势分析。' },
+  //     { title: '汇总报表', path: '/totalCharts', desc: '汇总视图（隐藏菜单亦可直接打开）。' },
+  //     { title: '渠道报表', path: '/channelCharts', desc: '渠道维度投放表现。' },
+  //     { title: '销售报表', path: '/salesCharts', desc: '销售趋势与贡献度。' },
+  //     { title: '利润菜单', path: '/lirunCharts', desc: '利润视图与经营健康度。' },
+  //     { title: '工作台', path: '/dashboard/workplace', desc: '个人工作台及常用卡片入口。' }
+  //   ]
+  // },
   {
     key: 'customer',
     title: '客户与回款',
@@ -89,17 +89,17 @@ export const MODULE_GROUPS = [
       { title: '抬头管理', path: '/Manager/bankAccount', desc: '抬头维护与开票。' }
     ]
   },
-  {
-    key: 'material',
-    title: '素材管理与洞察',
-    description: '素材列表、裂变、风控与数据洞察。',
-    modules: [
-      { title: '数据洞察', path: '/materialManage/dataCheck', desc: '数据洞察与趋势。' },
-      { title: '素材列表', path: '/materialManage/index', desc: '素材库与审核状态。' },
-      { title: '素材裂变', path: '/materialManage/copy', desc: '批量裂变工具。' },
-      { title: '素材风控', path: '/materialManage/douyinViolationScoreRecord', desc: '违规扣分与风险监控。' }
-    ]
-  },
+  // {
+  //   key: 'material',
+  //   title: '素材管理与洞察',
+  //   description: '素材列表、裂变、风控与数据洞察。',
+  //   modules: [
+  //     { title: '数据洞察', path: '/materialManage/dataCheck', desc: '数据洞察与趋势。' },
+  //     { title: '素材列表', path: '/materialManage/index', desc: '素材库与审核状态。' },
+  //     { title: '素材裂变', path: '/materialManage/copy', desc: '批量裂变工具。' },
+  //     { title: '素材风控', path: '/materialManage/douyinViolationScoreRecord', desc: '违规扣分与风险监控。' }
+  //   ]
+  // },
   {
     key: 'finance',
     title: '财务报表与返利',
@@ -127,38 +127,38 @@ export const MODULE_GROUPS = [
       { title: '代理商账户', path: '/advertiserInfo/TabAdvertiserInfoList', desc: '代理商账户信息。' }
     ]
   },
-  {
-    key: 'tools',
-    title: '工具与消息',
-    description: '工具集、更新日志与消息通知。',
-    modules: [
-      { title: '邮件发送记录', path: '/system/email', desc: '邮件发送日志。' },
-      { title: '更新日志', path: '/system/versionList', desc: '版本发布记录。' },
-      { title: '消息管理', path: '/modules/message/sysMessageList', desc: '系统消息列表。' },
-      { title: '消息模板', path: '/modules/message/sysMessageTemplateList', desc: '消息模板配置。' },
-      { title: '我的消息', path: '/isps/userAnnouncement', desc: '个人消息通知。' }
-    ]
-  },
-  {
-    key: 'monitor',
-    title: '系统监控',
-    description: '网关、定时任务、日志与性能监控。',
-    modules: [
-      { title: '路由网关', path: '/isystem/gatewayroute', desc: '网关路由管理。' },
-      { title: '定时任务', path: '/isystem/QuartzJobList', desc: 'Quartz 任务管理。' },
-      { title: '日志管理', path: '/isystem/log', desc: '系统日志查询。' },
-      { title: '数据日志', path: '/sys/dataLog-list', desc: '数据操作日志。' },
-      { title: 'Redis 监控', path: '/monitor/redis/info', desc: 'Redis 运行状态。' },
-      { title: 'Tomcat 信息', path: '/monitor/TomcatInfo', desc: 'Tomcat 监控。' },
-      { title: '服务器信息', path: '/monitor/SystemInfo', desc: '服务器监控。' },
-      { title: 'JVM 信息', path: '/monitor/JvmInfo', desc: 'JVM 监控。' },
-      { title: '请求追踪', path: '/monitor/HttpTrace', desc: '请求链路追踪。' },
-      { title: '磁盘监控', path: '/monitor/Disk', desc: '磁盘使用监控。' },
-      { title: 'SQL 监控', path: '/druid/', desc: 'Druid SQL 监控。' },
-      { title: '在线文档', path: '/doc.html', desc: '项目在线文档。' },
-      { title: '在线用户', path: '/isystem/online', desc: '在线用户列表。' }
-    ]
-  },
+  // {
+  //   key: 'tools',
+  //   title: '工具与消息',
+  //   description: '工具集、更新日志与消息通知。',
+  //   modules: [
+  //     { title: '邮件发送记录', path: '/system/email', desc: '邮件发送日志。' },
+  //     { title: '更新日志', path: '/system/versionList', desc: '版本发布记录。' },
+  //     { title: '消息管理', path: '/modules/message/sysMessageList', desc: '系统消息列表。' },
+  //     { title: '消息模板', path: '/modules/message/sysMessageTemplateList', desc: '消息模板配置。' },
+  //     { title: '我的消息', path: '/isps/userAnnouncement', desc: '个人消息通知。' }
+  //   ]
+  // },
+  // {
+  //   key: 'monitor',
+  //   title: '系统监控',
+  //   description: '网关、定时任务、日志与性能监控。',
+  //   modules: [
+  //     { title: '路由网关', path: '/isystem/gatewayroute', desc: '网关路由管理。' },
+  //     { title: '定时任务', path: '/isystem/QuartzJobList', desc: 'Quartz 任务管理。' },
+  //     { title: '日志管理', path: '/isystem/log', desc: '系统日志查询。' },
+  //     { title: '数据日志', path: '/sys/dataLog-list', desc: '数据操作日志。' },
+  //     { title: 'Redis 监控', path: '/monitor/redis/info', desc: 'Redis 运行状态。' },
+  //     { title: 'Tomcat 信息', path: '/monitor/TomcatInfo', desc: 'Tomcat 监控。' },
+  //     { title: '服务器信息', path: '/monitor/SystemInfo', desc: '服务器监控。' },
+  //     { title: 'JVM 信息', path: '/monitor/JvmInfo', desc: 'JVM 监控。' },
+  //     { title: '请求追踪', path: '/monitor/HttpTrace', desc: '请求链路追踪。' },
+  //     { title: '磁盘监控', path: '/monitor/Disk', desc: '磁盘使用监控。' },
+  //     { title: 'SQL 监控', path: '/druid/', desc: 'Druid SQL 监控。' },
+  //     { title: '在线文档', path: '/doc.html', desc: '项目在线文档。' },
+  //     { title: '在线用户', path: '/isystem/online', desc: '在线用户列表。' }
+  //   ]
+  // },
   {
     key: 'online',
     title: '在线开发',
@@ -211,12 +211,12 @@ export const MODULE_GROUPS = [
   }
 ]
 
-export function buildWebUrl (path = DEFAULT_ROUTE) {
+export function buildWebUrl(path = DEFAULT_ROUTE) {
   const cleanPath = path.startsWith('/') ? path : `/${path}`
   return `${H5_BASE_URL}${cleanPath}`
 }
 
-export function buildAuthedWebUrl (path = DEFAULT_ROUTE) {
+export function buildAuthedWebUrl(path = DEFAULT_ROUTE) {
   const baseUrl = buildWebUrl(path)
   const token = getToken()
   const tenantId = getTenantId()

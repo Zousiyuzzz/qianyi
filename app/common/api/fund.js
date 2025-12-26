@@ -53,4 +53,3 @@ export function updateFundTransferTime(id, createTime) {
     data: { id, createTime }
   })
 }
-

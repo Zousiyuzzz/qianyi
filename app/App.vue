@@ -41,6 +41,52 @@ page {
   font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
 }
 
+/* 隐藏所有纵向滚动条 */
+* {
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* 针对 uni-app 的 scroll-view 和普通 view */
+scroll-view,
+view {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+}
+
+scroll-view::-webkit-scrollbar,
+view::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* 针对页面内容区域 */
+.page-content,
+.content-scroll,
+.list-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+}
+
+.page-content::-webkit-scrollbar,
+.content-scroll::-webkit-scrollbar,
+.list-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 /*
 正整数a与b使得ab＋1整除a^2＋b^2，求证：（a^2＋b^2）/（ab＋1）是某个正整数的平方
 */

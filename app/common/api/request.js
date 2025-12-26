@@ -8,7 +8,7 @@ const defaultHeaders = {
 }
 
 function buildUrl(path = '') {
-  const base = API_ENV.gateway || API_ENV.baseURL || 'http://101.200.146.164:8000/jeecg-boot'
+  const base = API_ENV.gateway || API_ENV.baseURL || 'http://192.168.8.197:8080/jeecg-boot'
   if (!path) return base
   if (/^https?:\/\//i.test(path)) return path
   const normalizedBase = base.replace(/\/$/, '')
@@ -32,12 +32,7 @@ function attachAuth(headers = {}) {
 
 function attachSign(url, data = {}) {
   // 仅在开启加密时才计算签名，保持与 pc 端（zxcrm）的行为一致
-  if (!API_ENV.enableEncrypt) return {}
   const safeUrl = url || ''
-<<<<<<< HEAD
-  // 始终添加签名（后端需要）
-=======
->>>>>>> 81675c2b67b5e06e5b1c5b9e037b0cc7e3088fc3
   return {
     'X-Sign': signMd5Utils.getSign(safeUrl, data),
     'X-TIMESTAMP': signMd5Utils.getTimestamp()
@@ -88,17 +83,17 @@ export function request(options = {}) {
     // ...attachSign(fullUrl, normalizedData || finalParams || {})
   }
 
-  // 调试：打印完整的请求信息
-  console.log('[request] URL:', fullUrl)
-  console.log('[request] Method:', finalMethod)
-  console.log('[request] Headers:', JSON.stringify({
-    'X-Access-Token': finalHeaders['X-Access-Token'] ? finalHeaders['X-Access-Token'].substring(0, 30) + '...' : 'missing',
-    'tenant-id': finalHeaders['tenant-id'],
-    'X-Sign': finalHeaders['X-Sign'] || 'missing',
-    'X-TIMESTAMP': finalHeaders['X-TIMESTAMP'] || 'missing',
-    'Content-Type': finalHeaders['Content-Type']
-  }, null, 2))
-  console.log('[request] Data:', JSON.stringify(normalizedData || finalParams || {}, null, 2))
+  // // 调试：打印完整的请求信息
+  // console.log('[request] URL:', fullUrl)
+  // console.log('[request] Method:', finalMethod)
+  // console.log('[request] Headers:', JSON.stringify({
+  //   'X-Access-Token': finalHeaders['X-Access-Token'] ? finalHeaders['X-Access-Token'].substring(0, 30) + '...' : 'missing',
+  //   'tenant-id': finalHeaders['tenant-id'],
+  //   'X-Sign': finalHeaders['X-Sign'] || 'missing',
+  //   'X-TIMESTAMP': finalHeaders['X-TIMESTAMP'] || 'missing',
+  //   'Content-Type': finalHeaders['Content-Type']
+  // }, null, 2))
+  // console.log('[request] Data:', JSON.stringify(normalizedData || finalParams || {}, null, 2))
 
   if (!hideLoading) {
     uni.showLoading({ title: '加载中', mask: true })

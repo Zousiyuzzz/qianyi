@@ -1,13 +1,14 @@
 <template>
-  <view class="page">
-    <view class="navbar">
+  <view class="page" :style="{ paddingTop: (statusBarHeight + navBarContentHeight) + 'px' }">
+    <!-- Navbar - 固定定位 -->
+    <view class="navbar fixed-navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="navbar-content">
         <view class="navbar-left" @click.stop="handleBack">
           <text class="back-icon">‹</text>
         </view>
         <view class="navbar-title">回款延期</view>
         <view class="navbar-right" @click="showFilter = !showFilter">
-          <text class="filter-icon">筛选</text>
+          <text class="filter-icon">⏷</text>
         </view>
       </view>
     </view>
@@ -15,13 +16,8 @@
     <!-- 搜索栏 -->
     <view class="search-section">
       <view class="search-bar">
-        <input 
-          class="search-input" 
-          v-model="searchKeyword" 
-          placeholder="搜索客户、项目"
-          @confirm="handleSearch"
-          confirm-type="search"
-        />
+        <input class="search-input" v-model="searchKeyword" placeholder="搜索客户、项目" @confirm="handleSearch"
+          confirm-type="search" />
         <text class="search-icon" @click="handleSearch">🔍</text>
       </view>
     </view>
@@ -30,12 +26,7 @@
     <view class="filter-panel" v-if="showFilter">
       <view class="filter-item">
         <text class="filter-label">状态：</text>
-        <picker 
-          mode="selector" 
-          :range="statusOptions" 
-          range-key="text"
-          @change="handleStatusChange"
-        >
+        <picker mode="selector" :range="statusOptions" range-key="text" @change="handleStatusChange">
           <view class="filter-value">
             {{ selectedStatus ? selectedStatus.text : '全部' }}
           </view>
@@ -47,28 +38,17 @@
       </view>
     </view>
 
-    <!-- 列表 -->
-    <scroll-view 
-      class="list-scroll" 
-      scroll-y 
-      @scrolltolower="loadMore"
-      :refresher-enabled="true"
-      :refresher-triggered="refreshing"
-      @refresherrefresh="handleRefresh"
-    >
-      <view 
-        class="list-item" 
-        v-for="(item, index) in dataList" 
-        :key="item.id || index"
-        @click="handleItemClick(item)"
-      >
+    <!-- List - 使用普通view，不再使用scroll-view -->
+    <view class="page-content">
+      <view class="list-item" v-for="(item, index) in dataList" :key="item.id || index" @click="handleItemClick(item)"
+        hover-class="card-hover" hover-stay-time="80">
         <view class="item-header">
           <view class="item-title">{{ item.customerName || item.proName || '未知' }}</view>
           <view class="item-status" :class="getStatusClass(item.status)">
             {{ getStatusText(item.status) }}
           </view>
         </view>
-        
+
         <view class="item-content">
           <view class="item-row">
             <text class="label">项目：</text>
@@ -106,9 +86,14 @@
         <text>没有更多了</text>
       </view>
       <view class="empty" v-if="!loading && dataList.length === 0">
-        <text>暂无数据</text>
+        <text class="empty-title">暂无数据</text>
+        <text class="empty-sub" v-if="hasActiveFilters">试试清除筛选条件后再看看</text>
+
+        <view class="empty-actions" v-if="hasActiveFilters">
+          <button class="clear-filter-btn" @click="clearAllFilters">清除筛选</button>
+        </view>
       </view>
-    </scroll-view>
+    </view>
   </view>
 </template>
 
@@ -133,17 +118,44 @@ export default {
         { value: 'approved', text: '已通过' },
         { value: 'rejected', text: '已拒绝' }
       ],
-      selectedStatus: null
+      selectedStatus: null,
+      // 导航栏相关数据
+      statusBarHeight: 0,
+      navBarContentHeight: 44 // 导航栏内容高度44px
     }
   },
   onLoad() {
+    this.getStatusBarHeight()
     this.loadData()
+  },
+  // 页面下拉刷新
+  onPullDownRefresh() {
+    this.handleRefresh()
+  },
+  // 页面上拉触底
+  onReachBottom() {
+    this.loadMore()
   },
   onBackPress() {
     this.handleBack()
     return true
   },
+  computed: {
+    hasActiveFilters() {
+      return false
+    }
+  },
   methods: {
+    // 获取状态栏高度
+    getStatusBarHeight() {
+      try {
+        const systemInfo = uni.getSystemInfoSync()
+        this.statusBarHeight = systemInfo.statusBarHeight || 0
+      } catch (error) {
+        console.error('获取状态栏高度失败:', error)
+        this.statusBarHeight = 0
+      }
+    },
     handleBack() {
       const pages = getCurrentPages()
       if (pages.length > 1) {
@@ -232,7 +244,11 @@ export default {
       this.refreshing = true
       this.pageNo = 1
       this.dataList = []
-      this.loadData()
+      this.loadData().finally(() => {
+        // 停止下拉刷新
+        uni.stopPullDownRefresh()
+        this.refreshing = false
+      })
     },
     handleItemClick(item) {
       uni.navigateTo({
@@ -286,6 +302,9 @@ export default {
         'rejected': 'status-rejected'
       }
       return map[status] || ''
+    },
+    clearAllFilters() {
+      // No filters to clear
     }
   }
 }
@@ -379,8 +398,94 @@ export default {
   border: none;
 }
 
-.list-scroll {
+/* ===== Base ===== */
+.page {
+  height: 100vh;
+  background: #f2f2f7;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== Navbar ===== */
+.navbar.fixed-navbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  background: #fff;
+  background-color: #fff;
+  border-bottom: 1rpx solid rgba(0, 0, 0, .06);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  padding: 0 24rpx;
+}
+
+.navbar-left,
+.navbar-right {
+  width: 90rpx;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-left {
+  justify-content: flex-start;
+}
+
+.navbar-right {
+  justify-content: flex-end;
+}
+
+.back-icon {
+  font-size: 56rpx;
+  color: #1c1c1e;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.navbar-title {
   flex: 1;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1c1c1e;
+}
+
+.filter-icon {
+  font-size: 34rpx;
+  color: #0a84ff;
+}
+
+/* ===== Page Content ===== */
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: 0;
+  /* 让 flex 子元素正确计算高度 */
+  /* 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+}
+
+.page-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+.card-hover {
+  opacity: .92;
+  transform: scale(0.99);
 }
 
 .list-item {
@@ -482,12 +587,10 @@ export default {
 }
 
 .loading-more,
-.no-more,
-.empty {
+.no-more {
   text-align: center;
   padding: 40rpx;
   color: #999;
   font-size: 26rpx;
 }
 </style>
-

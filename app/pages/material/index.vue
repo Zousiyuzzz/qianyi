@@ -1,6 +1,7 @@
 <template>
-  <view class="page">
-    <view class="navbar">
+  <view class="page" :style="{ paddingTop: (statusBarHeight + navBarContentHeight) + 'px' }">
+    <!-- 导航栏 - 固定定位 -->
+    <view class="navbar fixed-navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="navbar-content">
         <view class="navbar-left" @click.stop="handleBack">
           <text class="back-icon">‹</text>
@@ -12,38 +13,22 @@
 
     <view class="search-section">
       <view class="search-bar">
-        <input 
-          class="search-input" 
-          v-model="searchKeyword" 
-          placeholder="搜索素材名称"
-          @confirm="handleSearch"
-          confirm-type="search"
-        />
+        <input class="search-input" v-model="searchKeyword" placeholder="搜索素材名称" @confirm="handleSearch"
+          confirm-type="search" />
         <text class="search-icon" @click="handleSearch">🔍</text>
       </view>
     </view>
 
-    <scroll-view 
-      class="list-scroll" 
-      scroll-y 
-      @scrolltolower="loadMore"
-      :refresher-enabled="true"
-      :refresher-triggered="refreshing"
-      @refresherrefresh="handleRefresh"
-    >
-      <view 
-        class="list-item" 
-        v-for="(item, index) in dataList" 
-        :key="item.id || index"
-        @click="handleItemClick(item)"
-      >
+    <!-- 列表 -->
+    <view class="page-content">
+      <view class="list-item" v-for="(item, index) in dataList" :key="item.id || index" @click="handleItemClick(item)">
         <view class="item-header">
           <view class="item-title">{{ item.materialName || '未知素材' }}</view>
           <view class="item-risk" :class="getRiskClass(item.riskLevel)">
             {{ getRiskText(item.riskLevel) }}
           </view>
         </view>
-        
+
         <view class="item-content">
           <view class="item-row">
             <text class="label">项目：</text>
@@ -75,15 +60,19 @@
         <text>没有更多了</text>
       </view>
       <view class="empty" v-if="!loading && dataList.length === 0">
-        <text>暂无数据</text>
+        <text class="empty-title">暂无数据</text>
+        <text class="empty-sub" v-if="hasActiveFilters">试试清除筛选条件后再看看</text>
+
+        <view class="empty-actions" v-if="hasActiveFilters">
+          <button class="clear-filter-btn" @click="clearAllFilters">清除筛选</button>
+        </view>
       </view>
-    </scroll-view>
+    </view>
   </view>
 </template>
 
 <script>
 import { getMaterialList } from '../../common/api/material'
-
 export default {
   data() {
     return {
@@ -94,21 +83,49 @@ export default {
       pageNo: 1,
       pageSize: 20,
       searchKeyword: '',
-      queryParam: {}
+      queryParam: {},
+      // 导航栏相关数据
+      statusBarHeight: 0,
+      navBarContentHeight: 44 // 导航栏内容高度44px
     }
   },
   onLoad() {
+    // 获取状态栏高度
+    this.getStatusBarHeight()
     this.loadData()
+  },
+  // 页面下拉刷新
+  onPullDownRefresh() {
+    this.handleRefresh()
+  },
+  // 页面上拉触底
+  onReachBottom() {
+    this.loadMore()
   },
   onBackPress() {
     this.handleBack()
     return true
   },
+  computed: {
+    hasActiveFilters() {
+      return false
+    }
+  },
   methods: {
+    // 获取状态栏高度
+    getStatusBarHeight() {
+      try {
+        const systemInfo = uni.getSystemInfoSync()
+        this.statusBarHeight = systemInfo.statusBarHeight || 0
+      } catch (error) {
+        console.error('获取状态栏高度失败:', error)
+        this.statusBarHeight = 0
+      }
+    },
     handleBack() {
       const pages = getCurrentPages()
       if (pages.length > 1) {
-        uni.navigateBack({ 
+        uni.navigateBack({
           delta: 1,
           fail: () => {
             uni.switchTab({ url: '/pages/modules/index' })
@@ -174,7 +191,11 @@ export default {
       this.refreshing = true
       this.pageNo = 1
       this.dataList = []
-      this.loadData()
+      this.loadData().finally(() => {
+        // 停止下拉刷新
+        uni.stopPullDownRefresh()
+        this.refreshing = false
+      })
     },
     handleItemClick(item) {
       uni.navigateTo({
@@ -196,6 +217,9 @@ export default {
         'high': 'risk-high'
       }
       return map[level] || 'risk-normal'
+    },
+    clearAllFilters() {
+      // No filters to clear
     }
   }
 }
@@ -203,6 +227,45 @@ export default {
 
 <style scoped lang="scss">
 @import '../../common/styles/ios-common.scss';
+
+/* ===== Base ===== */
+.page {
+  height: 100vh;
+  background: #f2f2f7;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== Navbar ===== */
+.navbar.fixed-navbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  background: #fff !important;
+  background-color: #fff !important;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+}
+
+/* ===== Page Content ===== */
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: 0; /* 让 flex 子元素正确计算高度 */
+  /* 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+}
+
+.page-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
 
 .search-section {
   background: #fff;
@@ -310,12 +373,10 @@ export default {
 }
 
 .loading-more,
-.no-more,
-.empty {
+.no-more {
   text-align: center;
   padding: 40rpx;
   color: #999;
   font-size: 26rpx;
 }
 </style>
-

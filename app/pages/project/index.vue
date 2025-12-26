@@ -1,14 +1,13 @@
 <template>
-  <view class="page">
-    <!-- Navbar -->
-    <view class="navbar">
+  <view class="page" :style="{ paddingTop: (statusBarHeight + navBarContentHeight) + 'px' }">
+    <!-- Navbar - 固定定位 -->
+    <view class="navbar fixed-navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="navbar-content">
         <view class="navbar-left" @click.stop="handleBack">
           <text class="back-icon">‹</text>
         </view>
         <view class="navbar-title">项目管理</view>
         <view class="navbar-right" @click="showFilter = !showFilter">
-          <!-- 你不想要点了：这里用一个小箭头/下拉符号表示筛选展开 -->
           <text class="filter-icon">⏷</text>
         </view>
       </view>
@@ -45,9 +44,9 @@
           <text>创建时间</text>
           <text class="seg-arrow" v-if="sortField === 'createTime'">{{ sortOrder === 'desc' ? '↓' : '↑' }}</text>
         </view>
-        <view class="seg-item" :class="{ active: sortField === 'proName' }" @click="handleSort('proName')">
-          <text>名称</text>
-          <text class="seg-arrow" v-if="sortField === 'proName'">{{ sortOrder === 'desc' ? '↓' : '↑' }}</text>
+        <view class="seg-item" :class="{ active: sortField === 'businessName' }" @click="handleSort('businessName')">
+          <text>渠道</text>
+          <text class="seg-arrow" v-if="sortField === 'businessName'">{{ sortOrder === 'desc' ? '↓' : '↑' }}</text>
         </view>
       </view>
     </view>
@@ -82,9 +81,8 @@
       </view>
     </view>
 
-    <!-- List -->
-    <scroll-view class="list-scroll" scroll-y @scrolltolower="loadMore" :refresher-enabled="true"
-      :refresher-triggered="refreshing" @refresherrefresh="handleRefresh">
+    <!-- List - 使用普通view，不再使用scroll-view -->
+    <view class="page-content">
       <!-- Skeleton -->
       <view class="skeleton-list" v-if="loading && dataList.length === 0">
         <view class="skeleton-item" v-for="n in 6" :key="n">
@@ -104,9 +102,6 @@
           </view>
 
           <view class="item-right">
-            <!-- <text class="item-status-text" :class="getStatusTextClass(item)" v-if="shouldShowStatus(item)">
-              {{ getStatusText(getItemStatusValue(item)) }}
-            </text> -->
             <text class="arrow-icon">›</text>
           </view>
         </view>
@@ -145,10 +140,14 @@
         <text>没有更多了</text>
       </view>
       <view class="empty" v-if="!loading && dataList.length === 0">
-        <text>暂无数据</text>
-        <button class="clear-filter-btn" v-if="hasActiveFilters" @click="clearAllFilters">清除筛选</button>
+        <text class="empty-title">暂无数据</text>
+        <text class="empty-sub" v-if="hasActiveFilters">试试清除筛选条件后再看看</text>
+
+        <view class="empty-actions" v-if="hasActiveFilters">
+          <button class="clear-filter-btn" @click="clearAllFilters">清除筛选</button>
+        </view>
       </view>
-    </scroll-view>
+    </view>
   </view>
 </template>
 
@@ -167,6 +166,10 @@ export default {
       searchKeyword: '',
       showFilter: false,
       queryParam: {},
+
+      // 导航栏相关数据
+      statusBarHeight: 0,
+      navBarContentHeight: 44, // 导航栏内容高度44px
 
       statusOptions: [
         { value: '', text: '全部' },
@@ -208,13 +211,37 @@ export default {
     }
   },
   onLoad() {
+    // 获取状态栏高度
+    this.getStatusBarHeight()
     this.loadData()
   },
+
+  // 页面下拉刷新
+  onPullDownRefresh() {
+    this.handleRefresh()
+  },
+
+  // 页面上拉触底
+  onReachBottom() {
+    this.loadMore()
+  },
+
   onBackPress() {
     this.handleBack()
     return true
   },
   methods: {
+    // 获取状态栏高度
+    getStatusBarHeight() {
+      try {
+        const systemInfo = uni.getSystemInfoSync()
+        this.statusBarHeight = systemInfo.statusBarHeight || 0
+      } catch (error) {
+        console.error('获取状态栏高度失败:', error)
+        this.statusBarHeight = 0
+      }
+    },
+
     handleBack() {
       const pages = getCurrentPages()
       if (pages.length > 1) {
@@ -356,52 +383,21 @@ export default {
       this.refreshing = true
       this.pageNo = 1
       this.dataList = []
-      this.loadData()
+      this.loadData().finally(() => {
+        // 停止下拉刷新
+        uni.stopPullDownRefresh()
+        this.refreshing = false
+      })
     },
 
     handleItemClick(item) {
-      // 将列表数据存储到临时存储，详情页直接使用
       uni.setStorageSync('_temp_project_data', item)
       uni.navigateTo({ url: `/pages/project/detail?id=${item.id}` })
     },
 
-    // ====== 映射/格式化 ======
     getOperationTypeText(type) {
       const map = { '1': '自运营', '2': '走量', '3': '收量' }
       return map[String(type)] || '-'
-    },
-
-    // 兼容：如果后端有字典文本，优先用（你可以按实际字段名改）
-    getItemStatusValue(item) {
-      // 常见字段：status / statusValue
-      if (item && item.status !== undefined) {
-        return item.status
-      }
-      if (item && item.statusValue !== undefined) {
-        return item.statusValue
-      }
-      return ''
-    },
-
-    // getStatusText(v) {
-    //   const map = { '1': '进行中', '2': '暂停', '3': '结束' }
-    //   return map[String(v)] || '未知'
-    // },
-
-    // 不想显示“未知”也可以：这里控制
-      shouldShowStatus(item) {
-        const v = String(this.getItemStatusValue(item) || '')
-        // 如果你希望未知不展示，把 return 改成：return v === '1' || v === '2' || v === '3'
-        return true
-      },
-
-    // 仅用文字颜色做弱区分（无 dot）
-      getStatusTextClass(item) {
-        const v = String(this.getItemStatusValue(item) || '')
-        if (v === '1') return 'status-1'
-        if (v === '2') return 'status-2'
-        if (v === '3') return 'status-3'
-      return 'status-0'
     },
 
     getRelativeTime(timeStr) {
@@ -431,20 +427,26 @@ export default {
 <style scoped>
 /* ===== Base ===== */
 .page {
-  min-height: 100vh;
+  height: 100vh;
   background: #f2f2f7;
-  /* iOS grouped background */
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ===== Navbar ===== */
-.navbar {
+.navbar.fixed-navbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+
   background: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  background-color: #fff;
   border-bottom: 1rpx solid rgba(0, 0, 0, .06);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
 }
 
 .navbar-content {
@@ -657,9 +659,23 @@ export default {
   border: none;
 }
 
-/* ===== List ===== */
-.list-scroll {
+/* ===== Page Content ===== */
+.page-content {
   flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: 0;
+  /* 让 flex 子元素正确计算高度 */
+  /* 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+}
+
+.page-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 .card-hover {
@@ -755,34 +771,6 @@ export default {
   padding-top: 2rpx;
 }
 
-/* Status text only (NO DOT) */
-.item-status-text {
-  font-size: 24rpx;
-  line-height: 1;
-  padding: 6rpx 10rpx;
-  border-radius: 999px;
-}
-
-.status-1 {
-  color: #0a84ff;
-  background: rgba(10, 132, 255, .10);
-}
-
-.status-2 {
-  color: #ff9f0a;
-  background: rgba(255, 159, 10, .12);
-}
-
-.status-3 {
-  color: #8e8e93;
-  background: rgba(142, 142, 147, .14);
-}
-
-.status-0 {
-  color: #8e8e93;
-  background: rgba(142, 142, 147, .12);
-}
-
 .arrow-icon {
   font-size: 34rpx;
   font-weight: 300;
@@ -859,25 +847,64 @@ export default {
 
 /* Footer states */
 .loading-more,
-.no-more,
-.empty {
+.no-more {
   text-align: center;
   padding: 40rpx 0;
   color: #8e8e93;
   font-size: 26rpx;
 }
 
-.clear-filter-btn {
-  margin-top: 20rpx;
-  padding: 12rpx 32rpx;
-  background: #0a84ff;
-  color: #fff;
-  border-radius: 999px;
+.empty {
+  text-align: center;
+  padding: 80rpx 0 40rpx;
+  color: #8e8e93;
+  font-size: 26rpx;
+}
+
+.empty-title {
+  font-size: 28rpx;
+  color: #8e8e93;
+}
+
+.empty-sub {
+  display: block;
+  margin-top: 12rpx;
   font-size: 24rpx;
-  border: none;
+  color: #c7c7cc;
+}
+
+.empty-actions {
+  margin-top: 28rpx;
+  display: flex;
+  justify-content: center;
+}
+
+/* iOS tinted / ghost button */
+.clear-filter-btn {
+  width: 320rpx;
+  height: 72rpx;
+  border-radius: 999px;
+
+  background: rgba(10, 132, 255, 0.12);
+  color: #0a84ff;
+  border: 1rpx solid rgba(10, 132, 255, 0.22);
+
+  font-size: 26rpx;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: none;
+}
+
+.clear-filter-btn:active {
+  background: rgba(10, 132, 255, 0.18);
 }
 
 .clear-filter-btn::after {
   border: none;
 }
+
 </style>

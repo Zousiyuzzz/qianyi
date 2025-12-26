@@ -6,7 +6,7 @@ index b6338b2476a75b4ab68cb99315f0034b8689e953..be437e925142d2a1bef7b1bd8dd0630d
   */
  window._CONFIG = {
    // 线上
--  // VUE_APP_API_BASE_URL: 'http://101.200.146.164:8000/jeecg-boot',
+-  // VUE_APP_API_BASE_URL: 'http://192.168.8.197:8080/jeecg-boot',
 +  // VUE_APP_API_BASE_URL: 'http://crm.zxmember.com/jeecg-boot',
    // 家里
    // VUE_APP_API_BASE_URL: 'http://192.168.1.11:8080/jeecg-boot/',

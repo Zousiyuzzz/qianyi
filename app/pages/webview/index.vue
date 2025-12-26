@@ -1,6 +1,6 @@
 <template>
-  <view class="page">
-    <view class="navbar">
+  <view class="page" :style="{ paddingTop: navbarHeight + 'px' }">
+    <view class="navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="navbar-content">
         <view class="navbar-left" @click.stop="handleBack">
           <text class="back-icon">‹</text>
@@ -14,7 +14,10 @@
 </template>
 
 <script>
+import navbarMixin from '../mixins/navbarMixin'
+
 export default {
+  mixins: [navbarMixin],
   data() {
     return {
       url: '',
@@ -50,7 +53,7 @@ export default {
   onLoad(query) {
     this.url = query.url || ''
     this.title = query.title || 'H5 功能'
-    
+
     // 如果URL为空，直接返回
     if (!this.url) {
       console.warn('webview URL为空，返回上一页')
@@ -59,7 +62,7 @@ export default {
       }, 100)
       return
     }
-    
+
     // 检查解码后的URL是否有效
     if (!this.decodedUrl || !this.decodedUrl.startsWith('http')) {
       console.warn('webview URL无效:', this.decodedUrl)
@@ -72,7 +75,7 @@ export default {
       }, 1500)
       return
     }
-    
+
     // 检查是否可以返回
     const pages = getCurrentPages()
     this.canGoBack = pages.length > 1
@@ -113,5 +116,4 @@ export default {
 
 <style scoped lang="scss">
 @import '../../common/styles/ios-common.scss';
-
 </style>

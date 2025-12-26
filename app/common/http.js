@@ -2,7 +2,7 @@ import { clearLoginSession, getTenantId, getToken } from './auth'
 import { API_ENV } from './config'
 import signMd5Utils from './utils/signMd5Utils'
 
-const BASE_URL = 'http://101.200.146.164:8000/jeecg-boot'
+const BASE_URL = 'http://192.168.8.197:8080/jeecg-boot'
 // const BASE_URL = 'http://192.168.8.197:8080/jeecg-boot'
 let interceptorReady = false
 

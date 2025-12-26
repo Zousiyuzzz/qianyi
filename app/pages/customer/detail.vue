@@ -1,6 +1,7 @@
 <template>
-  <view class="page">
-    <view class="navbar">
+  <view class="page" :style="{ paddingTop: (statusBarHeight + navBarContentHeight) + 'px' }">
+    <!-- Navbar - 固定定位 -->
+    <view class="navbar fixed-navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="navbar-content">
         <view class="navbar-left" @click.stop="handleBack">
           <text class="back-icon">‹</text>
@@ -10,74 +11,84 @@
       </view>
     </view>
 
-    <scroll-view class="content-scroll" scroll-y v-if="customerData">
+    <view class="page-content" v-if="customerData">
+      <!-- 客户主信息 -->
+      <view class="group">
+        <view class="group-header">
+          <text class="customer-name">{{ customerData.customerName || '-' }}</text>
+          <text class="customer-sub">{{ customerData.salesPerson_dictText || '-' }}</text>
+        </view>
+      </view>
+
       <!-- 基本信息 -->
-      <view class="section">
-        <view class="section-title">基本信息</view>
-        <view class="info-card">
-          <view class="info-item">
-            <text class="info-label">客户ID</text>
-            <text class="info-value">{{ customerData.id }}</text>
+      <view class="group">
+        <view class="group-item">
+          <text class="label">客户ID</text>
+          <text class="value">{{ customerData.id }}</text>
+        </view>
+        <view class="divider"></view>
+        <view class="group-item">
+          <text class="label">客户主体</text>
+          <view class="value-row">
+            <text class="value" v-if="!isEditingName">{{ customerData.customerName }}</text>
+            <input v-else class="value-input" v-model="editingName" @blur="saveName" @confirm="saveName"
+              confirm-type="done" />
+            <text class="edit-btn" @click="toggleEdit">{{ isEditingName ? '保存' : '编辑' }}</text>
           </view>
-          <view class="info-item">
-            <text class="info-label">客户主体</text>
-            <view class="info-value-row">
-              <text class="info-value" v-if="!isEditingName">{{ customerData.customerName }}</text>
-              <input 
-                v-else 
-                class="info-input" 
-                v-model="editingName" 
-                @blur="saveName"
-                @confirm="saveName"
-                confirm-type="done"
-              />
-              <text class="edit-btn" @click="toggleEdit">{{ isEditingName ? '保存' : '编辑' }}</text>
-            </view>
-          </view>
-          <view class="info-item">
-            <text class="info-label">商务</text>
-            <text class="info-value">{{ customerData.salesPerson_dictText || '-' }}</text>
-          </view>
-          <view class="info-item">
-            <text class="info-label">运营方式</text>
-            <text class="info-value">{{ getOperationModes(customerData.projectsByClientDistinctOnOperationModes) }}</text>
-          </view>
-          <view class="info-item">
-            <text class="info-label">合作状态</text>
-            <view class="status-badge" :class="getCooperationStatusClass(customerData)">
-              {{ getCooperationStatus(customerData) }}
-            </view>
+        </view>
+        <view class="divider"></view>
+        <view class="group-item">
+          <text class="label">商务</text>
+          <text class="value">{{ customerData.salesPerson_dictText || '-' }}</text>
+        </view>
+        <view class="divider"></view>
+        <view class="group-item">
+          <text class="label">运营方式</text>
+          <text class="value">{{ getOperationModes(customerData.projectsByClientDistinctOnOperationModes) }}</text>
+        </view>
+        <view class="divider"></view>
+        <view class="group-item">
+          <text class="label">合作状态</text>
+          <view class="status-badge" :class="getCooperationStatusClass(customerData)">
+            {{ getCooperationStatus(customerData) }}
           </view>
         </view>
       </view>
 
       <!-- 渠道信息 -->
-      <view class="section" v-if="channelList.length > 0">
-        <view class="section-title">渠道信息</view>
-        <view class="channel-card" v-for="(channel, index) in channelList" :key="index">
-          <view class="channel-header">
-            <text class="channel-name">{{ channel.channelName || channel.channel_sign }}</text>
-            <view class="channel-status" :class="getChannelStatusClass(channel)">
-              {{ getChannelStatus(channel) }}
+      <view class="group" v-if="channelList.length > 0">
+        <view class="group-item section-title">
+          <text>渠道信息</text>
+        </view>
+        <view v-for="(channel, index) in channelList" :key="index">
+          <view class="divider" v-if="index > 0"></view>
+          <view class="group-item">
+            <text class="label">渠道名称</text>
+            <view class="value-row">
+              <text class="value">{{ channel.channelName || channel.channel_sign || '-' }}</text>
+              <view class="status-badge" :class="getChannelStatusClass(channel)">
+                {{ getChannelStatus(channel) }}
+              </view>
             </view>
           </view>
-          <view class="channel-info">
-            <view class="channel-row">
-              <text class="label">项目：</text>
-              <text class="value">{{ channel.proName || '-' }}</text>
-            </view>
-            <view class="channel-row">
-              <text class="label">商务：</text>
-              <text class="value">{{ channel.businessPerson || '-' }}</text>
-            </view>
-            <view class="channel-row">
-              <text class="label">最后消耗时间：</text>
-              <text class="value">{{ channel.last_consume_time || '-' }}</text>
-            </view>
+          <view class="divider"></view>
+          <view class="group-item">
+            <text class="label">项目</text>
+            <text class="value">{{ channel.proName || '-' }}</text>
+          </view>
+          <view class="divider"></view>
+          <view class="group-item">
+            <text class="label">商务</text>
+            <text class="value">{{ channel.businessPerson || '-' }}</text>
+          </view>
+          <view class="divider"></view>
+          <view class="group-item">
+            <text class="label">最后消耗时间</text>
+            <text class="value">{{ channel.last_consume_time || '-' }}</text>
           </view>
         </view>
       </view>
-    </scroll-view>
+    </view>
 
     <view class="loading" v-if="loading">
       <text>加载中...</text>
@@ -96,12 +107,26 @@ export default {
       loading: false,
       isEditingName: false,
       editingName: '',
-      channelList: []
+      channelList: [],
+      // 导航栏相关数据
+      statusBarHeight: 0,
+      navBarContentHeight: 44 // 导航栏内容高度44px
     }
   },
   onLoad(query) {
+    this.getStatusBarHeight()
     this.customerId = query.id
-    if (this.customerId) {
+    // 先从列表传递的数据获取
+    const tempData = uni.getStorageSync('_temp_customer_data')
+    if (tempData && tempData.id === this.customerId) {
+      this.customerData = tempData
+      this.editingName = tempData.customerName
+      // 处理渠道数据
+      if (tempData.lastConsumeTimeByProjectChannels && Array.isArray(tempData.lastConsumeTimeByProjectChannels)) {
+        this.channelList = tempData.lastConsumeTimeByProjectChannels
+      }
+      uni.removeStorageSync('_temp_customer_data')
+    } else if (this.customerId) {
       this.loadDetail()
     }
   },
@@ -110,6 +135,16 @@ export default {
     return true
   },
   methods: {
+    // 获取状态栏高度
+    getStatusBarHeight() {
+      try {
+        const systemInfo = uni.getSystemInfoSync()
+        this.statusBarHeight = systemInfo.statusBarHeight || 0
+      } catch (error) {
+        console.error('获取状态栏高度失败:', error)
+        this.statusBarHeight = 0
+      }
+    },
     handleBack() {
       const pages = getCurrentPages()
       if (pages.length > 1) {
@@ -200,10 +235,10 @@ export default {
       const now = Date.now()
       const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
       const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000
-      
+
       let hasRecent = false
       let hasOld = false
-      
+
       item.lastConsumeTimeByProjectChannels.forEach(ch => {
         if (ch.last_consume_time) {
           const consumeTime = new Date(ch.last_consume_time).getTime()
@@ -214,7 +249,7 @@ export default {
           }
         }
       })
-      
+
       if (hasRecent) return '正常合作'
       if (hasOld) return '合作放缓'
       return '待消耗'
@@ -231,7 +266,7 @@ export default {
       const consumeTime = new Date(channel.last_consume_time).getTime()
       const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
       const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000
-      
+
       if (consumeTime > sevenDaysAgo) return '合作中'
       if (consumeTime > thirtyDaysAgo) return '合作放缓'
       return '已停投'
@@ -249,70 +284,162 @@ export default {
 <style scoped lang="scss">
 @import '../../common/styles/ios-common.scss';
 
-.content-scroll {
-  flex: 1;
+/* ===== Base ===== */
+.page {
+  height: 100vh;
+  background: #f2f2f7;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.section {
+/* ===== Navbar ===== */
+.navbar.fixed-navbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  background: #fff;
+  background-color: #fff;
+  border-bottom: 1rpx solid rgba(0, 0, 0, .06);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  padding: 0 24rpx;
+}
+
+.navbar-left,
+.navbar-right {
+  width: 90rpx;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-left {
+  justify-content: flex-start;
+}
+
+.navbar-right {
+  justify-content: flex-end;
+}
+
+.back-icon {
+  font-size: 56rpx;
+  color: #1c1c1e;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.navbar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1c1c1e;
+}
+
+/* ===== Page Content ===== */
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: 0;
+  /* 让 flex 子元素正确计算高度 */
+  /* 隐藏滚动条 */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 和 Edge */
+}
+
+.page-content::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* Grouped list */
+.group {
   margin: 16rpx;
   background: #fff;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.group-header {
   padding: 20rpx;
 }
 
-.section-title {
-  font-size: 28rpx;
+.customer-name {
+  font-size: 34rpx;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 16rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 1rpx solid #f0f0f0;
 }
 
-.info-card {
+.customer-sub {
+  margin-top: 6rpx;
+  font-size: 26rpx;
+  color: #6e6e73;
+}
+
+.group-item {
   display: flex;
-  flex-direction: column;
-  gap: 16rpx;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
 }
 
-.info-item {
+.group-item.section-title {
+  font-weight: 600;
+}
+
+.label {
+  font-size: 24rpx;
+  color: #8e8e93;
+}
+
+.value {
+  font-size: 26rpx;
+  color: #1c1c1e;
+}
+
+.value-row {
+  flex: 1;
   display: flex;
   align-items: center;
-  min-height: 48rpx;
+  justify-content: flex-end;
+  gap: 12rpx;
 }
 
-.info-label {
-  font-size: 24rpx;
-  color: #666;
-  min-width: 120rpx;
-}
-
-.info-value {
-  font-size: 24rpx;
-  color: #333;
+.value-input {
   flex: 1;
-}
-
-.info-value-row {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.info-input {
-  flex: 1;
-  font-size: 24rpx;
-  color: #333;
+  font-size: 26rpx;
+  color: #1c1c1e;
   padding: 8rpx 16rpx;
   background: #f5f5f5;
   border-radius: 8rpx;
+  max-width: 300rpx;
 }
 
 .edit-btn {
   font-size: 24rpx;
-  color: #2e87ff;
+  color: #0a84ff;
   padding: 8rpx 16rpx;
+}
+
+/* Divider */
+.divider {
+  height: 1rpx;
+  background: rgba(0, 0, 0, .06);
+  margin-left: 20rpx;
 }
 
 .status-badge {
@@ -342,52 +469,6 @@ export default {
   color: #ff4d4f;
 }
 
-.channel-card {
-  background: #f9f9f9;
-  border-radius: 8rpx;
-  padding: 16rpx;
-  margin-bottom: 12rpx;
-}
-
-.channel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12rpx;
-}
-
-.channel-name {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #333;
-}
-
-.channel-status {
-  padding: 4rpx 12rpx;
-  border-radius: 10rpx;
-  font-size: 22rpx;
-}
-
-.channel-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.channel-row {
-  display: flex;
-  font-size: 24rpx;
-}
-
-.channel-row .label {
-  color: #666;
-  min-width: 140rpx;
-}
-
-.channel-row .value {
-  color: #333;
-  flex: 1;
-}
 
 .loading {
   flex: 1;
@@ -398,4 +479,3 @@ export default {
   font-size: 26rpx;
 }
 </style>
-

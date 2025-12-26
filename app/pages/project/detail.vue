@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
+  <view class="page" :style="{ paddingTop: navbarHeight + 'px' }">
     <!-- Navbar -->
-    <view class="navbar">
+    <view class="navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="navbar-content">
         <view class="navbar-left" @click.stop="handleBack">
           <text class="back-icon">‹</text>
@@ -139,8 +139,8 @@
       <!-- 底部操作 -->
       <view class="bottom-safe">
         <view class="bottom-actions">
-          <button class="btn ios-secondary" @click="handleChangeLog">变动明细</button>
-          <button class="btn ios-primary" @click="handleFundPool">查看资金池</button>
+          <button class="btn ios-primary" @click="handleChangeLog">变动明细</button>
+          <!-- <button class="btn ios-primary" @click="handleFundPool">查看资金池</button> -->
         </view>
       </view>
     </scroll-view>
@@ -153,8 +153,10 @@
 
 <script>
 import { getProjectDetail, getProjectFundPool } from '../../common/api/project'
+import navbarMixin from '../mixins/navbarMixin'
 
 export default {
+  mixins: [navbarMixin],
   data() {
     return {
       projectId: '',

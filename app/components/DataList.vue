@@ -62,7 +62,12 @@
         <text>没有更多了</text>
       </view>
       <view class="empty" v-if="!loading && dataList.length === 0">
-        <text>暂无数据</text>
+        <text class="empty-title">暂无数据</text>
+        <text class="empty-sub" v-if="hasActiveFilters">试试清除筛选条件后再看看</text>
+
+        <view class="empty-actions" v-if="hasActiveFilters">
+          <button class="clear-filter-btn" @click="clearAllFilters">清除筛选</button>
+        </view>
       </view>
     </scroll-view>
   </view>
@@ -104,6 +109,11 @@ export default {
       refreshing: false
     }
   },
+  computed: {
+    hasActiveFilters() {
+      return this.activeFilterIndex !== 0 || this.searchKeyword.trim() !== ''
+    }
+  },
   methods: {
     handleSearch() {
       this.$emit('search', this.searchKeyword)
@@ -125,6 +135,11 @@ export default {
     },
     handleItemClick(item) {
       this.$emit('item-click', item)
+    },
+    clearAllFilters() {
+      this.searchKeyword = ''
+      this.activeFilterIndex = 0
+      this.$emit('clear-filters')
     }
   }
 }
@@ -232,8 +247,7 @@ export default {
 }
 
 .loading-more,
-.no-more,
-.empty {
+.no-more {
   text-align: center;
   padding: 40rpx;
   color: #999;

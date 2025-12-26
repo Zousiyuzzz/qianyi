@@ -1,6 +1,6 @@
 <template>
-  <scroll-view class="page modules-page" scroll-y>
-    <view class="navbar">
+  <view class="page modules-page" :style="{ paddingTop: navbarHeight + 'px' }">
+    <view class="navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="navbar-content">
         <view class="navbar-left"></view>
         <view class="navbar-title">功能导航</view>
@@ -8,38 +8,38 @@
       </view>
     </view>
 
-    <view class="intro-card">
-      <view class="intro-title">常用功能入口</view>
-      <view class="intro-desc">已适配移动端的场景可直接打开，未接入的功能会提示。</view>
-    </view>
+    <scroll-view class="content-scroll" scroll-y>
+      <view class="intro-card">
+        <view class="intro-title">常用功能入口</view>
+        <view class="intro-desc">已适配移动端的场景可直接打开，未接入的功能会提示。</view>
+      </view>
 
-    <view class="section-card" v-for="group in moduleGroups" :key="group.key">
-      <view class="section-header">
-        <view>
+      <!-- 分板块的图标模式 Grid 布局 -->
+      <view class="section-container" v-for="group in moduleGroups" :key="group.key">
+        <view class="section-header">
           <view class="section-title">{{ group.title }}</view>
-          <view class="section-desc">{{ group.description }}</view>
+          <view class="section-desc" v-if="group.description">{{ group.description }}</view>
         </view>
-        <view class="section-arrow">›</view>
-      </view>
-      <view class="module-grid">
-        <view class="module-item" v-for="mod in group.modules" :key="mod.title" @click="openModule(mod)">
-          <view class="module-icon">{{ getModuleIcon(mod) }}</view>
-          <view class="module-meta">
-            <text class="module-name">{{ mod.title }}</text>
-            <text class="module-desc">{{ mod.desc }}</text>
+        <view class="modules-grid">
+          <view class="module-card" v-for="mod in group.modules" :key="mod.title" @click="openModule(mod)">
+            <view class="module-icon-wrapper">
+              <view class="module-icon">{{ getModuleIcon(mod) }}</view>
+            </view>
+            <view class="module-title">{{ mod.title }}</view>
           </view>
-          <text class="item-arrow">›</text>
         </view>
       </view>
-    </view>
-  </scroll-view>
+    </scroll-view>
+  </view>
 </template>
 
 <script>
 import { MODULE_GROUPS } from '../../common/config'
 import { openWebView } from '../../common/navigation'
+import navbarMixin from '../mixins/navbarMixin'
 
 export default {
+  mixins: [navbarMixin],
   data() {
     return {
       moduleGroups: MODULE_GROUPS
@@ -146,8 +146,24 @@ export default {
   background: #f2f2f7;
 }
 
+.content-scroll {
+  flex: 1;
+  height: 0;
+  /* 让 flex 子元素正确计算高度 */
+  /* 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+}
+
+.content-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 .intro-card {
-  margin: 20rpx 16rpx 12rpx;
+  margin: 12rpx 16rpx;
   padding: 20rpx;
   background: #fff;
   border-radius: 20rpx;
@@ -166,95 +182,84 @@ export default {
   color: #6e6e73;
 }
 
-.section-card {
-  background: #fff;
-  margin: 12rpx 16rpx;
-  padding: 16rpx;
-  border-radius: 20rpx;
-  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.06);
+/* 板块容器 */
+.section-container {
+  margin-bottom: 24rpx;
+  padding: 0 16rpx;
 }
 
 .section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4rpx 6rpx 12rpx;
-  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+  padding: 20rpx 0 16rpx;
 }
 
 .section-title {
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 700;
-  color: #111;
+  color: #1c1c1e;
+  margin-bottom: 8rpx;
 }
 
 .section-desc {
   font-size: 24rpx;
-  color: #6e6e73;
-  margin-top: 4rpx;
+  color: #8e8e93;
+  line-height: 1.4;
 }
 
-.section-arrow {
-  font-size: 34rpx;
-  color: #c7c7cc;
-  font-weight: 300;
+/* 图标模式 Grid 布局 */
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20rpx;
+  background: #f2f2f7;
+  padding: 0;
 }
 
-.module-grid {
+.module-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx 12rpx;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  margin-top: 10rpx;
-}
-
-.module-item {
-  display: flex;
   align-items: center;
-  gap: 16rpx;
-  padding: 16rpx 10rpx;
-  border-radius: 16rpx;
-  transition: background 0.12s ease;
+  justify-content: center;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
-.module-item:active {
-  background: rgba(0, 0, 0, 0.04);
+.module-card:active {
+  transform: scale(0.95);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08);
+  background: #f8f8f8;
 }
 
-.module-icon {
-  width: 78rpx;
-  height: 78rpx;
-  border-radius: 18rpx;
+.module-icon-wrapper {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 20rpx;
   background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 42rpx;
+  margin-bottom: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(46, 135, 255, 0.12);
+}
+
+.module-icon {
+  font-size: 44rpx;
+  line-height: 1;
+}
+
+.module-title {
+  font-size: 22rpx;
+  font-weight: 500;
   color: #1c1c1e;
-  box-shadow: 0 4rpx 12rpx rgba(46, 135, 255, 0.12);
-}
-
-.module-meta {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.module-name {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #111;
-}
-
-.module-desc {
-  font-size: 24rpx;
-  color: #6e6e73;
-  line-height: 1.4;
-}
-
-.item-arrow {
-  font-size: 32rpx;
-  color: #c7c7cc;
-  font-weight: 300;
+  text-align: center;
+  line-height: 1.3;
+  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 </style>
