@@ -1,0 +1,17 @@
+# gitignore
+.DS_Store
+.idea
+.vscode
+.history
+.log
+.log.*
+.log.*.*
+.log.*.*.*
+.log.*.*.*.*
+.log.*.*.*.*.*
+.log.*.*.*.*.*.*
+.log.*.*.*.*.*.*.*
+
+/node_modules
+
+/dist
