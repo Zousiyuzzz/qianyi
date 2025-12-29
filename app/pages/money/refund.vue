@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import { getCustomerRefundList } from '../../common/api/money'
+import { addCustomerRefund, getCustomerRefundList, updateCustomerRefund } from '../../common/api/money'
 
 export default {
   data() {
@@ -132,7 +132,7 @@ export default {
   },
   computed: {
     hasActiveFilters() {
-      return false
+      return !!(this.searchKeyword || (this.queryParam && Object.keys(this.queryParam).length))
     }
   },
   methods: {
@@ -160,8 +160,25 @@ export default {
       }
     },
     handleAdd() {
-      uni.navigateTo({
-        url: '/pages/money/refundAdd'
+      uni.showModal({
+        title: '新增退款申请',
+        editable: true,
+        placeholderText: '请输入客户或项目名称',
+        success: async (res) => {
+          if (res.confirm && res.content) {
+            try {
+              await addCustomerRefund({
+                customerName: res.content,
+                proName: res.content,
+                status: 'pending'
+              })
+              uni.showToast({ title: '已提交', icon: 'success' })
+              this.handleRefresh()
+            } catch (error) {
+              uni.showToast({ title: error.message || '提交失败', icon: 'none' })
+            }
+          }
+        }
       })
     },
     setStatus(status) {
@@ -248,33 +265,34 @@ export default {
       })
     },
     handleApprove(item) {
-      uni.showModal({
-        title: '确认',
-        content: '确定要通过这个退款申请吗？',
-        success: (res) => {
-          if (res.confirm) {
-            // TODO: 调用审批接口
-            uni.showToast({
-              title: '审批成功',
-              icon: 'success'
-            })
-            this.handleRefresh()
-          }
-        }
-      })
+      this.submitApproval(item, 'approved')
     },
     handleReject(item) {
+      this.submitApproval(item, 'rejected')
+    },
+    submitApproval(item, status) {
       uni.showModal({
-        title: '确认',
-        content: '确定要驳回这个退款申请吗？',
-        success: (res) => {
-          if (res.confirm) {
-            // TODO: 调用驳回接口
+        title: status === 'approved' ? '通过退款' : '驳回退款',
+        editable: true,
+        placeholderText: '请输入备注，可选',
+        success: async (res) => {
+          if (!res.confirm) return
+          try {
+            await updateCustomerRefund({
+              id: item.id,
+              status,
+              approvalRemark: res.content || ''
+            })
             uni.showToast({
-              title: '已驳回',
+              title: status === 'approved' ? '审批成功' : '已驳回',
               icon: 'success'
             })
             this.handleRefresh()
+          } catch (error) {
+            uni.showToast({
+              title: error.message || '操作失败',
+              icon: 'none'
+            })
           }
         }
       })
@@ -303,7 +321,11 @@ export default {
       })
     },
     clearAllFilters() {
-      // No filters to clear
+      this.searchKeyword = ''
+      this.queryParam = {}
+      this.pageNo = 1
+      this.dataList = []
+      this.loadData()
     }
   }
 }

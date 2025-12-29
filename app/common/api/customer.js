@@ -60,6 +60,23 @@ export function getPaymentDelayApplyDetail(id) {
   })
 }
 
+// 审批回款延期申请
+export function approvePaymentDelay(data) {
+  return request({
+    url: '/projectPaymentDelay/approve',
+    method: 'POST',
+    data
+  })
+}
+
+export function rejectPaymentDelay(data) {
+  return request({
+    url: '/projectPaymentDelay/reject',
+    method: 'POST',
+    data
+  })
+}
+
 // 导出客户列表
 export function exportCustomerList(params) {
   return request({

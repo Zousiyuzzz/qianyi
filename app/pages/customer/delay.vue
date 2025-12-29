@@ -98,7 +98,7 @@
 </template>
 
 <script>
-import { getPaymentDelayApplyList } from '../../common/api/customer'
+import { approvePaymentDelay, getPaymentDelayApplyList, rejectPaymentDelay } from '../../common/api/customer'
 
 export default {
   data() {
@@ -142,7 +142,7 @@ export default {
   },
   computed: {
     hasActiveFilters() {
-      return false
+      return !!(this.searchKeyword || (this.queryParam && Object.keys(this.queryParam).length))
     }
   },
   methods: {
@@ -256,33 +256,39 @@ export default {
       })
     },
     handleApprove(item) {
-      uni.showModal({
-        title: '确认',
-        content: '确定要通过这个延期申请吗？',
-        success: (res) => {
-          if (res.confirm) {
-            // TODO: 调用审批接口
-            uni.showToast({
-              title: '审批成功',
-              icon: 'success'
-            })
-            this.handleRefresh()
-          }
-        }
-      })
+      this.submitApproval(item, 'approve')
     },
     handleReject(item) {
+      this.submitApproval(item, 'reject')
+    },
+    submitApproval(item, action) {
+      const isApprove = action === 'approve'
       uni.showModal({
-        title: '确认',
-        content: '确定要拒绝这个延期申请吗？',
-        success: (res) => {
-          if (res.confirm) {
-            // TODO: 调用拒绝接口
+        title: isApprove ? '同意延期' : '拒绝延期',
+        editable: true,
+        placeholderText: '请输入审批原因，可选',
+        success: async (res) => {
+          if (!res.confirm) return
+          try {
+            const payload = {
+              id: item.id,
+              approvalReason: res.content || ''
+            }
+            if (isApprove) {
+              await approvePaymentDelay(payload)
+            } else {
+              await rejectPaymentDelay(payload)
+            }
             uni.showToast({
-              title: '已拒绝',
+              title: isApprove ? '审批成功' : '已拒绝',
               icon: 'success'
             })
             this.handleRefresh()
+          } catch (error) {
+            uni.showToast({
+              title: error.message || '操作失败',
+              icon: 'none'
+            })
           }
         }
       })
@@ -304,7 +310,11 @@ export default {
       return map[status] || ''
     },
     clearAllFilters() {
-      // No filters to clear
+      this.searchKeyword = ''
+      this.queryParam = {}
+      this.pageNo = 1
+      this.dataList = []
+      this.loadData()
     }
   }
 }
