@@ -94,7 +94,7 @@
 
       <!-- Cards -->
       <view class="list-item" v-for="(item, index) in dataList" :key="item.id || index" @click="handleItemClick(item)"
-        hover-class="card-hover" hover-stay-time="80">
+        @longpress="handleItemActions(item)" hover-class="card-hover" hover-stay-time="80">
         <!-- Header: title + (status text) + arrow (NO DOT) -->
         <view class="item-header">
           <view class="item-title-wrapper">
@@ -148,11 +148,17 @@
         </view>
       </view>
     </view>
+
+    <!-- 浮动新增按钮 -->
+    <view class="floating-add" @click.stop="handleAdd">
+      <text class="add-icon">＋</text>
+    </view>
   </view>
 </template>
 
 <script>
 import { getProjectList } from '../../common/api/project'
+import { openWebView } from '../../common/navigation'
 
 export default {
   data() {
@@ -393,6 +399,34 @@ export default {
     handleItemClick(item) {
       uni.setStorageSync('_temp_project_data', item)
       uni.navigateTo({ url: `/pages/project/detail?id=${item.id}` })
+    },
+
+    handleItemActions(item) {
+      const actions = ['查看详情', '修改项目', '网页详情']
+      uni.showActionSheet({
+        itemList: actions,
+        success: ({ tapIndex }) => {
+          if (tapIndex === 0) this.handleItemClick(item)
+          if (tapIndex === 1) this.handleEdit(item)
+          if (tapIndex === 2) this.openWebDetail(item)
+        }
+      })
+    },
+
+    handleAdd() {
+      openWebView('/projectManager/TabProjectmanageList?openAdd=1', '项目管理')
+    },
+
+    handleEdit(item) {
+      if (!item || !item.id) return
+      const url = `/projectManager/workbench?id=${encodeURIComponent(item.uniqueId || '')}&oid=${encodeURIComponent(item.id)}`
+      openWebView(url, '项目工作台')
+    },
+
+    openWebDetail(item) {
+      if (!item) return
+      const url = `/projectManager/workbench?id=${encodeURIComponent(item.uniqueId || '')}&oid=${encodeURIComponent(item.id || '')}`
+      openWebView(url, '项目详情')
     },
 
     getOperationTypeText(type) {
@@ -905,6 +939,28 @@ export default {
 
 .clear-filter-btn::after {
   border: none;
+}
+
+/* Floating add button */
+.floating-add {
+  position: fixed;
+  right: 26rpx;
+  bottom: 40rpx;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #0a84ff;
+  box-shadow: 0 12rpx 32rpx rgba(10, 132, 255, .3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.add-icon {
+  color: #fff;
+  font-size: 48rpx;
+  font-weight: 600;
 }
 
 </style>
