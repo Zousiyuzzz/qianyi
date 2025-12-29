@@ -18,6 +18,24 @@ export function getCustomerRefundList(params) {
   })
 }
 
+// 新增退款申请
+export function addCustomerRefund(data) {
+  return request({
+    url: '/customerPaymentRecord/add',
+    method: 'POST',
+    data
+  })
+}
+
+// 编辑退款申请（包含审批状态变更）
+export function updateCustomerRefund(data) {
+  return request({
+    url: '/customerPaymentRecord/edit',
+    method: 'PUT',
+    data
+  })
+}
+
 // 到账记录（银行侧 - 招行交易记录）
 export function getBankTransactionList(params) {
   return request({

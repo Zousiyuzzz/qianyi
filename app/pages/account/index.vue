@@ -139,7 +139,7 @@ export default {
   },
   computed: {
     hasActiveFilters() {
-      return false
+      return !!(this.searchKeyword || (this.queryParam && Object.keys(this.queryParam).length))
     }
   },
   methods: {
@@ -270,7 +270,12 @@ export default {
       })
     },
     clearAllFilters() {
-      // No filters to clear
+      this.searchKeyword = ''
+      this.queryParam = {}
+      this.selectedType = null
+      this.pageNo = 1
+      this.dataList = []
+      this.loadData()
     }
   }
 }
