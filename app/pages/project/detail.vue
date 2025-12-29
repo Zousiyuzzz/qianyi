@@ -139,6 +139,7 @@
       <!-- 底部操作 -->
       <view class="bottom-safe">
         <view class="bottom-actions">
+          <button class="btn ios-secondary" @click="handleEdit">修改项目</button>
           <button class="btn ios-primary" @click="handleChangeLog">变动明细</button>
           <!-- <button class="btn ios-primary" @click="handleFundPool">查看资金池</button> -->
         </view>
@@ -153,6 +154,7 @@
 
 <script>
 import { getProjectDetail, getProjectFundPool } from '../../common/api/project'
+import { openWebView } from '../../common/navigation'
 import navbarMixin from '../mixins/navbarMixin'
 
 export default {
@@ -218,6 +220,10 @@ export default {
     },
     handleChangeLog() {
       uni.navigateTo({ url: `/pages/project/fundChangeLog?proId=${this.projectId}` })
+    },
+    handleEdit() {
+      const url = `/projectManager/workbench?id=${encodeURIComponent(this.projectData?.uniqueId || '')}&oid=${encodeURIComponent(this.projectId || '')}`
+      openWebView(url, '项目工作台')
     },
     formatNumber(num) {
       return Number(num || 0).toLocaleString('zh-CN', {
