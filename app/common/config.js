@@ -60,12 +60,12 @@ export const MODULE_GROUPS = [
     title: '账户管理',
     description: '账户、主体、共享钱包与绑定记录。',
     modules: [
-      { title: '账户列表', path: '/accountids/index', desc: '账户余额与状态。' },
-      { title: '账户主体', path: '/accountSubject/index', desc: '主体档案与资质。' },
-      { title: '共享钱包', path: '/advertiserWallet/advertiserWalletInfo/TabAdvertiserWalletInfoList', desc: '共享钱包开通与分配。' },
-      { title: '子端口', path: '/channelManager/subPort', desc: '子端口管理。' },
-      { title: '广告主ID复制', path: '/accountids/copy', desc: '广告主 ID 快速复制。' },
-      { title: '账户绑定变动记录', path: '/accountids/accountChangeRecord', desc: '账户绑定变更留痕。' }
+      { title: '账户列表', path: '/accountids/index', native: '/pages/account/index', desc: '账户余额与状态。' },
+      { title: '账户主体', path: '/accountSubject/index', native: '/pages/account/subject', desc: '主体档案与资质。' },
+      { title: '共享钱包', path: '/advertiserWallet/advertiserWalletInfo/TabAdvertiserWalletInfoList', native: '/pages/account/wallet', desc: '共享钱包开通与分配。' },
+      { title: '子端口', path: '/channelManager/subPort', native: '/pages/account/subport', desc: '子端口管理。' },
+      { title: '广告主ID复制', path: '/accountids/copy', native: '/pages/account/advertiserCopy', desc: '广告主 ID 快速复制。' },
+      { title: '账户绑定变动记录', path: '/accountids/accountChangeRecord', native: '/pages/account/changeRecord', desc: '账户绑定变更留痕。' }
     ]
   },
   {
@@ -73,9 +73,9 @@ export const MODULE_GROUPS = [
     title: '流水管理',
     description: '充退处理、账户流水与消耗明细。',
     modules: [
-      { title: '充退处理列表', path: '/chongtui/index', desc: '充值、退款与审核。' },
-      { title: '账户流水明细', path: '/fundTransferRecord/TabFundTransferRecordList', desc: '资金划拨及凭证。' },
-      { title: '账户消耗明细', path: '/consume/index', desc: '投放消耗与对账。' }
+      { title: '充退处理列表', path: '/chongtui/index', native: '/pages/fundTransfer/index', desc: '充值、退款与审核。' },
+      { title: '账户流水明细', path: '/fundTransferRecord/TabFundTransferRecordList', native: '/pages/account/flow', desc: '资金划拨及凭证。' },
+      { title: '账户消耗明细', path: '/consume/index', native: '/pages/account/consume', desc: '投放消耗与对账。' }
     ]
   },
   {

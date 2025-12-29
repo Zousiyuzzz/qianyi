@@ -198,9 +198,63 @@
       }
     },
     {
+      "path": "pages/account/subject",
+      "style": {
+        "navigationBarTitleText": "账户主体",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/account/wallet",
+      "style": {
+        "navigationBarTitleText": "共享钱包",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/account/subport",
+      "style": {
+        "navigationBarTitleText": "子端口",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/account/advertiserCopy",
+      "style": {
+        "navigationBarTitleText": "广告主ID复制",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/account/changeRecord",
+      "style": {
+        "navigationBarTitleText": "账户变动记录",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
       "path": "pages/account/flow",
       "style": {
         "navigationBarTitleText": "账户流水",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/account/consume",
+      "style": {
+        "navigationBarTitleText": "账户消耗明细",
         "navigationBarBackgroundColor": "#fff",
         "navigationStyle": "custom",
         "enablePullDownRefresh": true
@@ -256,6 +310,14 @@
     {
       "root": "pages/modules",
       "pages": [
+        {
+          "path": "accountManager/index",
+          "style": {
+            "navigationBarTitleText": "账户管理",
+            "navigationBarBackgroundColor": "#fff",
+            "navigationStyle": "custom"
+          }
+        },
         {
           "path": "mediaRebate/index",
           "style": {
