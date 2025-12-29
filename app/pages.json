@@ -304,7 +304,13 @@
         "navigationStyle": "custom",
         "enablePullDownRefresh": true
       }
-    }
+	},
+	{
+		"path": "pages/project/form",
+		"style": {
+			"navigationBarTitleText": ""
+		}
+	}
   ],
   "subPackages": [
     {

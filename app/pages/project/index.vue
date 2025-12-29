@@ -6,9 +6,9 @@
         <view class="navbar-left" @click.stop="handleBack">
           <text class="back-icon">‹</text>
         </view>
-        <view class="navbar-title">项目管理</view>
+        <view class="navbar-title">{{ crud.ui.pageTitle }}</view>
         <view class="navbar-right" @click="showFilter = !showFilter">
-          <text class="filter-icon">⏷</text>
+          <text class="filter-icon">{{ crud.ui.filter.toggleIcon }}</text>
         </view>
       </view>
     </view>
@@ -16,10 +16,10 @@
     <!-- Search + Summary + Sort -->
     <view class="search-section">
       <view class="search-bar">
-        <text class="search-icon" @click="handleSearch">🔎</text>
-        <input class="search-input" v-model="searchKeyword" placeholder="搜索项目名称" @confirm="handleSearch"
-          confirm-type="search" />
-        <text class="clear-icon" v-if="searchKeyword" @click.stop="clearSearch">×</text>
+        <text class="search-icon" @click="handleSearch">{{ crud.ui.search.icon }}</text>
+        <input class="search-input" v-model="searchKeyword" :placeholder="crud.ui.search.placeholder"
+          @confirm="handleSearch" confirm-type="search" />
+        <text class="clear-icon" v-if="searchKeyword" @click.stop="clearSearch">{{ crud.ui.search.clearIcon }}</text>
       </view>
 
       <!-- Filter summary -->
@@ -28,56 +28,36 @@
           <view class="filter-tag" v-for="(tag, index) in activeFilterTags" :key="index"
             @click.stop="removeFilter(tag.key)">
             <text class="tag-text">{{ tag.label }}</text>
-            <text class="tag-close">×</text>
+            <text class="tag-close">{{ crud.ui.filter.tagCloseIcon }}</text>
           </view>
         </view>
-        <text class="clear-all" @click.stop="clearAllFilters">清除</text>
+        <text class="clear-all" @click.stop="clearAllFilters">{{ crud.ui.filter.clearAllText }}</text>
       </view>
 
       <!-- iOS-ish segmented -->
       <view class="segmented">
-        <view class="seg-item" :class="{ active: sortField === 'updateTime' }" @click="handleSort('updateTime')">
-          <text>更新时间</text>
-          <text class="seg-arrow" v-if="sortField === 'updateTime'">{{ sortOrder === 'desc' ? '↓' : '↑' }}</text>
-        </view>
-        <view class="seg-item" :class="{ active: sortField === 'createTime' }" @click="handleSort('createTime')">
-          <text>创建时间</text>
-          <text class="seg-arrow" v-if="sortField === 'createTime'">{{ sortOrder === 'desc' ? '↓' : '↑' }}</text>
-        </view>
-        <view class="seg-item" :class="{ active: sortField === 'businessName' }" @click="handleSort('businessName')">
-          <text>渠道</text>
-          <text class="seg-arrow" v-if="sortField === 'businessName'">{{ sortOrder === 'desc' ? '↓' : '↑' }}</text>
+        <view class="seg-item" v-for="opt in crud.sort.items" :key="opt.field"
+          :class="{ active: sortField === opt.field }" @click="handleSort(opt.field)">
+          <text>{{ opt.label }}</text>
+          <text class="seg-arrow" v-if="sortField === opt.field">{{ sortOrder === 'desc' ? '↓' : '↑' }}</text>
         </view>
       </view>
     </view>
 
     <!-- Filter panel -->
     <view class="filter-panel" v-if="showFilter">
-      <view class="filter-item">
-        <text class="filter-label">状态</text>
-        <picker mode="selector" :range="statusOptions" range-key="text" @change="handleStatusChange">
-          <view class="filter-value">{{ selectedStatus ? selectedStatus.text : '全部' }}</view>
-        </picker>
-      </view>
-
-      <view class="filter-item">
-        <text class="filter-label">运营方式</text>
-        <picker mode="selector" :range="operationTypeOptions" range-key="text" @change="handleOperationTypeChange">
-          <view class="filter-value">{{ selectedOperationType ? selectedOperationType.text : '全部' }}</view>
-        </picker>
-      </view>
-
-      <view class="filter-item">
-        <text class="filter-label">合作方式</text>
-        <picker mode="selector" :range="collaborationModeOptions" range-key="text"
-          @change="handleCollaborationModeChange">
-          <view class="filter-value">{{ selectedCollaborationMode ? selectedCollaborationMode.text : '全部' }}</view>
+      <view class="filter-item" v-for="f in crud.filters" :key="f.key">
+        <text class="filter-label">{{ f.label }}</text>
+        <picker mode="selector" :range="f.options" range-key="text" @change="handleFilterChange(f.key, $event)">
+          <view class="filter-value">
+            {{ filterState[f.key] ? filterState[f.key].text : crud.ui.filter.allText }}
+          </view>
         </picker>
       </view>
 
       <view class="filter-actions">
-        <button class="filter-btn reset" @click="resetFilter">重置</button>
-        <button class="filter-btn confirm" @click="applyFilter">确定</button>
+        <button class="filter-btn reset" @click="resetFilter">{{ crud.ui.filter.resetText }}</button>
+        <button class="filter-btn confirm" @click="applyFilter">{{ crud.ui.filter.confirmText }}</button>
       </view>
     </view>
 
@@ -93,12 +73,13 @@
       </view>
 
       <!-- Cards -->
-      <view class="list-item" v-for="(item, index) in dataList" :key="item.id || index" @click="handleItemClick(item)"
-        @longpress="handleItemActions(item)" hover-class="card-hover" hover-stay-time="80">
-        <!-- Header: title + (status text) + arrow (NO DOT) -->
+      <view class="list-item" v-for="(item, index) in dataList" :key="getItemKey(item, index)"
+        @click="handleItemClick(item)" @longpress="handleItemActions(item)" hover-class="card-hover"
+        hover-stay-time="80">
+        <!-- Header -->
         <view class="item-header">
           <view class="item-title-wrapper">
-            <text class="item-title">{{ item.proName || '未知项目' }}</text>
+            <text class="item-title">{{ getVal(item, crud.card.titleProp) || crud.ui.list.titleFallback }}</text>
           </view>
 
           <view class="item-right">
@@ -106,128 +87,301 @@
           </view>
         </view>
 
-        <!-- One-line summary (no chips) -->
-        <view class="item-subtitle" v-if="item.businessName || item.operationType || item.collaborationMode_dictText">
-          <text class="subtext">
-            {{ item.businessName || '-' }}
-            <text class="dot" v-if="item.operationType"> · </text>
-            <text v-if="item.operationType">{{ getOperationTypeText(item.operationType) }}</text>
-            <text class="dot" v-if="item.collaborationMode_dictText"> · </text>
-            <text v-if="item.collaborationMode_dictText">{{ item.collaborationMode_dictText }}</text>
-          </text>
+        <!-- One-line summary -->
+        <view class="item-subtitle" v-if="getSubtitle(item)">
+          <text class="subtext">{{ getSubtitle(item) }}</text>
         </view>
 
         <!-- Content -->
         <view class="item-content">
           <view class="line">
-            <text class="icon">🏢</text>
-            <text class="text primary two-line">{{ item.customerName || '-' }}</text>
+            <text class="icon">{{ crud.card.line1.icon }}</text>
+            <text class="text primary two-line">{{ getVal(item, crud.card.line1.prop) || '-' }}</text>
           </view>
 
           <view class="line">
-            <text class="icon">👤</text>
-            <text class="text secondary">{{ item.businessPerson_dictText || '-' }}</text>
-            <text class="sep">·</text>
-            <text class="text tertiary">更新于 {{ getRelativeTime(item.updateTime) }}</text>
+            <text class="icon">{{ crud.card.line2.icon }}</text>
+            <text class="text secondary">{{ getVal(item, crud.card.line2.leftProp) || '-' }}</text>
+            <text class="sep">{{ crud.card.line2.sep }}</text>
+            <text class="text tertiary">
+              {{ crud.card.line2.rightPrefix }} {{ formatBy(item, crud.card.line2.rightProp,
+                crud.card.line2.rightFormatter) }}
+            </text>
           </view>
         </view>
       </view>
 
       <view class="loading-more" v-if="loading && dataList.length > 0">
-        <text>加载中...</text>
+        <text>{{ crud.ui.list.loadingMoreText }}</text>
       </view>
       <view class="no-more" v-if="!hasMore && dataList.length > 0">
-        <text>没有更多了</text>
+        <text>{{ crud.ui.list.noMoreText }}</text>
       </view>
       <view class="empty" v-if="!loading && dataList.length === 0">
-        <text class="empty-title">暂无数据</text>
-        <text class="empty-sub" v-if="hasActiveFilters">试试清除筛选条件后再看看</text>
+        <text class="empty-title">{{ crud.ui.list.emptyTitle }}</text>
+        <text class="empty-sub" v-if="hasActiveFilters">{{ crud.ui.list.emptySubWhenFiltered }}</text>
 
         <view class="empty-actions" v-if="hasActiveFilters">
-          <button class="clear-filter-btn" @click="clearAllFilters">清除筛选</button>
+          <button class="clear-filter-btn" @click="clearAllFilters">{{ crud.ui.list.clearFilterBtnText }}</button>
         </view>
       </view>
     </view>
 
     <!-- 浮动新增按钮 -->
-    <view class="floating-add" @click.stop="handleAdd">
-      <text class="add-icon">＋</text>
+    <view class="floating-add" :class="{ 'floating-add-hidden': drawerVisible }" @click.stop="handleAdd">
+      <text class="add-icon">{{ crud.ui.fab.icon }}</text>
     </view>
+
+    <!-- 项目表单抽屉 -->
+    <project-form-drawer :visible="drawerVisible" :editData="drawerEditData" @update:visible="drawerVisible = $event"
+      @success="handleDrawerSuccess" @close="handleDrawerClose" />
   </view>
 </template>
 
 <script>
 import { getProjectList } from '../../common/api/project'
 import { openWebView } from '../../common/navigation'
+import ProjectFormDrawer from './ProjectFormDrawer.vue'
+
+/**
+ * ======= 你复制“客户管理”只需要改这里 =======
+ * - ui 文案
+ * - api.list 接口
+ * - search.keywordProp 搜索字段
+ * - sort.items 排序项字段/文案
+ * - filters 筛选项/字段/选项
+ * - routes/detail/form 页面路径
+ * - card 显示字段映射
+ * - actions 跳转行为（App页 or WebView）
+ */
+const crud = {
+  ui: {
+    pageTitle: '项目管理',
+    search: {
+      placeholder: '搜索项目名称',
+      icon: '🔎',
+      clearIcon: '×'
+    },
+    filter: {
+      toggleIcon: '⏷',
+      allText: '全部',
+      clearAllText: '清除',
+      tagCloseIcon: '×',
+      resetText: '重置',
+      confirmText: '确定'
+    },
+    list: {
+      titleFallback: '未知项目',
+      loadingMoreText: '加载中...',
+      noMoreText: '没有更多了',
+      emptyTitle: '暂无数据',
+      emptySubWhenFiltered: '试试清除筛选条件后再看看',
+      clearFilterBtnText: '清除筛选'
+    },
+    fab: {
+      icon: '＋'
+    },
+    actionSheet: {
+      items: [
+        { key: 'detail', label: '查看详情' },
+        { key: 'edit', label: '修改项目' },
+        { key: 'web', label: '网页详情' }
+      ]
+    }
+  },
+
+  // 列表接口
+  api: {
+    list: getProjectList
+  },
+
+  // 路由（App原生页面）
+  routes: {
+    detail: '/pages/project/detail',
+    form: '/pages/project/form'
+  },
+
+  // 搜索字段映射
+  search: {
+    keywordProp: 'proName' // 后端接收的字段名
+  },
+
+  // 排序
+  sort: {
+    defaultField: 'updateTime',
+    defaultOrder: 'desc',
+    paramColumn: 'column',
+    paramOrder: 'order',
+    items: [
+      { field: 'updateTime', label: '更新时间' },
+      { field: 'createTime', label: '创建时间' },
+      { field: 'businessName', label: '渠道' }
+    ]
+  },
+
+  // 筛选（完全动态渲染）
+  filters: [
+    {
+      key: 'status',
+      label: '状态',
+      queryProp: 'status',
+      options: [
+        { value: '', text: '全部' },
+        { value: '1', text: '进行中' },
+        { value: '2', text: '暂停' },
+        { value: '3', text: '结束' }
+      ]
+    },
+    {
+      key: 'operationType',
+      label: '运营方式',
+      queryProp: 'operationType',
+      options: [
+        { value: '', text: '全部' },
+        { value: '1', text: '自运营' },
+        { value: '2', text: '走量' },
+        { value: '3', text: '收量' }
+      ]
+    },
+    {
+      key: 'collaborationMode',
+      label: '合作方式',
+      queryProp: 'collaborationMode',
+      options: [
+        { value: '', text: '全部' },
+        { value: '0', text: '预付' },
+        { value: '1', text: '垫付' },
+        { value: '2', text: '服务费' }
+      ]
+    }
+  ],
+
+  // 卡片显示字段映射
+  card: {
+    idProp: 'id',
+    titleProp: 'proName',
+    subtitleParts: [
+      { prop: 'businessName', fallback: '-' },
+      { prop: 'operationType', formatter: 'operationTypeText' },
+      { prop: 'collaborationMode_dictText' }
+    ],
+    line1: { icon: '🏢', prop: 'customerName' },
+    line2: {
+      icon: '👤',
+      leftProp: 'businessPerson_dictText',
+      sep: '·',
+      rightPrefix: '更新于',
+      rightProp: 'updateTime',
+      rightFormatter: 'relativeTime'
+    }
+  },
+
+  // WebView 行为（可选）
+  web: {
+    workbenchPath: '/projectManager/workbench',
+    titleWorkbench: '项目工作台',
+    titleDetail: '项目详情'
+  },
+
+  // 行为（你要切成客户管理，改这里即可）
+  actions: {
+    add(ctx) {
+      // App 原生新增
+      uni.navigateTo({ url: `${ctx.crud.routes.form}?mode=add` })
+      // 如果你仍想走 Web，换成下面这行：
+      // openWebView('/projectManager/TabProjectmanageList?openAdd=1', ctx.crud.ui.pageTitle)
+    },
+    edit(ctx, item) {
+      if (!item) return
+      uni.navigateTo({ url: `${ctx.crud.routes.form}?mode=edit&id=${encodeURIComponent(item[ctx.crud.card.idProp] || '')}` })
+      // Web 工作台（保留备用）
+      // const url = `${ctx.crud.web.workbenchPath}?id=${encodeURIComponent(item.uniqueId || '')}&oid=${encodeURIComponent(item.id || '')}`
+      // openWebView(url, ctx.crud.web.titleWorkbench)
+    },
+    webDetail(ctx, item) {
+      if (!item) return
+      const url = `${ctx.crud.web.workbenchPath}?id=${encodeURIComponent(item.uniqueId || '')}&oid=${encodeURIComponent(item.id || '')}`
+      openWebView(url, ctx.crud.web.titleDetail)
+    }
+  }
+}
 
 export default {
+  components: {
+    ProjectFormDrawer
+  },
   data() {
     return {
+      crud,
+
       dataList: [],
       loading: false,
       hasMore: true,
       refreshing: false,
       pageNo: 1,
       pageSize: 20,
+
       searchKeyword: '',
       showFilter: false,
       queryParam: {},
 
+      // 动态筛选状态
+      filterState: {},
+
+      // 排序
+      sortField: crud.sort.defaultField,
+      sortOrder: crud.sort.defaultOrder,
+
       // 导航栏相关数据
       statusBarHeight: 0,
-      navBarContentHeight: 44, // 导航栏内容高度44px
+      navBarContentHeight: 44,
 
-      statusOptions: [
-        { value: '', text: '全部' },
-        { value: '1', text: '进行中' },
-        { value: '2', text: '暂停' },
-        { value: '3', text: '结束' }
-      ],
-      operationTypeOptions: [
-        { value: '', text: '全部' },
-        { value: '1', text: '自运营' },
-        { value: '2', text: '走量' },
-        { value: '3', text: '收量' }
-      ],
-      collaborationModeOptions: [
-        { value: '', text: '全部' },
-        { value: '0', text: '预付' },
-        { value: '1', text: '垫付' },
-        { value: '2', text: '服务费' }
-      ],
-
-      selectedStatus: null,
-      selectedOperationType: null,
-      selectedCollaborationMode: null,
-      sortField: 'updateTime',
-      sortOrder: 'desc'
+      // 抽屉相关
+      drawerVisible: false,
+      drawerEditData: null
     }
   },
+
   computed: {
     hasActiveFilters() {
-      return !!(this.selectedStatus || this.selectedOperationType || this.selectedCollaborationMode || this.searchKeyword)
+      if (this.searchKeyword) return true
+      return this.crud.filters.some(f => this.filterState[f.key] && this.filterState[f.key].value)
     },
+
     activeFilterTags() {
       const tags = []
-      if (this.selectedStatus && this.selectedStatus.value) tags.push({ key: 'status', label: this.selectedStatus.text })
-      if (this.selectedOperationType && this.selectedOperationType.value) tags.push({ key: 'operationType', label: this.selectedOperationType.text })
-      if (this.selectedCollaborationMode && this.selectedCollaborationMode.value) tags.push({ key: 'collaborationMode', label: this.selectedCollaborationMode.text })
-      if (this.searchKeyword) tags.push({ key: 'keyword', label: `搜索：${this.searchKeyword}` })
+      // filter tags
+      this.crud.filters.forEach(f => {
+        const sel = this.filterState[f.key]
+        if (sel && sel.value) tags.push({ key: f.key, label: sel.text })
+      })
+      // keyword tag
+      if (this.searchKeyword) {
+        tags.push({ key: '__keyword__', label: `${this.crud.ui.search.placeholder.replace('搜索', '搜索：')}${this.searchKeyword}` })
+      }
       return tags
     }
   },
+
   onLoad() {
-    // 获取状态栏高度
     this.getStatusBarHeight()
+
+    // 初始化筛选状态
+    this.crud.filters.forEach(f => {
+      this.$set(this.filterState, f.key, null)
+    })
+
+    // 初始化排序入参
+    this.queryParam[this.crud.sort.paramColumn] = this.sortField
+    this.queryParam[this.crud.sort.paramOrder] = this.sortOrder
+
     this.loadData()
   },
 
-  // 页面下拉刷新
   onPullDownRefresh() {
     this.handleRefresh()
   },
 
-  // 页面上拉触底
   onReachBottom() {
     this.loadMore()
   },
@@ -236,8 +390,53 @@ export default {
     this.handleBack()
     return true
   },
+
   methods: {
-    // 获取状态栏高度
+    // ========= utils =========
+    getItemKey(item, index) {
+      const idProp = this.crud.card.idProp
+      return (item && item[idProp]) || index
+    },
+
+    getVal(obj, prop) {
+      if (!obj || !prop) return ''
+      // 支持 "a.b.c" 取值
+      if (prop.indexOf('.') > -1) {
+        return prop.split('.').reduce((acc, k) => (acc ? acc[k] : undefined), obj)
+      }
+      return obj[prop]
+    },
+
+    formatBy(item, prop, formatterName) {
+      const v = this.getVal(item, prop)
+      if (!formatterName) return (v ?? '-') || '-'
+      if (formatterName === 'relativeTime') return this.getRelativeTime(v)
+      if (formatterName === 'operationTypeText') return this.getOperationTypeText(v)
+      return (v ?? '-') || '-'
+    },
+
+    getSubtitle(item) {
+      const parts = this.crud.card.subtitleParts || []
+      const texts = []
+      parts.forEach(p => {
+        const v = this.getVal(item, p.prop)
+        if (p.formatter === 'operationTypeText') {
+          if (v) texts.push(this.getOperationTypeText(v))
+          return
+        }
+        if (v) {
+          texts.push(v)
+        } else if (p.fallback !== undefined && texts.length === 0) {
+          // 只给第一个兜底（保持你原本 businessName || '-' 的效果）
+          texts.push(p.fallback)
+        }
+      })
+      // 去掉空串
+      const cleaned = texts.filter(t => t !== undefined && t !== null && String(t).trim() !== '')
+      return cleaned.length ? cleaned.join(' · ') : ''
+    },
+
+    // ========= navbar =========
     getStatusBarHeight() {
       try {
         const systemInfo = uni.getSystemInfoSync()
@@ -262,51 +461,50 @@ export default {
       }
     },
 
+    // ========= search =========
     clearSearch() {
       this.searchKeyword = ''
-      delete this.queryParam.proName
+      delete this.queryParam[this.crud.search.keywordProp]
       this.pageNo = 1
       this.dataList = []
       this.loadData()
     },
 
     handleSearch() {
-      if (this.searchKeyword) this.queryParam.proName = this.searchKeyword
-      else delete this.queryParam.proName
+      const key = this.crud.search.keywordProp
+      if (this.searchKeyword) this.queryParam[key] = this.searchKeyword
+      else delete this.queryParam[key]
 
       this.pageNo = 1
       this.dataList = []
       this.loadData()
     },
 
-    handleStatusChange(e) {
-      const index = e.detail.value
-      this.selectedStatus = this.statusOptions[index]
-    },
-    handleOperationTypeChange(e) {
-      const index = e.detail.value
-      this.selectedOperationType = this.operationTypeOptions[index]
-    },
-    handleCollaborationModeChange(e) {
-      const index = e.detail.value
-      this.selectedCollaborationMode = this.collaborationModeOptions[index]
+    // ========= filters =========
+    handleFilterChange(key, e) {
+      const f = this.crud.filters.find(x => x.key === key)
+      if (!f) return
+      const idx = e.detail.value
+      this.filterState[key] = f.options[idx]
     },
 
     resetFilter() {
-      this.selectedStatus = null
-      this.selectedOperationType = null
-      this.selectedCollaborationMode = null
+      this.crud.filters.forEach(f => {
+        this.filterState[f.key] = null
+      })
     },
 
     applyFilter() {
-      this.queryParam = { ...(this.queryParam || {}) }
-      delete this.queryParam.status
-      delete this.queryParam.operationType
-      delete this.queryParam.collaborationMode
+      // 清空所有筛选对应 queryProp
+      this.crud.filters.forEach(f => {
+        delete this.queryParam[f.queryProp]
+      })
 
-      if (this.selectedStatus && this.selectedStatus.value) this.queryParam.status = this.selectedStatus.value
-      if (this.selectedOperationType && this.selectedOperationType.value) this.queryParam.operationType = this.selectedOperationType.value
-      if (this.selectedCollaborationMode && this.selectedCollaborationMode.value) this.queryParam.collaborationMode = this.selectedCollaborationMode.value
+      // 写入选中的筛选
+      this.crud.filters.forEach(f => {
+        const sel = this.filterState[f.key]
+        if (sel && sel.value) this.queryParam[f.queryProp] = sel.value
+      })
 
       this.showFilter = false
       this.pageNo = 1
@@ -315,41 +513,46 @@ export default {
     },
 
     removeFilter(key) {
-      if (key === 'status') this.selectedStatus = null
-      if (key === 'operationType') this.selectedOperationType = null
-      if (key === 'collaborationMode') this.selectedCollaborationMode = null
-      if (key === 'keyword') {
+      if (key === '__keyword__') {
         this.searchKeyword = ''
-        delete this.queryParam.proName
+        delete this.queryParam[this.crud.search.keywordProp]
+        this.applyFilter()
+        return
       }
+      if (this.filterState[key]) this.filterState[key] = null
       this.applyFilter()
     },
 
     clearAllFilters() {
       this.searchKeyword = ''
-      this.selectedStatus = null
-      this.selectedOperationType = null
-      this.selectedCollaborationMode = null
+      this.crud.filters.forEach(f => (this.filterState[f.key] = null))
       this.queryParam = {}
+
+      // 重新写入排序入参（保持你原逻辑）
+      this.queryParam[this.crud.sort.paramColumn] = this.sortField
+      this.queryParam[this.crud.sort.paramOrder] = this.sortOrder
+
       this.pageNo = 1
       this.dataList = []
       this.loadData()
     },
 
+    // ========= sort =========
     handleSort(field) {
       if (this.sortField === field) this.sortOrder = this.sortOrder === 'desc' ? 'asc' : 'desc'
       else {
         this.sortField = field
         this.sortOrder = 'desc'
       }
-      this.queryParam.column = field
-      this.queryParam.order = this.sortOrder
+      this.queryParam[this.crud.sort.paramColumn] = field
+      this.queryParam[this.crud.sort.paramOrder] = this.sortOrder
 
       this.pageNo = 1
       this.dataList = []
       this.loadData()
     },
 
+    // ========= list =========
     async loadData() {
       if (this.loading) return
       this.loading = true
@@ -359,7 +562,7 @@ export default {
           pageSize: this.pageSize,
           ...this.queryParam
         }
-        const res = await getProjectList(params)
+        const res = await this.crud.api.list(params)
         if (res && res.success) {
           const result = (res && res.result) ? res.result : {}
           const records = result.records || result.list || []
@@ -390,45 +593,53 @@ export default {
       this.pageNo = 1
       this.dataList = []
       this.loadData().finally(() => {
-        // 停止下拉刷新
         uni.stopPullDownRefresh()
         this.refreshing = false
       })
     },
 
+    // ========= navigation/actions =========
     handleItemClick(item) {
+      // 存储当前 item（detail 页优先读取，保留你原逻辑）
       uni.setStorageSync('_temp_project_data', item)
-      uni.navigateTo({ url: `/pages/project/detail?id=${item.id}` })
+      const id = this.getVal(item, this.crud.card.idProp)
+      uni.navigateTo({ url: `${this.crud.routes.detail}?id=${encodeURIComponent(id || '')}` })
     },
 
     handleItemActions(item) {
-      const actions = ['查看详情', '修改项目', '网页详情']
-      uni.showActionSheet({
-        itemList: actions,
-        success: ({ tapIndex }) => {
-          if (tapIndex === 0) this.handleItemClick(item)
-          if (tapIndex === 1) this.handleEdit(item)
-          if (tapIndex === 2) this.openWebDetail(item)
-        }
-      })
+      // 长按直接打开编辑抽屉
+      this.drawerEditData = item
+      this.drawerVisible = true
     },
 
     handleAdd() {
-      openWebView('/projectManager/TabProjectmanageList?openAdd=1', '项目管理')
+      // 打开新增抽屉
+      this.drawerEditData = null
+      this.drawerVisible = true
     },
 
     handleEdit(item) {
-      if (!item || !item.id) return
-      const url = `/projectManager/workbench?id=${encodeURIComponent(item.uniqueId || '')}&oid=${encodeURIComponent(item.id)}`
-      openWebView(url, '项目工作台')
+      // 打开编辑抽屉（保留此方法以兼容其他地方调用）
+      this.drawerEditData = item
+      this.drawerVisible = true
+    },
+
+    handleDrawerSuccess() {
+      // 抽屉保存成功后刷新列表
+      this.pageNo = 1
+      this.dataList = []
+      this.loadData()
+    },
+
+    handleDrawerClose() {
+      this.drawerEditData = null
     },
 
     openWebDetail(item) {
-      if (!item) return
-      const url = `/projectManager/workbench?id=${encodeURIComponent(item.uniqueId || '')}&oid=${encodeURIComponent(item.id || '')}`
-      openWebView(url, '项目详情')
+      this.crud.actions.webDetail(this, item)
     },
 
+    // ========= formatters =========
     getOperationTypeText(type) {
       const map = { '1': '自运营', '2': '走量', '3': '收量' }
       return map[String(type)] || '-'
@@ -436,7 +647,7 @@ export default {
 
     getRelativeTime(timeStr) {
       if (!timeStr) return '-'
-      const time = new Date(timeStr.replace(/-/g, '/'))
+      const time = new Date(String(timeStr).replace(/-/g, '/'))
       const now = new Date()
       const diff = now - time
       const minutes = Math.floor(diff / 60000)
@@ -452,7 +663,7 @@ export default {
         return `昨天 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
       }
       if (days < 7) return `${days}天前`
-      return timeStr.substring(0, 10)
+      return String(timeStr).substring(0, 10)
     }
   }
 }
@@ -699,14 +910,12 @@ export default {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   height: 0;
-  /* 让 flex 子元素正确计算高度 */
-  /* 隐藏滚动条 */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 和 Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .page-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
   width: 0;
   height: 0;
   background: transparent;
@@ -954,7 +1163,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1200;
+  z-index: 100;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: auto;
+
+  &.floating-add-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+  }
 }
 
 .add-icon {
@@ -962,5 +1179,4 @@ export default {
   font-size: 48rpx;
   font-weight: 600;
 }
-
 </style>

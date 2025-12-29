@@ -56,3 +56,21 @@ export function getProjectFundPool(params) {
   })
 }
 
+// 新增项目
+export function addProject(data) {
+  return request({
+    url: '/projectmanage/add',
+    method: 'POST',
+    data
+  })
+}
+
+// 编辑项目
+export function updateProject(data) {
+  return request({
+    url: '/projectmanage/edit',
+    method: 'PUT',
+    data
+  })
+}
+

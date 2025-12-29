@@ -20,17 +20,17 @@ export default {
   mixins: [navbarMixin],
   data() {
     return {
-      url: '',
+      pageUrl: '',
       title: 'H5 功能',
       canGoBack: false
     }
   },
   computed: {
     decodedUrl() {
-      if (!this.url) return ''
+      if (!this.pageUrl) return ''
       try {
         // 尝试解码，如果已经是解码后的URL，decodeURIComponent会抛出错误
-        let decoded = decodeURIComponent(this.url)
+        let decoded = decodeURIComponent(this.pageUrl)
         // 如果解码后还包含编码字符，说明被编码了多次，继续解码
         while (decoded.includes('%')) {
           const prev = decoded
@@ -46,16 +46,16 @@ export default {
         return decoded
       } catch (e) {
         // 解码失败，直接使用原始URL
-        return this.url
+        return this.pageUrl
       }
     }
   },
   onLoad(query) {
-    this.url = query.url || ''
+    this.pageUrl = query.url || ''
     this.title = query.title || 'H5 功能'
 
     // 如果URL为空，直接返回
-    if (!this.url) {
+    if (!this.pageUrl) {
       console.warn('webview URL为空，返回上一页')
       setTimeout(() => {
         this.handleBack()
