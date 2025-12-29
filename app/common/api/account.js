@@ -52,3 +52,48 @@ export function getAccountConsumptionList(params) {
   })
 }
 
+// 共享钱包列表
+export function getSharedWalletList(params) {
+  return request({
+    url: '/advertiserWalletInfo/list',
+    method: 'GET',
+    params
+  })
+}
+
+// 子端口列表
+export function getSecondaryAgentList(params) {
+  return request({
+    url: '/secondaryAgentInfo/list',
+    method: 'GET',
+    params
+  })
+}
+
+// 广告主复制任务
+export function getAdvertiserCopyList(params) {
+  return request({
+    url: '/advertiserCopy/list',
+    method: 'GET',
+    params
+  })
+}
+
+// 账户绑定变动记录
+export function getAccountChangeRecordList(params) {
+  return request({
+    url: '/accountProjectHistory/list',
+    method: 'GET',
+    params
+  })
+}
+
+// 账户消耗总览
+export function getAgentConsumeList(params) {
+  return request({
+    url: '/agentdata/list',
+    method: 'GET',
+    params
+  })
+}
+

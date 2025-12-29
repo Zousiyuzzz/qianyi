@@ -131,6 +131,10 @@ export default {
       return iconMap[mod.title] || '📦'
     },
     openModule(mod) {
+      if (mod && mod.native) {
+        uni.navigateTo({ url: mod.native })
+        return
+      }
       if (mod && mod.path) {
         openWebView(mod.path, mod.title)
       }
