@@ -85,14 +85,14 @@
         "navigationStyle": "custom"
       }
     },
-    {
-      "path": "pages/webview/index",
-      "style": {
-        "navigationBarTitleText": "功能",
-        "navigationBarBackgroundColor": "#fff",
-        "navigationStyle": "custom"
-      }
-    },
+    // {
+    //   "path": "pages/webview/index",
+    //   "style": {
+    //     "navigationBarTitleText": "功能",
+    //     "navigationBarBackgroundColor": "#fff",
+    //     "navigationStyle": "custom"
+    //   }
+    // },
     {
       "path": "pages/profile/index",
       "style": {

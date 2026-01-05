@@ -240,12 +240,12 @@ export default {
   width: 88rpx;
   height: 88rpx;
   border-radius: 20rpx;
-  background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+  // background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 12rpx;
-  box-shadow: 0 2rpx 8rpx rgba(46, 135, 255, 0.12);
+  // box-shadow: 0 2rpx 8rpx rgba(46, 135, 255, 0.12);
 }
 
 .module-icon {
