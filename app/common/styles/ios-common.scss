@@ -137,6 +137,14 @@ scroll-view.page {
   color: #1c1c1e !important;
 }
 
+input::placeholder,
+textarea::placeholder,
+.search-input::placeholder,
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: #c7c7cc !important;
+}
+
 .search-icon {
   font-size: 28rpx !important;
   color: #8e8e93 !important;
