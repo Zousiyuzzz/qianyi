@@ -38,9 +38,9 @@ export const MODULE_GROUPS = [
     title: '客户与回款',
     description: '客户池海、回款管理与延期审批。',
     modules: [
-      { title: '客户池海', path: '/customerManager/TabCustomermanageList', desc: '客户主数据与跟进。' },
-      { title: '客户回款', path: '/customerManager/BackmoneyList', desc: '回款登记、核销与审批。' },
-      { title: '回款延期', path: '/customerManager/delay', desc: '回款延期申请与处理。' }
+      { title: '客户池海', path: '/customerManager/TabCustomermanageList', native: '/pages/customer/index', desc: '客户主数据与跟进。' },
+      { title: '客户回款', path: '/customerManager/BackmoneyList', native: '/pages/customer/backmoney', desc: '回款登记、核销与审批。' },
+      { title: '回款延期', path: '/customerManager/delay', native: '/pages/customer/delay', desc: '回款延期申请与处理。' }
     ]
   },
   {
@@ -48,9 +48,9 @@ export const MODULE_GROUPS = [
     title: '项目与资金池',
     description: '项目全链路、资金池及机器人配置。',
     modules: [
-      { title: '项目管理', path: '/projectManager/TabProjectmanageList', desc: '项目立项、进度与协作。' },
-      { title: '项目资金池', path: '/projectFundPool/TabProjectFundPoolList', desc: '资金池余额与分配。' },
-      { title: '项目资金变动明细', path: '/projectFundPool/TabProjectFundPoolChangeLogList', desc: '资金变动流水追踪。' },
+      { title: '项目管理', path: '/projectManager/TabProjectmanageList', native: '/pages/project/index', desc: '项目立项、进度与协作。' },
+      { title: '项目资金池', path: '/projectFundPool/TabProjectFundPoolList', native: '/pages/project/fundPool', desc: '资金池余额与分配。' },
+      { title: '项目资金变动明细', path: '/projectFundPool/TabProjectFundPoolChangeLogList', native: '/pages/project/fundChangeLog', desc: '资金变动流水追踪。' },
       { title: '返点政策模板', path: '/customerManager/CustomerRetabeTemplate', desc: '返点政策模板配置。' },
       { title: '微信机器人配置', path: '/projectManager/wechatConfig', desc: '消息机器人与通知。' }
     ]
@@ -83,8 +83,8 @@ export const MODULE_GROUPS = [
     title: '资金管理',
     description: '到账、退款、项目损失与抬头管理。',
     modules: [
-      { title: '客户到账', path: '/moneyManager/Preparation', desc: '到账登记与确认。' },
-      { title: '客户退款', path: '/moneyManager/Refund', desc: '退款流程与凭证。' },
+      { title: '客户到账', path: '/moneyManager/Preparation', native: '/pages/money/arrival', desc: '到账登记与确认。' },
+      { title: '客户退款', path: '/moneyManager/Refund', native: '/pages/money/refund', desc: '退款流程与凭证。' },
       { title: '项目损失', path: '/projectLossRecord/index', desc: '损益记录与核算。' },
       { title: '抬头管理', path: '/Manager/bankAccount', desc: '抬头维护与开票。' }
     ]
@@ -105,7 +105,7 @@ export const MODULE_GROUPS = [
     title: '财务报表与返利',
     description: '媒体返点、核算、成本导入与利润报表。',
     modules: [
-      { title: '返点管理', path: '/mediaRebate/index', desc: '媒体返点总览。' },
+      { title: '返点管理', path: '/mediaRebate/index', native: '/pages/rebate/index', desc: '媒体返点总览。' },
       { title: '巨量引擎 - 返点结算', path: '/mediaRebate/DY/fandian/index', desc: '巨量返点结算。' },
       { title: '巨量引擎 - 对账核算', path: '/mediaRebate/DY/duizhang/index', desc: '巨量对账与核算。' },
       { title: '巨量引擎 - 业绩明细', path: '/mediaRebate/DY/performanceDetail/index', desc: '业绩明细查询。' },
@@ -122,7 +122,7 @@ export const MODULE_GROUPS = [
     title: '渠道与代理商',
     description: '渠道资源、平台应用与代理商账户。',
     modules: [
-      { title: '渠道列表', path: '/channelManager/ChannelList', desc: '渠道档案与合作管理。' },
+      { title: '渠道列表', path: '/channelManager/ChannelList', native: '/pages/channel/index', desc: '渠道档案与合作管理。' },
       { title: '平台应用管理', path: '/channelManager/AppManager', desc: '平台应用接入与维护。' },
       { title: '代理商账户', path: '/advertiserInfo/TabAdvertiserInfoList', desc: '代理商账户信息。' }
     ]
@@ -201,7 +201,7 @@ export const MODULE_GROUPS = [
     title: '个人中心',
     description: '个人中心与账户设置。',
     modules: [
-      { title: '个人中心', path: '/account/center', desc: '个人信息与概览。' },
+      { title: '个人中心', path: '/account/center', native: '/pages/profile/index', desc: '个人信息与概览。' },
       { title: '基本设置', path: '/account/settings/BaseSetting', desc: '基础资料设置。' },
       { title: '账户绑定', path: '/account/settings/binding', desc: '账号绑定管理。' },
       { title: '个性化设置', path: '/account/settings/custom', desc: '个性化偏好。' },
